@@ -1,7 +1,13 @@
 namespace GatoGPT;
 
+using GodotEGPNonGame.ServiceWorkers;
+using GodotEGP.Logging;
+using Godot;
+
 class Program
 {
+	public static GodotEGP.Main GodotEGP;
+
     static void Main(string[] args)
     {
 		var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +18,13 @@ class Program
 		builder.Services.AddSwaggerGen();
 
 		// background worker test
-		builder.Services.AddHostedService<FrameBasedServiceWorker>();
+		builder.Services.AddHostedService<SceneTreeServiceWorker>();
+
+		// init GodotEGP
+		GodotEGP = new GodotEGP.Main();
+		SceneTreeServiceWorker.AddChild(GodotEGP);
+
+		SceneTreeServiceWorker.AddChild(new TestNode());
 
 		var app = builder.Build();
 
@@ -53,4 +65,12 @@ class Program
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}
+
+public class TestNode : Node
+{
+	public override void _Process(double delta)
+	{
+		LoggerManager.LogDebug("This node is being processed!", "", "delta", delta);
+	}
 }
