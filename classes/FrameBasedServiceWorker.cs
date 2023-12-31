@@ -39,7 +39,7 @@ public partial class FrameBasedServiceWorker : BackgroundService
         	if (_deltaTime.TotalMilliseconds >= (1 / _targetFps) * 1000)
         	{
         		LoggerManager.LogDebug("Delta time", "", "deltaTime", _deltaTime);
-        		LoggerManager.LogDebug("Frame count", "", "frameCount", _frameCounter);
+        		LoggerManager.LogDebug("Frame count", "", "frameCount", 1000 / _deltaTime.TotalMilliseconds);
         		_startTime = DateTime.Now;
 
         		_taskRunCounter += _deltaTime;
@@ -54,7 +54,6 @@ public partial class FrameBasedServiceWorker : BackgroundService
 				var _elapsedTime = DateTime.Now - _startTime;
         		LoggerManager.LogDebug("Elapsed time", "", "elapsedTime", _elapsedTime.TotalMilliseconds);
 
-				// increase frame counter
         		_frameCounter += 1 * _deltaTime.TotalMilliseconds / 1000;
         	}
 
