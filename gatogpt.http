@@ -1,0 +1,6 @@
+@gatogpt_HostAddress = http://localhost:5036
+
+GET {{gatogpt_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,22 @@
+/**
+ * @author      : {{NAME}} ({{EMAIL}}) {{COPYRIGHT}}
+ * @file        : {{FILE}}
+ * @created     : {{TIMESTAMP}}
+ */
+
+namespace GodotEGP.{{FILEP}};
+
+using Godot;
+using GodotEGP.Objects.Extensions;
+using GodotEGP.Logging;
+using GodotEGP.Service;
+using GodotEGP.Event.Events;
+using GodotEGP.Config;
+
+public partial class {{CAMEL_CLASS}}
+{
+	public {{CAMEL_CLASS}}()
+	{
+		{{CURSOR}}
+	}
+}
