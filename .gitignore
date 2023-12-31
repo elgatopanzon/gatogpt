@@ -1,2 +1,4 @@
 # Managed by git-multi (sub repo ssh://git@gitlab.elgatopanzon.io:2224/godot/addons/godotegp-framework/addon-csharp.git) (commit d9adad05) 
 /libs/godotegp-framework 
+# Managed by git-multi (sub repo ssh://git@gitlab.elgatopanzon.io:2224/godot/addons/godotegp-framework/godotegp-framework-nongame.git) (commit 28c4cd1fa85b6f590cc7dbbe25fd873e20622bbb) 
+/libs/godotegp-framework-nongame 
