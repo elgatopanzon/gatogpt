@@ -4,7 +4,7 @@
  * @created     : {{TIMESTAMP}}
  */
 
-namespace GodotEGP.{{FILEP}};
+namespace GatoGPT.{{FILEP}};
 
 using Godot;
 using GodotEGP.Objects.Extensions;
