@@ -24,7 +24,8 @@ class Program
 		GodotEGP = new GodotEGP.Main();
 		SceneTree.Instance.Root.AddChild(GodotEGP);
 
-		// SceneTree.Instance.Root.AddChild(new TestNode());
+		var testnode = new TestNode();
+		SceneTree.Instance.Root.AddChild(testnode);
 
 		var app = builder.Build();
 
@@ -76,6 +77,16 @@ public class TestNode : Node
 
 	public override void _Process(double delta)
 	{
-		LoggerManager.LogDebug("This node is being processed!", "", "delta", delta);
+		// LoggerManager.LogDebug("This node is being processed!", "", "delta", delta);
+	}
+
+	public void TestMethod()
+	{
+		LoggerManager.LogDebug("Test method");
+	}
+
+	public void TestCallDeferred()
+	{
+		CallDeferred("TestMethod");
 	}
 }
