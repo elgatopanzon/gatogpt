@@ -2,6 +2,7 @@ namespace GatoGPT;
 
 using GodotEGPNonGame.ServiceWorkers;
 using GodotEGP.Logging;
+using GodotEGP.Random;
 using Godot;
 
 class Program
@@ -32,6 +33,22 @@ class Program
 		// timertest.Autostart = true;
 		// timertest.OneShot = false;
 		// SceneTree.Instance.Root.AddChild(timertest);
+		//
+
+		// var rnd = new NumberGenerator(123, 1);
+		// LoggerManager.LogDebug("Random int", "", "num", rnd.Randi());
+		// LoggerManager.LogDebug("Random int", "", "num", rnd.Randi());
+        //
+		// var state = rnd.State;
+        //
+		// LoggerManager.LogDebug("Random int", "", "num", rnd.Randi());
+		// LoggerManager.LogDebug("Random int", "", "num", rnd.Randi());
+        //
+		// rnd = new NumberGenerator(123, state);
+        //
+		// LoggerManager.LogDebug("Random int restored state", "", "num", rnd.Randi());
+		// LoggerManager.LogDebug("Random int restored state", "", "num", rnd.Randi());
+		
 
 		var app = builder.Build();
 
