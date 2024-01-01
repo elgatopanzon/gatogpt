@@ -22,9 +22,9 @@ class Program
 
 		// init GodotEGP
 		GodotEGP = new GodotEGP.Main();
-		SceneTreeServiceWorker.AddChild(GodotEGP);
+		SceneTree.Instance.Root.AddChild(GodotEGP);
 
-		SceneTreeServiceWorker.AddChild(new TestNode());
+		// SceneTree.Instance.Root.AddChild(new TestNode());
 
 		var app = builder.Build();
 
@@ -69,6 +69,11 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 
 public class TestNode : Node
 {
+	public override void _Ready()
+	{
+		LoggerManager.LogDebug("This node is ready!");
+	}
+
 	public override void _Process(double delta)
 	{
 		LoggerManager.LogDebug("This node is being processed!", "", "delta", delta);
