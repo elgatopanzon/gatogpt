@@ -27,6 +27,12 @@ class Program
 		var testnode = new TestNode();
 		SceneTree.Instance.Root.AddChild(testnode);
 
+		// var timertest = new Timer();
+		// timertest.WaitTime = 5;
+		// timertest.Autostart = true;
+		// timertest.OneShot = false;
+		// SceneTree.Instance.Root.AddChild(timertest);
+
 		var app = builder.Build();
 
 		// Configure the HTTP request pipeline.
