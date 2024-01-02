@@ -6,6 +6,7 @@ using GatoGPT.Service;
 using GatoGPT.Handler;
 using GatoGPT.Config;
 using GatoGPT.Resource;
+using GatoGPT.LLM;
 
 using GodotEGP;
 using GodotEGP.Logging;
@@ -106,6 +107,13 @@ class Program
 					))
 		{
 			LoggerManager.LogDebug("Required services ready");
+
+			// var m = new ModelDefinition();
+			// m.ModelProfile = new ModelProfile();
+			// m.ModelResource = ServiceRegistry.Get<ResourceManager>().GetResources<LlamaModel>()["TheBloke/Mistral-7B-Instruct-v0.2-GGUF"];
+			// m.ModelResourceId = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF";
+            //
+			// LoggerManager.LogDebug("Test model definition", "", "model", m);
 
 			app.Run();
 		}

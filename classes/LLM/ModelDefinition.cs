@@ -47,6 +47,14 @@ public partial class ModelDefinition : VObject
 		set { _modelResource.Value = value; }
 	}
 
+	internal readonly VValue<string> _modelResourceId;
+
+	public string ModelResourceId
+	{
+		get { return _modelResourceId.Value; }
+		set { _modelResourceId.Value = value; }
+	}
+
 	public ModelDefinition()
 	{
 		_modelProfile = AddValidatedNative<ModelProfile>(this)
@@ -58,6 +66,11 @@ public partial class ModelDefinition : VObject
 
 		_modelResource = AddValidatedValue<Resource<LlamaModel>>(this)
 		    .ChangeEventsEnabled();
+
+		_modelResourceId = AddValidatedValue<string>(this)
+		    .Default("")
+		    .ChangeEventsEnabled();
+
 	}
 }
 
