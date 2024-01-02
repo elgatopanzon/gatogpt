@@ -21,6 +21,9 @@ class Program
 		// background worker test
 		builder.Services.AddHostedService<SceneTreeServiceWorker>();
 
+		// force create the local user directory
+		OS.GetUserDataDir();
+
 		// init GodotEGP
 		GodotEGP = new GodotEGP.Main();
 		SceneTree.Instance.Root.AddChild(GodotEGP);
@@ -48,7 +51,6 @@ class Program
         //
 		// LoggerManager.LogDebug("Random int restored state", "", "num", rnd.Randi());
 		// LoggerManager.LogDebug("Random int restored state", "", "num", rnd.Randi());
-		
 
 		var app = builder.Build();
 
