@@ -108,6 +108,7 @@ class Program
 
 			LoggerManager.LogDebug("LLMConfig", "", "llmPresets", ServiceRegistry.Get<ConfigManager>().Get<LlamaModelPresetsConfig>());
 			LoggerManager.LogDebug("LLMConfig", "", "llmModelDefinitions", ServiceRegistry.Get<ConfigManager>().Get<LlamaModelDefinitionsConfig>());
+			LoggerManager.LogDebug("LLMConfig", "", "llmManager", ServiceRegistry.Get<ConfigManager>().Get<LlamaModelManagerConfig>());
 
 			app.Run();
 		}
