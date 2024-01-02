@@ -6,12 +6,15 @@
 
 namespace GatoGPT.LLM;
 
+using GatoGPT.Resource;
+
 using Godot;
 using GodotEGP.Objects.Extensions;
 using GodotEGP.Logging;
 using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
+using GodotEGP.Resource;
 
 using GodotEGP.Objects.Validated;
 
@@ -36,14 +39,13 @@ public partial class ModelDefinition : VObject
 	}
 
 	// instance of the model resource to load for this model definition
-	// internal readonly VValue<ModelResource> _modelResource;
-    //
-	// public ModelResource ModelResource
-	// {
-	// 	get { return _modelResource.Value; }
-	// 	set { _modelResource.Value = value; }
-	// }
+	internal readonly VValue<Resource<LlamaModel>> _modelResource;
 
+	public Resource<LlamaModel> ModelResource
+	{
+		get { return _modelResource.Value; }
+		set { _modelResource.Value = value; }
+	}
 
 	public ModelDefinition()
 	{
@@ -54,8 +56,8 @@ public partial class ModelDefinition : VObject
 		    .Default("")
 		    .ChangeEventsEnabled();
 
-		// _modelResource = AddValidatedValue<ModelResource>(this)
-		//     .ChangeEventsEnabled();
+		_modelResource = AddValidatedValue<Resource<LlamaModel>>(this)
+		    .ChangeEventsEnabled();
 	}
 }
 
