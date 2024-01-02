@@ -1,8 +1,14 @@
 namespace GatoGPT;
 
 using GodotEGPNonGame.ServiceWorkers;
+
+using GodotEGP;
 using GodotEGP.Logging;
+using GodotEGP.Service;
 using GodotEGP.Random;
+using GodotEGP.Objects.Extensions;
+using GodotEGP.Event.Events;
+using GodotEGP.Event.Filter;
 using Godot;
 
 class Program
@@ -83,7 +89,17 @@ class Program
 		.WithName("GetWeatherForecast")
 		.WithOpenApi();
 
-		app.Run();
+		// wait for services to be ready
+		if (ServiceRegistry.WaitForServices(typeof(ConfigManager), typeof(ResourceManager), typeof(ScriptService)))
+		{
+			LoggerManager.LogDebug("Required services ready");
+
+			app.Run();
+		}
+		else
+		{
+			LoggerManager.LogCritical("Required services never became ready");
+		}
 
     }
 }
