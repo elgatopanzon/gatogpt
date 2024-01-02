@@ -18,6 +18,9 @@ using GodotEGP.Event.Events;
 using GodotEGP.Config;
 using GodotEGP.Resource;
 
+using LLama;
+using LLama.Common;
+
 public partial class LlamaModelManager : Service
 {
 	private LlamaModelManagerConfig _config = new LlamaModelManagerConfig();
@@ -41,7 +44,10 @@ public partial class LlamaModelManager : Service
 		_presetsConfig = presetsConfig;
 		_definitionsConfig = definitionsConfig;
 
-		_SetServiceReady(true);
+		if (!GetReady())
+		{
+			_SetServiceReady(true);
+		}
 	}
 
 	public void SetModelResources(Dictionary<string, Resource<LlamaModel>> modelResources)
@@ -73,10 +79,44 @@ public partial class LlamaModelManager : Service
 	}
 
 	// Called when service is considered ready
-	public override void _OnServiceReady()
+	public async override void _OnServiceReady()
 	{
 		LoggerManager.LogDebug("Model resources", "", "modelResources", _modelResources);
 		LoggerManager.LogDebug("Model definitions", "", "modelDefinitions", _definitionsConfig);
+
+		// test loading of a model using LLamaSharp
+		// string modelPath = "/home/laz/text-generation-webui-docker/config/models/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/mistral-7b-instruct-v0.2.Q8_0.gguf"; // change it to your own model path
+		// var prompt = "Transcript of a dialog, where the User interacts with an Assistant named Bob. Bob is helpful, kind, honest, good at writing, and never fails to answer the User's requests immediately and with precision.\r\n\r\nUser: Hello, Bob.\r\nBob: Hello. How may I help you today?\r\nUser: Please tell me the largest city in Europe.\r\nBob: Sure. The largest city in Europe is Moscow, the capital of Russia.\r\nUser: How are you?"; // use the "chat-with-bob" prompt here.
+        //
+		// // Load a model
+		// var parameters = new ModelParams(modelPath)
+		// {
+    	// 	ContextSize = 8192,
+    	// 	// Seed = 1337,
+    	// 	GpuLayerCount = 0
+		// };
+		// using var model = LLamaWeights.LoadFromFile(parameters);
+        //
+		// // Initialize a chat session
+		// using var context = model.CreateContext(parameters);
+		// var ex = new InteractiveExecutor(context);
+		// ChatSession session = new ChatSession(ex);
+        //
+        //
+		//
+		// while (prompt != "stop")
+		// {
+		// 	string res = "";
+        //
+		// 	await foreach (var text in session.ChatAsync(prompt, new LLama.Common.InferenceParams() { Temperature = 0.8f, AntiPrompts = new List<string> { "User:" } }))
+        //
+    	// 	{
+    	// 		res += text;
+    	// 	}
+        //
+    	// 	LoggerManager.LogDebug(res);
+    	// 	break;
+		// }
 	}
 }
 
