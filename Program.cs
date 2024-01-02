@@ -5,6 +5,7 @@ using GodotEGPNonGame.ServiceWorkers;
 using GatoGPT.Service;
 using GatoGPT.Handler;
 using GatoGPT.Config;
+using GatoGPT.Resource;
 
 using GodotEGP;
 using GodotEGP.Logging;
@@ -105,10 +106,6 @@ class Program
 					))
 		{
 			LoggerManager.LogDebug("Required services ready");
-
-			LoggerManager.LogDebug("LLMConfig", "", "llmPresets", ServiceRegistry.Get<ConfigManager>().Get<LlamaModelPresetsConfig>());
-			LoggerManager.LogDebug("LLMConfig", "", "llmModelDefinitions", ServiceRegistry.Get<ConfigManager>().Get<LlamaModelDefinitionsConfig>());
-			LoggerManager.LogDebug("LLMConfig", "", "llmManager", ServiceRegistry.Get<ConfigManager>().Get<LlamaModelManagerConfig>());
 
 			app.Run();
 		}
