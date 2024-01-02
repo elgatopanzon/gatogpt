@@ -1,0 +1,61 @@
+/**
+ * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
+ * @file        : ModelDefinition
+ * @created     : Monday Jan 01, 2024 23:58:19 CST
+ */
+
+namespace GatoGPT.LLM;
+
+using Godot;
+using GodotEGP.Objects.Extensions;
+using GodotEGP.Logging;
+using GodotEGP.Service;
+using GodotEGP.Event.Events;
+using GodotEGP.Config;
+
+using GodotEGP.Objects.Validated;
+
+public partial class ModelDefinition : VObject
+{
+	// the profile instance used for the model definition
+	internal readonly VNative<ModelProfile> _modelProfile;
+
+	public ModelProfile ModelProfile
+	{
+		get { return _modelProfile.Value; }
+		set { _modelProfile.Value = value; }
+	}
+
+	// model profile preset code (used to override the filename one)
+	internal readonly VValue<string> _profilePreset;
+
+	public string ProfilePreset
+	{
+		get { return _profilePreset.Value; }
+		set { _profilePreset.Value = value; }
+	}
+
+	// instance of the model resource to load for this model definition
+	// internal readonly VValue<ModelResource> _modelResource;
+    //
+	// public ModelResource ModelResource
+	// {
+	// 	get { return _modelResource.Value; }
+	// 	set { _modelResource.Value = value; }
+	// }
+
+
+	public ModelDefinition()
+	{
+		_modelProfile = AddValidatedNative<ModelProfile>(this)
+		    .ChangeEventsEnabled();
+
+		_profilePreset = AddValidatedValue<string>(this)
+		    .Default("")
+		    .ChangeEventsEnabled();
+
+		// _modelResource = AddValidatedValue<ModelResource>(this)
+		//     .ChangeEventsEnabled();
+	}
+}
+

@@ -2,6 +2,10 @@ namespace GatoGPT;
 
 using GodotEGPNonGame.ServiceWorkers;
 
+using GatoGPT.Service;
+using GatoGPT.Handler;
+using GatoGPT.Config;
+
 using GodotEGP;
 using GodotEGP.Logging;
 using GodotEGP.Service;
@@ -89,10 +93,21 @@ class Program
 		.WithName("GetWeatherForecast")
 		.WithOpenApi();
 
+		// init LLMConfigHandler
+		SceneTree.Instance.Root.AddChild(new LlamaConfigHandler());
+
 		// wait for services to be ready
-		if (ServiceRegistry.WaitForServices(typeof(ConfigManager), typeof(ResourceManager), typeof(ScriptService)))
+		if (ServiceRegistry.WaitForServices(
+					typeof(ConfigManager), 
+					typeof(ResourceManager), 
+					typeof(ScriptService),
+					typeof(LlamaModelManager)
+					))
 		{
 			LoggerManager.LogDebug("Required services ready");
+
+			LoggerManager.LogDebug("LLMConfig", "", "llmPresets", ServiceRegistry.Get<ConfigManager>().Get<LlamaModelPresetsConfig>());
+			LoggerManager.LogDebug("LLMConfig", "", "llmModelDefinitions", ServiceRegistry.Get<ConfigManager>().Get<LlamaModelDefinitionsConfig>());
 
 			app.Run();
 		}

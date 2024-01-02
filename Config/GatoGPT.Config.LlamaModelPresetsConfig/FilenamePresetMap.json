@@ -1,0 +1,18 @@
+{
+  "FilenamePresetMap": {
+    "*/Llama-2-*B-*hat-*/*.*": "metaai_llama_2_chat",
+    "*/vicuna-*B-v*-16K-*/*.*": "vicuna_v1_5_16k",
+    "*/CodeLlama-*B-Python-*/*.*": "codellama_instruct",
+    "*/CodeLlama-*B-Instruct-*/*.*": "codellama_instruct",
+    "*/Phind-CodeLlama-34B-v*-GGUF/*/*.*": "phind_codellama",
+    "*/*istral-*B-Instruct-v*-GGUF/*.gguf": "mistral_instruct",
+    "*/OpenHermes-2*-Mistral-7B-GGUF/*.gguf": "chatml",
+    "*/dolphin-*-mistral-*B-GGUF/*.gguf": "chatml",
+    "*/*istral-*B-OpenOrca-GGUF/*.gguf": "chatml",
+    "*/zephyr-*-GGUF/*.gguf": "zephyr",
+    "*/stablelm-zephyr-*-GGUF/*.gguf": "zephyr",
+    "*/deepseek-*-instruct-GGUF/*.gguf": "deepseek_coder",
+    "*/Mixtral-8x7B-Instruct-v*-GGUF/*.gguf": "mistral_instruct",
+    "*/phi-2-GGUF/*.gguf": "phi_2"
+  }
+}

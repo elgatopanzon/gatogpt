@@ -1,0 +1,209 @@
+{
+  "DefaultModelProfiles": {
+    "alpaca": {
+      "Name": "Alpaca",
+      "InferenceParams": {
+        "InputPrefix": "### Instruction:\n",
+        "InputSuffix": "\n### Response:\n",
+        "Antiprompts": [
+          "### Instruction:"
+        ],
+        "PrePrompt": "Below is an instruction that describes a task. Write a response that appropriately completes the request.",
+        "PrePromptSuffix": "\n",
+        "PrePromptPrefix": ""
+      }
+    },
+    "chatml": {
+      "Name": "ChatML",
+      "InferenceParams": {
+        "InputPrefix": "<|im_end|>\n<|im_start|>user\n",
+        "InputSuffix": "<|im_end|>\n<|im_start|>assistant\n",
+        "Antiprompts": [
+          "<|im_start|>",
+          "<|im_end|>"
+        ],
+        "PrePromptPrefix": "<|im_start|>system\n",
+        "PrePromptSuffix": "",
+        "PrePrompt": "Perform the task to the best of your ability."
+      }
+    },
+    "codellama_completion": {
+      "Name": "CodeLlama Completion",
+      "LoadParams": {
+        "RopeFreqBase": 0,
+        "RopeFreqScale": 0
+      },
+      "InferenceParams": {
+        "TopP": 0.9,
+        "Temp": 0.2,
+        "InputPrefix": "",
+        "InputSuffix": "",
+        "PrePrompt": "",
+        "PrePromptPrefix": "",
+        "PrePromptSuffix": "",
+        "Antiprompts": [
+          ""
+        ]
+      }
+    },
+    "codellama_instruct": {
+      "Name": "CodeLlama Instruct",
+      "LoadParams": {
+        "RopeFreqBase": 0,
+        "RopeFreqScale": 0
+      },
+      "InferenceParams": {
+        "TopP": 0.95,
+        "Temp": 0.2,
+        "InputPrefix": "[INST]",
+        "InputSuffix": "[/INST]",
+        "PrePrompt": "You are a helpful coding AI assistant.",
+        "PrePromptPrefix": "[INST]<<SYS>>",
+        "PrePromptSuffix": "<</SYS>>[/INST]",
+        "Antiprompts": [
+          "[INST]"
+        ]
+      }
+    },
+    "codellama_wizardcoder": {
+      "Name": "CodeLlama WizardCoder"
+    },
+    "deepseek_coder": {
+      "Name": "Deepseek Coder",
+      "LoadParams": {
+        "RopeFreqBase": 0,
+        "RopeFreqScale": 0
+      },
+      "InferenceParams": {
+        "InputPrefix": "### Instruction:\n",
+        "InputSuffix": "\n### Response:\n",
+        "Antiprompts": [
+          "### Instruction:"
+        ],
+        "PrePrompt": "You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science.",
+        "PrePromptSuffix": "\n",
+        "PrePromptPrefix": ""
+      }
+    },
+    "metaai_llama_2_chat": {
+      "Name": "MetaAI Llama 2 Chat",
+      "LoadParams": {
+        "RopeFreqBase": 0,
+        "RopeFreqScale": 0
+      },
+      "InferenceParams": {
+        "InputPrefix": "[INST]",
+        "InputSuffix": "[/INST]\n",
+        "PrePrompt": "You are a helpful coding AI assistant.",
+        "PrePromptPrefix": "[INST]<<SYS>>\n",
+        "PrePromptSuffix": "<</SYS>>[/INST]\n",
+        "Antiprompts": [
+          "[INST]"
+        ]
+      }
+    },
+    "mistral_instruct": {
+      "Name": "Mistral Instruct",
+      "LoadParams": {
+        "RopeFreqBase": 0,
+        "RopeFreqScale": 0
+      },
+      "InferenceParams": {
+        "InputPrefix": "[INST]",
+        "InputSuffix": "[/INST]",
+        "PrePromptPrefix": "",
+        "PrePromptSuffix": "",
+        "Antiprompts": [
+          "[INST]"
+        ]
+      }
+    },
+    "obsidian_vision": {
+      "Name": "Obsidian Vision",
+      "LoadParams": {
+        "NCtx": 2048,
+        "RopeFreqBase": 10000,
+        "RopeFreqScale": 1
+      },
+      "InferenceParams": {
+        "InputPrefix": "<|im_start|>user\n",
+        "InputSuffix": "\n###\n<|im_start|>assistant:",
+        "Antiprompts": [
+          "<|im_start|>",
+          "<|im_end|>",
+          "###"
+        ],
+        "PrePrompt": "",
+        "PrePromptSuffix": "",
+        "PrePromptPrefix": ""
+      }
+    },
+    "phi_2": {
+      "Name": "Phi 2",
+      "LoadParams": {
+        "RopeFreqBase": 0,
+        "RopeFreqScale": 0
+      },
+      "InferenceParams": {
+        "InputPrefix": "Instruct: ",
+        "InputSuffix": "\nOutput:",
+        "PrePromptPrefix": "",
+        "PrePromptSuffix": "",
+        "Antiprompts": [
+          "Instruct:",
+          "Output:"
+        ]
+      }
+    },
+    "phind_codellama": {
+      "Name": "Phind CodeLlama",
+      "LoadParams": {
+        "RopeFreqBase": 0,
+        "RopeFreqScale": 0
+      },
+      "InferenceParams": {
+        "InputPrefix": "### User Message\n",
+        "InputSuffix": "### Assistant\n",
+        "PrePromptPrefix": "### System Prompt\n",
+        "PrePromptSuffix": "\n",
+        "Antiprompts": [
+          "[INST]"
+        ]
+      }
+    },
+    "vicuna_v1_5_16k": {
+      "Name": "Vicuna v1.5 16K",
+      "LoadParams": {
+        "RopeFreqScale": 0.25
+      },
+      "InferenceParams": {
+        "InputPrefix": "USER:",
+        "InputSuffix": "ASSISTANT:",
+        "PrePromptPrefix": "",
+        "PrePromptSuffix": "\n\n",
+        "PrePrompt": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.",
+        "Antiprompts": [
+          "USER:"
+        ]
+      }
+    },
+    "zephyr": {
+      "Name": "Zephyr",
+      "InferenceParams": {
+        "PrePromptPrefix": "<|system|>\n",
+        "PrePromptSuffix": "\n",
+        "InputPrefix": "\n<|user|>\n",
+        "InputSuffix": "\n<|assistant|>\n",
+        "Antiprompts": [
+          "<|system|>",
+          "<|user|>",
+          "<|assistant|>"
+        ]
+      },
+      "LoadParams": {
+        "RopeFreqScale": 0,
+        "RopeFreqBase": 0
+      }
+    }
+  }
+}
