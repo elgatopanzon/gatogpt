@@ -364,6 +364,8 @@ public partial class InferenceParams : VObject
 		_prePromptSuffix = AddValidatedValue<string>(this)
 		    .Default("\n")
 		    .ChangeEventsEnabled();
+
+		Antiprompts.Add("");
 	}
 }
 

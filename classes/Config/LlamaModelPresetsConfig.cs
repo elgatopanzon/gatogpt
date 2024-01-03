@@ -57,6 +57,8 @@ public partial class LlamaModelPresetsConfig : VConfig
 		{
 			if (Regex.IsMatch(filename, WildCardToRegular(obj.Key)))
 			{
+				LoggerManager.LogDebug("Found profile matching filename", "", "match", $"{filename} = {obj.Value}");
+
 				return GetDefaultProfile(obj.Value);
 			}
 		}

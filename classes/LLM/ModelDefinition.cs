@@ -29,6 +29,14 @@ public partial class ModelDefinition : VObject
 		set { _modelProfile.Value = value; }
 	}
 
+	internal readonly VNative<ModelProfile> _modelProfileOverride;
+
+	public ModelProfile ModelProfileOverride
+	{
+		get { return _modelProfileOverride.Value; }
+		set { _modelProfileOverride.Value = value; }
+	}
+
 	// model profile preset code (used to override the filename one)
 	internal readonly VValue<string> _profilePreset;
 
@@ -55,9 +63,12 @@ public partial class ModelDefinition : VObject
 		set { _modelResourceId.Value = value; }
 	}
 
-	public ModelDefinition()
+	public ModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null)
 	{
 		_modelProfile = AddValidatedNative<ModelProfile>(this)
+		    .ChangeEventsEnabled();
+
+		_modelProfileOverride = AddValidatedNative<ModelProfile>(this)
 		    .ChangeEventsEnabled();
 
 		_profilePreset = AddValidatedValue<string>(this)
@@ -71,6 +82,13 @@ public partial class ModelDefinition : VObject
 		    .Default("")
 		    .ChangeEventsEnabled();
 
+		ModelResourceId = modelResourceId;
+		ProfilePreset = profilePreset;
+
+		if (modelProfile != null)
+		{
+			ModelProfileOverride = modelProfile;
+		}
 	}
 }
 

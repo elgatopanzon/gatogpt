@@ -9,8 +9,10 @@ namespace GatoGPT.Service;
 using GatoGPT.LLM;
 using GatoGPT.Config;
 using GatoGPT.Resource;
+using GatoGPT.Event;
 
 using Godot;
+using GodotEGP;
 using GodotEGP.Objects.Extensions;
 using GodotEGP.Logging;
 using GodotEGP.Service;
@@ -117,6 +119,38 @@ public partial class LlamaModelManager : Service
     	// 	LoggerManager.LogDebug(res);
     	// 	break;
 		// }
+
+		var m = new ModelDefinition("TheBloke/Mistral-7B-Instruct-v0.2-GGUF");
+		m.ModelResource = ServiceRegistry.Get<ResourceManager>().GetResources<LlamaModel>()["TheBloke/Mistral-7B-Instruct-v0.2-GGUF"];
+		m.ModelProfile = _presetsConfig.GetPresetForFilename(m.ModelResource.Definition.Path);
+
+		LoggerManager.LogDebug("Loading model with profile", "", "modelProfile", m._modelProfile);
+
+		var instance = new LlamaModelInstance(m);
+		instance.Subscribe<LlamaModelLoadFinished>((e) => {
+			LoggerManager.LogDebug("Model loaded event");
+
+			instance.RunInference("5 random words");
+		}, oneshot:true);
+
+		instance.Subscribe<LlamaInferenceFinished>((e) => {
+			LoggerManager.LogDebug("Inference finished!");
+
+			// instance.Subscribe<LlamaModelUnloadFinished>((e) => {
+			// 	LoggerManager.LogDebug("Model unloaded");
+            //
+			// 	instance.RunInference("5 random trees");
+            //
+			// 	instance.Subscribe<LlamaInferenceFinished>((e) => {
+			// 		LoggerManager.LogDebug("Inference 2 finished!");
+            //
+			// 		instance.UnloadModel();
+			// 	}, oneshot:true);
+			// }, oneshot:true);
+
+			instance.UnloadModel();
+		}, oneshot:true);
+
 	}
 }
 
