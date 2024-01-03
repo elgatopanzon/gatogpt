@@ -20,6 +20,14 @@ using GodotEGP.Objects.Validated;
 
 public partial class ModelDefinition : VObject
 {
+	// friendly ID of the model definition
+	private string _id;
+	public string Id
+	{
+		get { return _id; }
+		set { _id = value; }
+	}
+
 	// the profile instance used for the model definition
 	internal readonly VNative<ModelProfile> _modelProfile;
 

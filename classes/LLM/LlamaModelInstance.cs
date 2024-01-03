@@ -33,6 +33,17 @@ public partial class LlamaModelInstance : BackgroundJob
 		set { _instanceId = value; }
 	}
 
+	private string _contextStatePath {
+		get {
+			return Path.Combine(OS.GetUserDataDir(), InstanceId+"-context");
+		}
+	}
+	private string _executorStatePath {
+		get {
+			return Path.Combine(OS.GetUserDataDir(), InstanceId+"-executor");
+		}
+	}
+
 	// holds the definition of the model we are currently working with
 	private ModelDefinition _modelDefinition;
 	public ModelDefinition ModelDefinition
@@ -53,10 +64,14 @@ public partial class LlamaModelInstance : BackgroundJob
 	private LLamaContext _llamaContext;
 
 	// the LLamaSharp executor, accepting the created context
+	// private StatelessExecutor _executor;
+	private InstructExecutor _executorStateful;
 	private StatelessExecutor _executor;
+	private bool _stateful = false;
 
 	// current text prompt used for inference
-	private string _prompt;
+	public string Prompt;
+	private string _currentInferenceLine = "";
 
 	public InferenceResult InferenceResult { get; set; }
 
@@ -86,10 +101,13 @@ public partial class LlamaModelInstance : BackgroundJob
 	private const int INFERENCE_RUNNING_STATE = 3;
 	private const int INFERENCE_FINISHED_STATE = 4;
 
-	public LlamaModelInstance(ModelDefinition modelDefinition)
+	public LlamaModelInstance(ModelDefinition modelDefinition, bool isStateful = false)
 	{
 		_modelDefinition = modelDefinition;
-		_instanceId = $"{_modelDefinition.ModelResourceId}-{GetHashCode()}";
+
+		SetInstanceId();
+
+		_stateful = isStateful;
 
 		// setup states
 		_state = new();
@@ -122,6 +140,7 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		// with the model loaded, we can begin running the inference loop
 		_state.AddTransition(_loadModelState, _inferenceRunningState, INFERENCE_RUNNING_STATE);
+		_state.AddTransition(_inferenceFinishedState, _inferenceRunningState, INFERENCE_RUNNING_STATE);
 
 		// from the running state we can change to the finished state
 		_state.AddTransition(_inferenceRunningState, _inferenceFinishedState, INFERENCE_FINISHED_STATE);
@@ -131,11 +150,13 @@ public partial class LlamaModelInstance : BackgroundJob
 		_state.AddTransition(_inferenceFinishedState, _unloadModelState, UNLOAD_MODEL_STATE);
 		// 2. re-setup the model if the definition changed
 		_state.AddTransition(_inferenceFinishedState, _setupState, SETUP_STATE);
+		_state.AddTransition(_inferenceFinishedState, _loadModelState, LOAD_MODEL_STATE);
 
 		// from the unload model state we have to re-setup the params before we
 		// load the model again
 		_state.AddTransition(_unloadModelState, _setupState, SETUP_STATE);
 		_state.AddTransition(_unloadModelState, _setupState, INFERENCE_RUNNING_STATE);
+		_state.AddTransition(_unloadModelState, _loadModelState, LOAD_MODEL_STATE);
 
 		// subscribe to thread events
 		this.SubscribeOwner<LlamaModelLoadStart>(_On_ModelLoadStart, true);
@@ -150,6 +171,11 @@ public partial class LlamaModelInstance : BackgroundJob
 		_state.Enter();
 
 		LoggerManager.LogDebug("Created model instance", "", "instanceId", _instanceId);
+	}
+
+	public void SetInstanceId()
+	{
+		_instanceId = $"{_modelDefinition.Id}-{GetHashCode()}";
 	}
 
 	/***********************************
@@ -214,14 +240,58 @@ public partial class LlamaModelInstance : BackgroundJob
 	{
 		LoggerManager.LogDebug("Creating inference executor with context", "", "modelPath", _modelParams.ModelPath);
 
+		_executorStateful = new InstructExecutor(_llamaContext);
+	}
+
+	public void CreateStatelessInferenceExecutor()
+	{
+		LoggerManager.LogDebug("Creating stateless inference executor", "", "modelPath", _modelParams.ModelPath);
+
 		_executor = new StatelessExecutor(_llamaWeights, _modelParams);
+	}
+
+	public void LoadModel()
+	{
+		_state.Transition(LOAD_MODEL_STATE);
 	}
 
 	public void UnloadModel()
 	{
-		_state.Transition(UNLOAD_MODEL_STATE);
+		if (_state.CurrentSubState != _unloadModelState)
+		{
+			_state.Transition(UNLOAD_MODEL_STATE);
 
-		Run();
+			Run();
+		}
+	}
+
+	public bool SafeToUnloadModel()
+	{
+		return (_state.CurrentSubState != _loadModelState && _state.CurrentSubState != _inferenceRunningState);
+	}
+
+	public async void SaveInstanceState()
+	{
+		LoggerManager.LogDebug("Saving state to file");
+
+		_llamaContext.SaveState(_contextStatePath);
+		await _executorStateful.SaveState(_executorStatePath);
+	}
+
+	public async void LoadInstanceState()
+	{
+		if (File.Exists(_contextStatePath))
+		{
+			LoggerManager.LogDebug("Loading context state from file");
+			_llamaContext.LoadState(_contextStatePath);
+		}
+
+
+		if (File.Exists(_executorStatePath))
+		{
+			LoggerManager.LogDebug("Loading executor state from file");
+			await _executorStateful.LoadState(_executorStatePath);
+		}
 	}
 
 	/*****************************
@@ -229,7 +299,10 @@ public partial class LlamaModelInstance : BackgroundJob
 	*****************************/
 	public void RunInference(string promptText)
 	{
-		_prompt = promptText;
+		Prompt = promptText;
+		_currentInferenceLine = "";
+
+		LoggerManager.LogDebug(_state.CurrentSubState.GetType().Name);
 
 		// if we are in the unloaded or finished state, enable auto run on load
 		if (_state.CurrentSubState == _inferenceFinishedState || _state.CurrentSubState == _unloadModelState)
@@ -256,70 +329,89 @@ public partial class LlamaModelInstance : BackgroundJob
 		return $"{prePromptP}{prePrompt}{prePromptS}{InputP}{userPrompt}{InputS}";
 	}
 
-	public async void ExecuteInference()
+	public bool ProcessInference(string text)
+	{
+    	if (InferenceResult.TokenCount == 0)
+    	{
+    		InferenceResult.FirstTokenTime = DateTime.Now;
+    		InferenceResult.PrevTokenTime = DateTime.Now;
+    	}
+
+    	// calculate token per sec
+    	InferenceResult.PrevTokenTime = DateTime.Now;
+
+		this.Emit<LlamaInferenceToken>((o) => {
+			o.SetInstanceId(_instanceId);
+			o.SetToken(text);
+			});
+
+		InferenceResult.AddToken(text);
+
+		// if a new line is obtained, end the current line and emit a Line
+		// event
+		if (text == "\n")
+		{
+			this.Emit<LlamaInferenceLine>((o) => {
+				o.SetInstanceId(_instanceId);
+				o.SetLine(_currentInferenceLine);
+				});
+
+			_currentInferenceLine = "";
+		}
+		else
+		{
+			// append text to create the line
+    		_currentInferenceLine += text;
+		}
+
+		// if an empty token is recieved, break out of the inferent loop
+    	if (text.Length == 0)
+    	{
+			this.Emit<LlamaInferenceLine>((o) => {
+				o.SetInstanceId(_instanceId);
+				o.SetLine(_currentInferenceLine);
+				});
+
+    		return true;
+    	}
+
+    	return false;
+	}
+
+	public async Task<bool> ExecuteInference()
 	{
 		// set the inference start time
 		InferenceResult = new InferenceResult();
 
 		// format the input prompt
-		string formattedPrompt = FormatPrompt(_prompt);
+		string formattedPrompt = FormatPrompt(Prompt);
 
-		LoggerManager.LogDebug("Prompt", "", "prompt", formattedPrompt);
-
-		string currentLine = "";
+		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
+		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", formattedPrompt);
 
 		// start the inference loop
-		await foreach (var text in _executor.InferAsync(formattedPrompt, _inferenceParams))
-    	{
-    		if (InferenceResult.TokenCount == 0)
+		if (_stateful)
+		{
+			await foreach (var text in _executorStateful.InferAsync(formattedPrompt, _inferenceParams))
     		{
-    			InferenceResult.FirstTokenTime = DateTime.Now;
-    			InferenceResult.PrevTokenTime = DateTime.Now;
+    			if (ProcessInference(text))
+    			{
+    				break;
+    			}
     		}
-
-    		// calculate token per sec
-    		InferenceResult.PrevTokenTime = DateTime.Now;
-
-			this.Emit<LlamaInferenceToken>((o) => {
-				o.SetInstanceId(_instanceId);
-				o.SetToken(text);
-				});
-
-			InferenceResult.AddToken(text);
-
-			// if a new line is obtained, end the current line and emit a Line
-			// event
-			if (text == "\n")
-			{
-				this.Emit<LlamaInferenceLine>((o) => {
-					o.SetInstanceId(_instanceId);
-					o.SetLine(currentLine);
-					});
-
-				currentLine = "";
-			}
-			else
-			{
-				// append text to create the line
-    			currentLine += text;
-			}
-
-			// if an empty token is recieved, break out of the inferent loop
-    		if (text.Length == 0)
+		}
+		else
+		{
+			await foreach (var text in _executor.InferAsync(formattedPrompt, _inferenceParams))
     		{
-				this.Emit<LlamaInferenceLine>((o) => {
-					o.SetInstanceId(_instanceId);
-					o.SetLine(currentLine);
-					});
-
-				this.Emit<LlamaInferenceFinished>((o) => {
-					o.SetInstanceId(_instanceId);
-					o.SetResult(InferenceResult);
-					});
-
-    			break;
+    			if (ProcessInference(text))
+    			{
+    				break;
+    			}
     		}
-    	}
+		}
+
+    	return true;
 	}
 
 	/*******************
@@ -332,7 +424,12 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		SetupLoadParams();
 
-		_state.Transition(LOAD_MODEL_STATE);
+		if (_autorunOnLoad)
+		{
+			LoggerManager.LogDebug("Autorun on load enabled");
+
+			_state.Transition(INFERENCE_RUNNING_STATE);
+		}
 	}
 
 	public void _State_LoadModel_OnEnter()
@@ -343,7 +440,7 @@ public partial class LlamaModelInstance : BackgroundJob
 		Run();
 	}
 
-	public void _State_LoadModel_OnUpdate()
+	public async void _State_LoadModel_OnUpdate()
 	{
 		LoggerManager.LogDebug("Entered LoadModel update state");
 
@@ -353,9 +450,28 @@ public partial class LlamaModelInstance : BackgroundJob
 		this.Emit<LlamaModelLoadStart>((o) => o.SetInstanceId(_instanceId));
 
 		// load and prepare the model
-		LoadModelWeights();
-		CreateModelContext();
-		CreateInferenceExecutor();
+		if (_llamaWeights == null)
+		{
+			LoadModelWeights();
+		}
+
+		if (_stateful)
+		{
+			// only create a new context if one doesn't exist
+			// if (_llamaContext == null)
+			// {
+				CreateModelContext();
+			// }
+
+			// create new executor instance
+			CreateInferenceExecutor();
+
+			// reload the state if it exists
+			LoadInstanceState();
+		}
+		else {
+			CreateStatelessInferenceExecutor();
+		}
 
 		this.Emit<LlamaModelLoadFinished>((o) => o.SetInstanceId(_instanceId));
 
@@ -368,9 +484,14 @@ public partial class LlamaModelInstance : BackgroundJob
 		}
 	}
 
-	public void _State_UnloadModel_OnEnter()
+	public async void _State_UnloadModel_OnEnter()
 	{
 		LoggerManager.LogDebug("Entered UnloadModel state");
+
+		if (_stateful)
+		{
+			SaveInstanceState();
+		}
 	}
 
 	public void _State_UnloadModel_OnUpdate()
@@ -380,9 +501,13 @@ public partial class LlamaModelInstance : BackgroundJob
 		this.Emit<LlamaModelUnloadStart>((o) => o.SetInstanceId(_instanceId));
 
 		_llamaWeights = null;
+
 		_llamaContext = null;
+		if (!_stateful)
+		{
+			_modelParams = null;
+		}
 		_executor = null;
-		_modelParams = null;
 		_inferenceParams = null;
 
 		GC.Collect();
@@ -398,11 +523,11 @@ public partial class LlamaModelInstance : BackgroundJob
 		Run();
 	}
 
-	public void _State_InferenceRunning_OnUpdate()
+	public async void _State_InferenceRunning_OnUpdate()
 	{
 		LoggerManager.LogDebug("Entered InferenceRunning update state");
 
-		ExecuteInference();
+		await ExecuteInference();
 
 		_state.Transition(INFERENCE_FINISHED_STATE);
 	}
@@ -411,6 +536,10 @@ public partial class LlamaModelInstance : BackgroundJob
 	{
 		LoggerManager.LogDebug("Entered InferenceFinished state");
 		
+		this.Emit<LlamaInferenceFinished>((o) => {
+			o.SetInstanceId(_instanceId);
+			o.SetResult(InferenceResult);
+			});
 	}
 
 	/**********************

@@ -46,10 +46,48 @@ public partial class LlamaModelManager : Service
 		_presetsConfig = presetsConfig;
 		_definitionsConfig = definitionsConfig;
 
+		PrepareDefinitionConfigs();
+
 		if (!GetReady())
 		{
 			_SetServiceReady(true);
 		}
+	}
+
+	public void PrepareDefinitionConfigs()
+	{
+		// check there's resources and model definitions before processing
+		if (_definitionsConfig.ModelDefinitions.Count == 0 || _modelResources == null || _modelResources.Count == 0)
+		{
+			return;
+		}
+
+		foreach (var def in _definitionsConfig.ModelDefinitions)
+		{
+			if (def.Value.ModelResourceId.Length > 0)
+			{
+				def.Value.Id = def.Key;
+				
+				// fetch the resource object from resources
+				def.Value.ModelResource = GetModelResource(def.Value.ModelResourceId);
+
+				// find matching preset for filename
+				def.Value.ModelProfile = _presetsConfig.GetPresetForFilename(def.Value.ModelResource.Definition.Path);
+
+				// merge profile with profile overrides, if set
+				if (def.Value.ModelProfileOverride != null)
+				{
+					LoggerManager.LogDebug("Applying model profile overrides", "", "overrides", def.Value.ModelProfileOverride);
+
+					def.Value.ModelProfile.MergeFrom(def.Value.ModelProfileOverride);
+				}
+			}
+		}
+	}
+
+	public Resource<LlamaModel> GetModelResource(string resourceId)
+	{
+		return _modelResources[resourceId];
 	}
 
 	public void SetModelResources(Dictionary<string, Resource<LlamaModel>> modelResources)
@@ -57,6 +95,8 @@ public partial class LlamaModelManager : Service
 		LoggerManager.LogDebug("Setting model resources config", "", "modelResources", modelResources);
 
 		_modelResources = modelResources;
+
+		PrepareDefinitionConfigs();
 	}
 
 	// Called when the node enters the scene tree for the first time.
@@ -81,76 +121,24 @@ public partial class LlamaModelManager : Service
 	}
 
 	// Called when service is considered ready
-	public async override void _OnServiceReady()
+	public override void _OnServiceReady()
 	{
 		LoggerManager.LogDebug("Model resources", "", "modelResources", _modelResources);
 		LoggerManager.LogDebug("Model definitions", "", "modelDefinitions", _definitionsConfig);
+	}
 
-		// test loading of a model using LLamaSharp
-		// string modelPath = "/home/laz/text-generation-webui-docker/config/models/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/mistral-7b-instruct-v0.2.Q8_0.gguf"; // change it to your own model path
-		// var prompt = "Transcript of a dialog, where the User interacts with an Assistant named Bob. Bob is helpful, kind, honest, good at writing, and never fails to answer the User's requests immediately and with precision.\r\n\r\nUser: Hello, Bob.\r\nBob: Hello. How may I help you today?\r\nUser: Please tell me the largest city in Europe.\r\nBob: Sure. The largest city in Europe is Moscow, the capital of Russia.\r\nUser: How are you?"; // use the "chat-with-bob" prompt here.
-        //
-		// // Load a model
-		// var parameters = new ModelParams(modelPath)
-		// {
-    	// 	ContextSize = 8192,
-    	// 	// Seed = 1337,
-    	// 	GpuLayerCount = 0
-		// };
-		// using var model = LLamaWeights.LoadFromFile(parameters);
-        //
-		// // Initialize a chat session
-		// using var context = model.CreateContext(parameters);
-		// var ex = new InteractiveExecutor(context);
-		// ChatSession session = new ChatSession(ex);
-        //
-        //
-		//
-		// while (prompt != "stop")
-		// {
-		// 	string res = "";
-        //
-		// 	await foreach (var text in session.ChatAsync(prompt, new LLama.Common.InferenceParams() { Temperature = 0.8f, AntiPrompts = new List<string> { "User:" } }))
-        //
-    	// 	{
-    	// 		res += text;
-    	// 	}
-        //
-    	// 	LoggerManager.LogDebug(res);
-    	// 	break;
-		// }
+	/******************************
+	*  Model management methods  *
+	******************************/
+	
+	public bool ModelDefinitionIsValid(string id)
+	{
+		return _definitionsConfig.ModelDefinitions.ContainsKey(id);
+	}
 
-		var m = new ModelDefinition("TheBloke/Mistral-7B-Instruct-v0.2-GGUF");
-		m.ModelResource = ServiceRegistry.Get<ResourceManager>().GetResources<LlamaModel>()["TheBloke/Mistral-7B-Instruct-v0.2-GGUF"];
-		m.ModelProfile = _presetsConfig.GetPresetForFilename(m.ModelResource.Definition.Path);
-
-		LoggerManager.LogDebug("Loading model with profile", "", "modelProfile", m._modelProfile);
-
-		var instance = new LlamaModelInstance(m);
-		instance.Subscribe<LlamaModelLoadFinished>((e) => {
-			LoggerManager.LogDebug("Model loaded event");
-
-			instance.RunInference("5 random words");
-		}, oneshot:true);
-
-		instance.Subscribe<LlamaInferenceFinished>((e) => {
-			LoggerManager.LogDebug("Inference finished!");
-
-			// instance.Subscribe<LlamaModelUnloadFinished>((e) => {
-			// 	LoggerManager.LogDebug("Model unloaded");
-            //
-			// 	instance.RunInference("5 random trees");
-            //
-			// 	instance.Subscribe<LlamaInferenceFinished>((e) => {
-			// 		LoggerManager.LogDebug("Inference 2 finished!");
-            //
-			// 		instance.UnloadModel();
-			// 	}, oneshot:true);
-			// }, oneshot:true);
-
-			instance.UnloadModel();
-		}, oneshot:true);
-
+	public ModelDefinition GetModelDefinition(string id)
+	{
+		return _definitionsConfig.ModelDefinitions[id];
 	}
 }
 

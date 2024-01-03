@@ -7,6 +7,7 @@ using GatoGPT.Handler;
 using GatoGPT.Config;
 using GatoGPT.Resource;
 using GatoGPT.LLM;
+using GatoGPT.Event;
 
 using GodotEGP;
 using GodotEGP.Logging;
@@ -108,12 +109,35 @@ class Program
 		{
 			LoggerManager.LogDebug("Required services ready");
 
-			// var m = new ModelDefinition();
-			// m.ModelProfile = new ModelProfile();
-			// m.ModelResource = ServiceRegistry.Get<ResourceManager>().GetResources<LlamaModel>()["TheBloke/Mistral-7B-Instruct-v0.2-GGUF"];
-			// m.ModelResourceId = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF";
-            //
-			// LoggerManager.LogDebug("Test model definition", "", "model", m);
+			// test LlamaInferenceService chaining instances
+			// test stateless infer chain, copying the generated output to the
+			// 2nd instance
+			var instance = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "Write a 3 paragraph story about fish", stateful:false);
+			instance.Subscribe<LlamaInferenceFinished>((e) => {
+				var instance = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", $"{e.Result.OutputStripped}\n\nWhat is a good title for it?", stateful:false);
+
+				instance.Subscribe<LlamaInferenceFinished>((e) => {
+					// test stateful infer chain, where the instance is the same and the
+					// model will keep it's context
+					var instance2 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "Write a 3 paragraph story about trees", stateful:true);
+
+					instance2.Subscribe<LlamaInferenceFinished>((e) => {
+						instance2.UnloadModel();
+
+						instance2.SubscribeOwner<LlamaModelUnloadFinished>((e) => {
+								LoggerManager.LogDebug("Model unloaded, proceed to infer");
+							// var instance3 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", $"What is a good title for it?", stateful:true, instance2.InstanceId);
+							instance2.LoadModel();
+
+							instance2.SubscribeOwner<LlamaModelLoadFinished>((e) => {
+								instance2.RunInference($"What is a good title for it?");
+							}, oneshot:true);
+						}, oneshot:true);
+					}, oneshot:true);
+
+				}, oneshot:true);
+			}, oneshot:true);
+
 
 			app.Run();
 		}
