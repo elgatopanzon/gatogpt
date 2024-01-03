@@ -46,7 +46,8 @@ public partial class LlamaInferenceService : Service
 		var modelInstance = new LlamaModelInstance(modelDefinition, stateful);
 
 		// unload all existing models to free memory
-		UnloadExistingModels(existingInstanceId);
+		// note: no longer need to do this, since models unload by default
+		// UnloadExistingModels(existingInstanceId);
 
 		if (existingInstanceId.Length == 0)
 		{
@@ -60,15 +61,16 @@ public partial class LlamaInferenceService : Service
 		}
 
 		// load the model and infer
-		modelInstance.SubscribeOwner<LlamaModelLoadFinished>((e) => {
-			// once model finished loading, run the inferance
-			LoggerManager.LogDebug("Model instance loaded", "", "instanceId", e.Id);
+		// modelInstance.SubscribeOwner<LlamaModelLoadFinished>((e) => {
+		// 	// once model finished loading, run the inferance
+		// 	LoggerManager.LogDebug("Model instance loaded", "", "instanceId", e.Id);
+        //
+		// 	modelInstance.RunInference(prompt);
+		// }, oneshot:true);
 
-			modelInstance.RunInference(prompt);
-		}, oneshot:true);
-
-		// load the model
-		modelInstance.LoadModel();
+		// start the inference
+		// modelInstance.LoadModel();
+		modelInstance.StartInference(prompt);
 
 		// return the instance for external management
 		return modelInstance;

@@ -78,8 +78,6 @@ public partial class LlamaModelInstance : BackgroundJob
 	// DateTime instances used for timing events
 	private DateTime _modelLoadStartTime;
 
-	private bool _autorunOnLoad = false;
-
 	// state machines
 	class ModelInstanceState : HStateMachine {};
 	class SetupState : HStateMachine {};
@@ -140,23 +138,27 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		// with the model loaded, we can begin running the inference loop
 		_state.AddTransition(_loadModelState, _inferenceRunningState, INFERENCE_RUNNING_STATE);
-		_state.AddTransition(_inferenceFinishedState, _inferenceRunningState, INFERENCE_RUNNING_STATE);
 
-		// from the running state we can change to the finished state
-		_state.AddTransition(_inferenceRunningState, _inferenceFinishedState, INFERENCE_FINISHED_STATE);
+		// from the running state we can change to the unload state
+		_state.AddTransition(_inferenceRunningState, _unloadModelState, UNLOAD_MODEL_STATE);
 
-		// once inference has finished, we can allow a few things
-		// 1. unload the model
-		_state.AddTransition(_inferenceFinishedState, _unloadModelState, UNLOAD_MODEL_STATE);
-		// 2. re-setup the model if the definition changed
-		_state.AddTransition(_inferenceFinishedState, _setupState, SETUP_STATE);
+		// once model is unloaded inference is considered finished
+		_state.AddTransition(_unloadModelState, _inferenceFinishedState, INFERENCE_FINISHED_STATE);
+
+		// if we want to re-run inferrence, we need to restart from loadModel state
 		_state.AddTransition(_inferenceFinishedState, _loadModelState, LOAD_MODEL_STATE);
 
-		// from the unload model state we have to re-setup the params before we
-		// load the model again
-		_state.AddTransition(_unloadModelState, _setupState, SETUP_STATE);
-		_state.AddTransition(_unloadModelState, _setupState, INFERENCE_RUNNING_STATE);
-		_state.AddTransition(_unloadModelState, _loadModelState, LOAD_MODEL_STATE);
+		// // 1. unload the model
+		// _state.AddTransition(_inferenceFinishedState, _unloadModelState, UNLOAD_MODEL_STATE);
+		// // // 2. re-setup the model if the definition changed
+		// // _state.AddTransition(_inferenceFinishedState, _setupState, SETUP_STATE);
+		// // _state.AddTransition(_inferenceFinishedState, _loadModelState, LOAD_MODEL_STATE);
+        //
+		// // from the unload model state we have to re-setup the params before we
+		// // load the model again
+		// _state.AddTransition(_unloadModelState, _setupState, SETUP_STATE);
+		// _state.AddTransition(_unloadModelState, _setupState, INFERENCE_RUNNING_STATE);
+		// _state.AddTransition(_unloadModelState, _loadModelState, LOAD_MODEL_STATE);
 
 		// subscribe to thread events
 		this.SubscribeOwner<LlamaModelLoadStart>(_On_ModelLoadStart, true);
@@ -195,8 +197,10 @@ public partial class LlamaModelInstance : BackgroundJob
 			BatchSize = (uint) _modelDefinition.ModelProfile.LoadParams.NBatch,
 			RopeFrequencyBase = (float) _modelDefinition.ModelProfile.LoadParams.RopeFreqBase,
 			RopeFrequencyScale = (float) _modelDefinition.ModelProfile.LoadParams.RopeFreqScale,
-			// TODO: F16KV param?
+			UseFp16Memory = _modelDefinition.ModelProfile.LoadParams.F16KV,
 		};
+
+		LoggerManager.LogDebug("Setup model params", "", "params", _modelParams);
 	}
 
 	public void SetupInferenceParams()
@@ -260,8 +264,6 @@ public partial class LlamaModelInstance : BackgroundJob
 		if (_state.CurrentSubState != _unloadModelState)
 		{
 			_state.Transition(UNLOAD_MODEL_STATE);
-
-			Run();
 		}
 	}
 
@@ -270,15 +272,17 @@ public partial class LlamaModelInstance : BackgroundJob
 		return (_state.CurrentSubState != _loadModelState && _state.CurrentSubState != _inferenceRunningState);
 	}
 
-	public async void SaveInstanceState()
+	public async Task<bool> SaveInstanceState()
 	{
 		LoggerManager.LogDebug("Saving state to file");
 
 		_llamaContext.SaveState(_contextStatePath);
 		await _executorStateful.SaveState(_executorStatePath);
+
+		return true;
 	}
 
-	public async void LoadInstanceState()
+	public async Task<bool> LoadInstanceState()
 	{
 		if (File.Exists(_contextStatePath))
 		{
@@ -292,27 +296,26 @@ public partial class LlamaModelInstance : BackgroundJob
 			LoggerManager.LogDebug("Loading executor state from file");
 			await _executorStateful.LoadState(_executorStatePath);
 		}
+
+		return true;
 	}
 
 	/*****************************
 	*  Model inference methods  *
 	*****************************/
-	public void RunInference(string promptText)
+	public void StartInference(string promptText)
 	{
 		Prompt = promptText;
 		_currentInferenceLine = "";
 
-		LoggerManager.LogDebug(_state.CurrentSubState.GetType().Name);
+		LoggerManager.LogDebug("Starting inference", "", "prompt", Prompt);
 
-		// if we are in the unloaded or finished state, enable auto run on load
-		if (_state.CurrentSubState == _inferenceFinishedState || _state.CurrentSubState == _unloadModelState)
-		{
-			_autorunOnLoad = true;
-		}
-		else
-		{
-			_autorunOnLoad = false;
-		}
+		LoadModel();
+	}
+
+	public void RunInference()
+	{
+		LoggerManager.LogDebug(_state.CurrentSubState.GetType().Name);
 
 		_state.Transition(INFERENCE_RUNNING_STATE);
 	}
@@ -423,13 +426,12 @@ public partial class LlamaModelInstance : BackgroundJob
 		LoggerManager.LogDebug("Entered Setup state");
 
 		SetupLoadParams();
-
-		if (_autorunOnLoad)
-		{
-			LoggerManager.LogDebug("Autorun on load enabled");
-
-			_state.Transition(INFERENCE_RUNNING_STATE);
-		}
+		// if (_autorunOnLoad)
+		// {
+		// 	LoggerManager.LogDebug("Autorun on load enabled");
+        //
+		// 	_state.Transition(INFERENCE_RUNNING_STATE);
+		// }
 	}
 
 	public void _State_LoadModel_OnEnter()
@@ -458,16 +460,16 @@ public partial class LlamaModelInstance : BackgroundJob
 		if (_stateful)
 		{
 			// only create a new context if one doesn't exist
-			// if (_llamaContext == null)
-			// {
+			if (_llamaContext == null)
+			{
 				CreateModelContext();
-			// }
+			}
 
 			// create new executor instance
 			CreateInferenceExecutor();
 
 			// reload the state if it exists
-			LoadInstanceState();
+			await LoadInstanceState();
 		}
 		else {
 			CreateStatelessInferenceExecutor();
@@ -475,44 +477,8 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		this.Emit<LlamaModelLoadFinished>((o) => o.SetInstanceId(_instanceId));
 
-		// if autorunOnLoad is enabled, transition directly to the running state
-		if (_autorunOnLoad)
-		{
-			LoggerManager.LogDebug("Autorun on load enabled");
-
-			_state.Transition(INFERENCE_RUNNING_STATE);
-		}
-	}
-
-	public async void _State_UnloadModel_OnEnter()
-	{
-		LoggerManager.LogDebug("Entered UnloadModel state");
-
-		if (_stateful)
-		{
-			SaveInstanceState();
-		}
-	}
-
-	public void _State_UnloadModel_OnUpdate()
-	{
-		LoggerManager.LogDebug("Entered UnloadModel update state");
-
-		this.Emit<LlamaModelUnloadStart>((o) => o.SetInstanceId(_instanceId));
-
-		_llamaWeights = null;
-
-		_llamaContext = null;
-		if (!_stateful)
-		{
-			_modelParams = null;
-		}
-		_executor = null;
-		_inferenceParams = null;
-
-		GC.Collect();
-
-		this.Emit<LlamaModelUnloadFinished>((o) => o.SetInstanceId(_instanceId));
+		// after loading start the inference
+		_state.Transition(INFERENCE_RUNNING_STATE);
 	}
 
 	public void _State_InferenceRunning_OnEnter()
@@ -529,8 +495,45 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		await ExecuteInference();
 
+		_state.Transition(UNLOAD_MODEL_STATE);
+	}
+
+	public async void _State_UnloadModel_OnEnter()
+	{
+		LoggerManager.LogDebug("Entered UnloadModel state");
+
+		if (_stateful)
+		{
+			await SaveInstanceState();
+		}
+
+		Run();
+	}
+
+	public void _State_UnloadModel_OnUpdate()
+	{
+		LoggerManager.LogDebug("Entered UnloadModel update state");
+
+		this.Emit<LlamaModelUnloadStart>((o) => o.SetInstanceId(_instanceId));
+
+		_llamaWeights = null;
+
+		if (!_stateful)
+		{
+			_modelParams = null;
+			_llamaContext = null;
+		}
+		_executor = null;
+		_inferenceParams = null;
+
+		GC.Collect();
+
+		this.Emit<LlamaModelUnloadFinished>((o) => o.SetInstanceId(_instanceId));
+
+		// transition to inference finished state after unloading model
 		_state.Transition(INFERENCE_FINISHED_STATE);
 	}
+
 
 	public void _State_InferenceFinished_OnEnter()
 	{

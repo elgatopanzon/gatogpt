@@ -122,17 +122,20 @@ class Program
 					var instance2 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "Write a 3 paragraph story about trees", stateful:true);
 
 					instance2.Subscribe<LlamaInferenceFinished>((e) => {
-						instance2.UnloadModel();
+						// instance2.UnloadModel();
 
-						instance2.SubscribeOwner<LlamaModelUnloadFinished>((e) => {
-								LoggerManager.LogDebug("Model unloaded, proceed to infer");
-							// var instance3 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", $"What is a good title for it?", stateful:true, instance2.InstanceId);
-							instance2.LoadModel();
-
-							instance2.SubscribeOwner<LlamaModelLoadFinished>((e) => {
-								instance2.RunInference($"What is a good title for it?");
-							}, oneshot:true);
-						}, oneshot:true);
+						// instance2.SubscribeOwner<LlamaModelLoadFinished>((e) => {
+							instance2.StartInference($"What is a good title for it?");
+						// }, oneshot:true);
+						// instance2.SubscribeOwner<LlamaModelUnloadFinished>((e) => {
+						// 		LoggerManager.LogDebug("Model unloaded, proceed to infer");
+						// 	// var instance3 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", $"What is a good title for it?", stateful:true, instance2.InstanceId);
+						// 	// instance2.LoadModel();
+                        //
+						// 	instance2.SubscribeOwner<LlamaModelLoadFinished>((e) => {
+						// 		instance2.RunInference($"What is a good title for it?");
+						// 	}, oneshot:true);
+						// }, oneshot:true);
 					}, oneshot:true);
 
 				}, oneshot:true);
