@@ -45,7 +45,7 @@ public partial class InferenceResult
 
 	public double TokensPerSec {
 		get {
-			return TotalTokenCount / GenerationTime.TotalSeconds;
+			return GenerationTokenCount / (GenerationTime.TotalSeconds - TimeToFirstToken.TotalSeconds);
 		}
 	}
 
