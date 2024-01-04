@@ -26,13 +26,15 @@ public partial class LlamaInferenceService : Service
 
 	private Dictionary<string, LlamaModelInstance> _modelInstances = new();
 
+	private Queue<InferenceRequest> _inferenceQueue = new();
+
 	public LlamaInferenceService()
 	{
 		// assign the model manager instance
 		_modelManager = ServiceRegistry.Get<LlamaModelManager>();
 	}
 
-	public LlamaModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	public LlamaModelInstance CreateModelInstance(string modelDefinitionId, bool stateful = false, string existingInstanceId = "")
 	{
 		// check if the requested definition is valid
 		if (!_modelManager.ModelDefinitionIsValid(modelDefinitionId))
@@ -56,10 +58,17 @@ public partial class LlamaInferenceService : Service
 			modelInstance = _modelInstances[existingInstanceId];
 		}
 
+		// return the instance for external management
+		return modelInstance;
+	}
+
+	public LlamaModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	{
+		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
+
 		// start the inference
 		modelInstance.StartInference(prompt);
 
-		// return the instance for external management
 		return modelInstance;
 	}
 
@@ -91,6 +100,78 @@ public partial class LlamaInferenceService : Service
 		}
 	}
 
+	public InferenceResult InferWait(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	{
+		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
+
+		// start the inference
+		modelInstance.StartInference(prompt);
+
+		// wait indefinitely until finished
+		while (!modelInstance.Finished)
+		{
+			System.Threading.Thread.Sleep(100);
+		}
+
+		return modelInstance.InferenceResult;
+	}
+
+	/*****************************
+	*  Inference queue methods  *
+	*****************************/
+	
+	public async Task<InferenceResult> InferAsync(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	{
+		var modelInstance = QueueInferenceRequest(modelDefinitionId, prompt, stateful, existingInstanceId);	
+
+		// wait for the model
+		while (!modelInstance.Finished)
+		{
+			// LoggerManager.LogDebug("Waiting for inference", "", "inferenceRequest", $"prompt:{prompt}, model:{modelDefinitionId}, instanceId:{modelInstance.InstanceId}, queueSize:{_inferenceQueue.Count}");
+			await Task.Delay(100);
+		}
+
+		return modelInstance.InferenceResult;
+	}
+
+	public LlamaModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	{
+		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
+
+		LoggerManager.LogDebug("Queuing inference request", "", "inferenceRequest", $"prompt:{prompt}, model:{modelDefinitionId}");
+
+		_inferenceQueue.Enqueue(new InferenceRequest(modelInstance, prompt));	
+
+		return modelInstance;
+	}
+
+	public override void _Process(double delta)
+	{
+		// if there's a queued request and there's no running instances, then
+		// dequeue a request and start inference
+		if (_inferenceQueue.TryPeek(out var request) && !IsRunningInstances())
+		{
+			_inferenceQueue.Dequeue();
+
+			LoggerManager.LogDebug("Running queued inference", "", "request", request);
+
+			request.ModelInstance.StartInference(request.Prompt);
+		}
+	}
+
+	public bool IsRunningInstances()
+	{
+		foreach (var instance in _modelInstances)
+		{
+			if (instance.Value.Running)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/****************
 	*  Exceptions  *
 	****************/
@@ -107,3 +188,14 @@ public partial class LlamaInferenceService : Service
 	}
 }
 
+public partial class InferenceRequest
+{
+	public LlamaModelInstance ModelInstance { get; set; }
+	public string Prompt { get; set; }
+
+	public InferenceRequest(LlamaModelInstance modelInstance, string prompt) 
+	{
+		ModelInstance = modelInstance;
+		Prompt = prompt;
+	}
+}

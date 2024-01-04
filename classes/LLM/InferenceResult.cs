@@ -31,7 +31,7 @@ public partial class InferenceResult
 
 	public TimeSpan GenerationTime {
 		get {
-			return PrevTokenTime - FirstTokenTime;
+			return PrevTokenTime - StartTime;
 		}
 	}
 
@@ -61,6 +61,8 @@ public partial class InferenceResult
 			return Output.Trim();
 		}
 	}
+
+	public bool Finished { get; set; }
 
 	public InferenceResult()
 	{

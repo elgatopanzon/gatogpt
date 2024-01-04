@@ -44,6 +44,21 @@ public partial class LlamaModelInstance : BackgroundJob
 		}
 	}
 
+	public bool Finished
+	{
+		get { 
+			if (InferenceResult != null)
+			{
+				return InferenceResult.Finished;
+			}
+			else
+			{
+				return false;
+			}
+		}
+	}
+	public bool Running { get; set; }
+
 	// holds the definition of the model we are currently working with
 	private ModelDefinition _modelDefinition;
 	public ModelDefinition ModelDefinition
@@ -350,6 +365,8 @@ public partial class LlamaModelInstance : BackgroundJob
 		Prompt = promptText;
 		_currentInferenceLine = "";
 
+		Running = true;
+
 		LoggerManager.LogDebug("Starting inference", "", "prompt", Prompt);
 
 		LoadModel();
@@ -583,6 +600,9 @@ public partial class LlamaModelInstance : BackgroundJob
 		LoggerManager.LogDebug("Entered InferenceFinished state");
 
 		GC.Collect();
+
+		InferenceResult.Finished = true;
+		Running = false;
 		
 		this.Emit<LlamaInferenceFinished>((o) => {
 			o.SetInstanceId(_instanceId);
@@ -650,6 +670,8 @@ public partial class LlamaModelInstance : BackgroundJob
 	public override void RunWorkerError(object sender, RunWorkerCompletedEventArgs e)
 	{
 		LoggerManager.LogDebug("Run thread error", "", "state", _state.CurrentSubState.GetType().Name);
+
+		Running = false;
 	}
 
 	/****************
