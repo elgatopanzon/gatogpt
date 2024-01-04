@@ -393,7 +393,7 @@ public partial class LlamaModelInstance : BackgroundJob
 
 	public bool ProcessInference(string text)
 	{
-    	if (InferenceResult.TokenCount == 0)
+    	if (InferenceResult.GenerationTokenCount == 0)
     	{
     		InferenceResult.FirstTokenTime = DateTime.Now;
     		InferenceResult.PrevTokenTime = DateTime.Now;
@@ -447,6 +447,8 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		// format the input prompt
 		string formattedPrompt = FormatPrompt(Prompt);
+
+		InferenceResult.PromptTokenCount = _llamaWeights.NativeHandle.Tokenize(formattedPrompt, true, false, System.Text.Encoding.UTF8).Count();
 
 		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
 		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", formattedPrompt);
@@ -543,6 +545,10 @@ public partial class LlamaModelInstance : BackgroundJob
 	public void _State_InferenceRunning_OnEnter()
 	{
 		LoggerManager.LogDebug("Entered InferenceRunning state");
+
+		this.Emit<LlamaInferenceStart>((o) => {
+			o.SetInstanceId(_instanceId);
+			});
 
 		// run the thread, which will call InferenceRunning_OnUpdate state
 		Run();

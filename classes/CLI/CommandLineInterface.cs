@@ -20,12 +20,16 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
+using System.Text.RegularExpressions;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
 public partial class CommandLineInterface
 {
-	private string[] _args{ get; set; }
+	private string[] _args { get; set; }
+	private Dictionary <string, List<string>> _argsParsed { get; set; }
+	private Dictionary <string, string> _argAliases = new();
 
 	private Dictionary<string, Func<Task<int>>> _commands = new();
 
@@ -36,20 +40,41 @@ public partial class CommandLineInterface
 	public CommandLineInterface(string[] args)
 	{
 		_args = args;
+		_argsParsed = ParseArgs();
 
-    	LoggerManager.LogDebug("CLI arguments", "", "args", args);
+    	LoggerManager.LogDebug("CLI arguments list", "", "args", _args);
+    	LoggerManager.LogDebug("CLI arguments parsed", "", "argsParsed", _argsParsed);
 
     	// add commands
     	_commands.Add("help", CommandHelp);
     	_commands.Add("generate", CommandGenerate);
     	_commands.Add("models", CommandModels);
     	_commands.Add("api", CommandApi);
+
+    	// arg aliases
+    	_argAliases.Add("-m", "--model");
+    	_argAliases.Add("-p", "--prompt");
+    	_argAliases.Add("-c", "--chat");
+
+		SetLogLevel();
+	}
+
+	public void SetLogLevel()
+	{
+		if (_argsParsed.ContainsKey("--log-level"))
+		{
+			string logLevelString = _argsParsed["--log-level"][0];
+
+			Message.LogLevel logLevel = (Message.LogLevel) Enum.Parse(typeof(Message.LogLevel), logLevelString);
+
+			LoggerManager.SetLogLevel(logLevel);
+
+			LoggerManager.LogInfo("Log level set", "", "logLevel", logLevel.ToString());
+		}
 	}
 
 	public async Task<int> Run()
 	{
-		string commandMatch = "";
-
 		if (_args.Count() >= 1)
 		{
 			// get the running command and remove from args
@@ -66,6 +91,89 @@ public partial class CommandLineInterface
 		return await CommandHelp();
 	}
 
+	public Dictionary<string, List<string>> ParseArgs()
+	{
+		Dictionary<string, List<string>> parsed = new();
+
+		// loop over args matching args with - or --
+		string currentCommand = "";
+		List<string> currentValues = new();
+
+		foreach (string argPart in _args)
+		{
+			// looking for - or --
+			if (IsCommandSwitch(argPart))
+			{
+				LoggerManager.LogDebug("Found command arg", "", "cmd", argPart);
+
+				currentCommand = argPart;
+				currentValues = new();
+
+				// set command from alias
+				if (_argAliases.ContainsKey(currentCommand))
+				{
+					currentCommand = _argAliases[argPart];
+				}
+			}
+			else
+			{
+				// if the command is empty, then consider this the main command
+				if (currentCommand == "")
+				{
+					currentCommand = argPart;
+				}
+				else
+				{
+					LoggerManager.LogDebug("Adding command value", "", "value", argPart);
+
+					currentValues.Add(argPart);
+				}
+			}
+
+			// add and reset current command state when we encounter a new
+			// command
+			if (currentCommand != "")
+			{
+				if (parsed.ContainsKey(currentCommand))
+				{
+				}
+				else
+				{
+					parsed.Add(currentCommand, currentValues);
+				}
+			}
+
+		}
+
+		LoggerManager.LogDebug("Parsed arguments", "", "argsParsed", parsed);
+
+		return parsed;
+	}
+
+	public bool IsCommandSwitch(string cmd)
+	{
+		return Regex.IsMatch(cmd, "-[a-zA-Z0-9]+");
+	}
+
+	public List<string> GetArgumentValues(string arg)
+	{
+		return _argsParsed.GetValueOrDefault(arg, new List<string>());
+	}
+
+	public string GetArgumentValue(string arg)
+	{
+		return GetArgumentValues(arg).SingleOrDefault("");
+	}
+
+	public bool GetArgumentSwitchValue(string arg)
+	{
+		return _argsParsed.ContainsKey(arg);
+	}
+
+	/**************
+	*  Commands  *
+	**************/
+
 	public async Task<int> CommandHelp()
 	{
 		Console.WriteLine("Help text (todo)");
@@ -75,9 +183,58 @@ public partial class CommandLineInterface
 
 	public async Task<int> CommandGenerate()
 	{
-		Console.WriteLine("Generate");
+		string modelId = GetArgumentValue("--model");
+		string prompt = GetArgumentValue("--prompt");
 
-		// TODO: parse commands and use them to call inference service
+		bool isChat = GetArgumentSwitchValue("--chat");
+
+		// check if model ID is valid
+		if (modelId == "")
+		{
+			Console.WriteLine($"Error: --model must be set to a model id");
+			return 1;
+		}
+		if (!_modelManager.ModelDefinitions.ContainsKey(modelId))
+		{
+			Console.WriteLine($"Error: no model exists with id '{modelId}'");
+			return 1;
+		}
+
+		LoggerManager.LogDebug("Starting generation", "", "modelId", modelId);
+
+		// return a single inference request when not in chat mode
+		if (!isChat)
+		{
+			// create a model instance
+			LlamaModelInstance instance = _inferenceService.CreateModelInstance(modelId, stateful:false);
+			string promptFull = instance.FormatPrompt(prompt);
+
+			// subscribe to token events as they are generated and print them
+			instance.SubscribeOwner<LlamaInferenceToken>((e) => {
+				Console.Write(e.Token);
+				});
+
+			// print the full prompt when inference starts
+			instance.SubscribeOwner<LlamaInferenceStart>(async (e) => {
+				await Task.Delay(1000); // HACK: wait for the stateless context to log
+				Console.WriteLine("");
+				Console.WriteLine(promptFull);
+				Console.WriteLine("");
+				});
+
+			// await for the inference result using the created instance ID
+			InferenceResult result = await _inferenceService.InferAsync(modelId, prompt, stateful:false, existingInstanceId:instance.InstanceId);
+
+			// print the final result
+			Console.WriteLine("");
+			Console.WriteLine("");
+			Console.WriteLine($"GenerationTime: {result.GenerationTime.TotalMilliseconds} ms");
+			Console.WriteLine($"PromptTokenCount: {result.PromptTokenCount}");
+			Console.WriteLine($"GeneratedTokenCount: {result.GenerationTokenCount}");
+			Console.WriteLine($"TotalTokenCount: {result.TotalTokenCount}");
+			Console.WriteLine($"TimeToFirstToken: {result.TimeToFirstToken.TotalMilliseconds} ms");
+			Console.WriteLine($"TokensPerSec: {result.TokensPerSec}");
+		}
 
 		return 0;
 	}

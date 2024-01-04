@@ -129,7 +129,7 @@ public partial class LlamaInferenceService : Service
 			AddModelInstance(modelInstance);
 		}
 		else {
-			LoggerManager.LogDebug("Using existing stateful instance", "", "instanceId", existingInstanceId);
+			LoggerManager.LogDebug("Using existing instance", "", "instanceId", existingInstanceId);
 
 			modelInstance = _modelInstances[existingInstanceId];
 		}

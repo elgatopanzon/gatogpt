@@ -15,9 +15,17 @@ using GodotEGP.Config;
 
 public partial class InferenceResult
 {
-	public int TokenCount { 
+	public int GenerationTokenCount { 
 		get {
 			return Tokens.Count;
+		}
+	}
+
+	public int PromptTokenCount { get; set; }
+
+	public int TotalTokenCount { 
+		get {
+			return GenerationTokenCount + PromptTokenCount;
 		}
 	}
 
@@ -37,7 +45,7 @@ public partial class InferenceResult
 
 	public double TokensPerSec {
 		get {
-			return TokenCount / GenerationTime.TotalSeconds;
+			return TotalTokenCount / GenerationTime.TotalSeconds;
 		}
 	}
 

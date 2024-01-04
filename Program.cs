@@ -31,6 +31,7 @@ class Program
 		SceneTree.Instance.Root.AddChild(GodotEGP);
 
 		var serviceWorker = new SceneTreeServiceWorker();
+		serviceWorker.StartAsync(new CancellationToken());
 
 		// init LLMConfigHandler
 		SceneTree.Instance.Root.AddChild(new LlamaConfigHandler());
