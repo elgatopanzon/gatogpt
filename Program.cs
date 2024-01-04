@@ -22,83 +22,68 @@ class Program
 {
 	public static GodotEGP.Main GodotEGP;
 
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
-		var builder = WebApplication.CreateBuilder(args);
-
-		// Add services to the container.
-		// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-		builder.Services.AddEndpointsApiExplorer();
-		builder.Services.AddSwaggerGen();
-
-		// background worker test
-		builder.Services.AddHostedService<SceneTreeServiceWorker>();
-
-		// force create the local user directory
-		OS.GetUserDataDir();
+		// var builder = WebApplication.CreateBuilder(args);
+        //
+		// // Add services to the container.
+		// // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+		// builder.Services.AddEndpointsApiExplorer();
+		// builder.Services.AddSwaggerGen();
+        //
+		// // background worker test
+		// builder.Services.AddHostedService<SceneTreeServiceWorker>();
+        //
+		// // force create the local user directory
+		// OS.GetUserDataDir();
+        //
+		// // init GodotEGP
+		// GodotEGP = new GodotEGP.Main();
+		// SceneTree.Instance.Root.AddChild(GodotEGP);
+        //
+		// var testnode = new TestNode();
+		// SceneTree.Instance.Root.AddChild(testnode);
+        //
+		// var app = builder.Build();
+        //
+		// // Configure the HTTP request pipeline.
+		// if (app.Environment.IsDevelopment())
+		// {
+    	// 	app.UseSwagger();
+    	// 	app.UseSwaggerUI();
+		// }
+        //
+		// app.UseHttpsRedirection();
+        //
+		// var summaries = new[]
+		// {
+    	// 	"Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+		// };
+        //
+		// app.MapGet("/weatherforecast", async () =>
+		// {
+    	// 	var forecast =  Enumerable.Range(1, 5).Select(index =>
+        // 		new WeatherForecast
+        // 		(
+        //     		DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+        //     		Random.Shared.Next(-20, 55),
+        //     		summaries[Random.Shared.Next(summaries.Length)]
+        // 		))
+        // 		.ToArray();
+		// 	var inferenceService = ServiceRegistry.Get<LlamaInferenceService>();
+		// 	
+		// 	var result = await inferenceService.InferAsync("testmodel", "Write 2 words about the weather");
+		// 	// LoggerManager.LogDebug("Inference result", "", "res", result);
+    	// 	return result;
+		// })
+		// .WithName("GetWeatherForecast")
+		// .WithOpenApi();
 
 		// init GodotEGP
 		GodotEGP = new GodotEGP.Main();
 		SceneTree.Instance.Root.AddChild(GodotEGP);
 
-		var testnode = new TestNode();
-		SceneTree.Instance.Root.AddChild(testnode);
-
-		// var timertest = new Timer();
-		// timertest.WaitTime = 5;
-		// timertest.Autostart = true;
-		// timertest.OneShot = false;
-		// SceneTree.Instance.Root.AddChild(timertest);
-		//
-
-		// var rnd = new NumberGenerator(123, 1);
-		// LoggerManager.LogDebug("Random int", "", "num", rnd.Randi());
-		// LoggerManager.LogDebug("Random int", "", "num", rnd.Randi());
-        //
-		// var state = rnd.State;
-        //
-		// LoggerManager.LogDebug("Random int", "", "num", rnd.Randi());
-		// LoggerManager.LogDebug("Random int", "", "num", rnd.Randi());
-        //
-		// rnd = new NumberGenerator(123, state);
-        //
-		// LoggerManager.LogDebug("Random int restored state", "", "num", rnd.Randi());
-		// LoggerManager.LogDebug("Random int restored state", "", "num", rnd.Randi());
-
-		var app = builder.Build();
-
-		// Configure the HTTP request pipeline.
-		if (app.Environment.IsDevelopment())
-		{
-    		app.UseSwagger();
-    		app.UseSwaggerUI();
-		}
-
-		app.UseHttpsRedirection();
-
-		var summaries = new[]
-		{
-    		"Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-		};
-
-		app.MapGet("/weatherforecast", async () =>
-		{
-    		var forecast =  Enumerable.Range(1, 5).Select(index =>
-        		new WeatherForecast
-        		(
-            		DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            		Random.Shared.Next(-20, 55),
-            		summaries[Random.Shared.Next(summaries.Length)]
-        		))
-        		.ToArray();
-			var inferenceService = ServiceRegistry.Get<LlamaInferenceService>();
-			
-			var result = await inferenceService.InferAsync("testmodel", "Write 2 words about the weather");
-			// LoggerManager.LogDebug("Inference result", "", "res", result);
-    		return result;
-		})
-		.WithName("GetWeatherForecast")
-		.WithOpenApi();
+		var serviceWorker = new SceneTreeServiceWorker();
 
 		// init LLMConfigHandler
 		SceneTree.Instance.Root.AddChild(new LlamaConfigHandler());
@@ -146,13 +131,14 @@ class Program
 			var res2 = inferenceService.InferWait("testmodel", "What's the time?");
 			LoggerManager.LogDebug("Waited for res2", "", "res2", res2.OutputStripped);
 
-			app.Run();
+			// app.Run();
 		}
 		else
 		{
 			LoggerManager.LogCritical("Required services never became ready");
 		}
 
+		await Task.Delay(-1);
     }
 }
 
