@@ -202,6 +202,9 @@ public partial class CommandLineInterface
 
 		LoggerManager.LogDebug("Starting generation", "", "modelId", modelId);
 
+		LoadParams loadParams = GetGenerationLoadParams();
+		InferenceParams inferenceParams = GetGenerationInferenceParams();
+
 		// return a single inference request when not in chat mode
 		if (!isChat)
 		{
@@ -222,11 +225,15 @@ public partial class CommandLineInterface
 				Console.WriteLine("");
 				});
 
+			// print empty line after inference finished
+			instance.SubscribeOwner<LlamaInferenceFinished>((e) => {
+				Console.Write("");
+				});
+
 			// await for the inference result using the created instance ID
-			InferenceResult result = await _inferenceService.InferAsync(modelId, prompt, stateful:false, existingInstanceId:instance.InstanceId);
+			InferenceResult result = await _inferenceService.InferAsync(modelId, prompt, stateful:false, existingInstanceId:instance.InstanceId, loadParams, inferenceParams);
 
 			// print the final result
-			Console.WriteLine("");
 			Console.WriteLine("");
 			Console.WriteLine($"GenerationTime: {result.GenerationTime.TotalMilliseconds} ms");
 			Console.WriteLine($"PromptTokenCount: {result.PromptTokenCount}");
@@ -237,6 +244,20 @@ public partial class CommandLineInterface
 		}
 
 		return 0;
+	}
+
+	public LoadParams GetGenerationLoadParams()
+	{
+		var loadParams = new LoadParams();
+
+		return loadParams;
+	}
+
+	public InferenceParams GetGenerationInferenceParams()
+	{
+		var inferenceParams = new InferenceParams();
+
+		return inferenceParams;
 	}
 
 	public async Task<int> CommandModels()

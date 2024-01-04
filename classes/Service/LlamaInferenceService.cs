@@ -38,14 +38,14 @@ public partial class LlamaInferenceService : Service
 	*  Inference methods  *
 	***********************/
 	
-	public LlamaModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	public LlamaModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
 	{
-		var modelInstance = QueueInferenceRequest(modelDefinitionId, prompt, stateful, existingInstanceId);	
+		var modelInstance = QueueInferenceRequest(modelDefinitionId, prompt, stateful, existingInstanceId, loadParams, inferenceParams);	
 
 		return modelInstance;
 	}
 
-	public InferenceResult InferWait(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	public InferenceResult InferWait(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
 	{
 		// skip the queue and create the instance
 		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
@@ -62,10 +62,10 @@ public partial class LlamaInferenceService : Service
 		return modelInstance.InferenceResult;
 	}
 
-	public async Task<InferenceResult> InferAsync(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	public async Task<InferenceResult> InferAsync(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
 	{
 		// call the normal infer which queues request
-		var modelInstance = Infer(modelDefinitionId, prompt, stateful, existingInstanceId);	
+		var modelInstance = Infer(modelDefinitionId, prompt, stateful, existingInstanceId, loadParams, inferenceParams);	
 
 		// wait for the model
 		while (!modelInstance.Finished)
@@ -81,13 +81,13 @@ public partial class LlamaInferenceService : Service
 	*  Inference queue methods  *
 	*****************************/
 
-	public LlamaModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	public LlamaModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
 	{
 		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
 
 		LoggerManager.LogDebug("Queuing inference request", "", "inferenceRequest", $"prompt:{prompt}, model:{modelDefinitionId}");
 
-		_inferenceQueue.Enqueue(new InferenceRequest(modelInstance, prompt));	
+		_inferenceQueue.Enqueue(new InferenceRequest(modelInstance, prompt, loadParams, inferenceParams));	
 
 		return modelInstance;
 	}
@@ -102,7 +102,7 @@ public partial class LlamaInferenceService : Service
 
 			LoggerManager.LogDebug("Running queued inference", "", "request", request);
 
-			request.ModelInstance.StartInference(request.Prompt);
+			request.ModelInstance.StartInference(request.Prompt, request.LoadParams, request.InferenceParams);
 		}
 	}
 
@@ -200,10 +200,14 @@ public partial class InferenceRequest
 {
 	public LlamaModelInstance ModelInstance { get; set; }
 	public string Prompt { get; set; }
+	public LLM.LoadParams LoadParams { get; set; }
+	public LLM.InferenceParams InferenceParams { get; set; }
 
-	public InferenceRequest(LlamaModelInstance modelInstance, string prompt) 
+	public InferenceRequest(LlamaModelInstance modelInstance, string prompt, LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null) 
 	{
 		ModelInstance = modelInstance;
 		Prompt = prompt;
+		LoadParams = loadParams;
+		InferenceParams = inferenceParams;
 	}
 }

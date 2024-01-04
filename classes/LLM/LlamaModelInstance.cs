@@ -67,6 +67,9 @@ public partial class LlamaModelInstance : BackgroundJob
 		set { _modelDefinition = value; }
 	}
 
+	public LLM.LoadParams LoadParams { get; set; }
+	public LLM.InferenceParams InferenceParams { get; set; }
+
 	// LLamaSharp specific properties
 	// holds the model params object in LLamaSharp format
 	private LLama.Common.ModelParams _modelParams;
@@ -203,16 +206,16 @@ public partial class LlamaModelInstance : BackgroundJob
 		// create model params object using path to model file
 		_modelParams = new LLama.Common.ModelParams(ModelDefinition.ModelResource.Definition.Path)
 		{
-			ContextSize = (uint) _modelDefinition.ModelProfile.LoadParams.NCtx,
-			MainGpu = _modelDefinition.ModelProfile.LoadParams.MainGpu,
-			GpuLayerCount = _modelDefinition.ModelProfile.LoadParams.NGpuLayers,
-			Seed = (uint) _modelDefinition.ModelProfile.LoadParams.Seed,
-			UseMemorymap = _modelDefinition.ModelProfile.LoadParams.UseMMap,
-			UseMemoryLock = _modelDefinition.ModelProfile.LoadParams.UseMlock,
-			BatchSize = (uint) _modelDefinition.ModelProfile.LoadParams.NBatch,
-			RopeFrequencyBase = (float) _modelDefinition.ModelProfile.LoadParams.RopeFreqBase,
-			RopeFrequencyScale = (float) _modelDefinition.ModelProfile.LoadParams.RopeFreqScale,
-			UseFp16Memory = _modelDefinition.ModelProfile.LoadParams.F16KV,
+			ContextSize = (uint) LoadParams.NCtx,
+			MainGpu = LoadParams.MainGpu,
+			GpuLayerCount = LoadParams.NGpuLayers,
+			Seed = (uint) LoadParams.Seed,
+			UseMemorymap = LoadParams.UseMMap,
+			UseMemoryLock = LoadParams.UseMlock,
+			BatchSize = (uint) LoadParams.NBatch,
+			RopeFrequencyBase = (float) LoadParams.RopeFreqBase,
+			RopeFrequencyScale = (float) LoadParams.RopeFreqScale,
+			UseFp16Memory = LoadParams.F16KV,
 		};
 
 		LoggerManager.LogDebug("Setup model params", "", "params", _modelParams);
@@ -224,14 +227,14 @@ public partial class LlamaModelInstance : BackgroundJob
 		_inferenceParams = new LLama.Common.InferenceParams()
 		{
 			// TODO: tokens keep from initial prompt
-			TokensKeep = _modelDefinition.ModelProfile.InferenceParams.KeepTokens,
-			MaxTokens = _modelDefinition.ModelProfile.InferenceParams.NPredict,
-			AntiPrompts = _modelDefinition.ModelProfile.InferenceParams.Antiprompts.Concat(new List<String>() { "" }).ToList(),
-			TopK = _modelDefinition.ModelProfile.InferenceParams.TopK,
-			TopP = (float) _modelDefinition.ModelProfile.InferenceParams.TopP,
-			MinP = (float) _modelDefinition.ModelProfile.InferenceParams.MinP,
-			Temperature = (float) _modelDefinition.ModelProfile.InferenceParams.Temp,
-			RepeatPenalty = (float) _modelDefinition.ModelProfile.InferenceParams.RepeatPenalty,
+			TokensKeep = InferenceParams.KeepTokens,
+			MaxTokens = InferenceParams.NPredict,
+			AntiPrompts = InferenceParams.Antiprompts.Concat(new List<String>() { "" }).ToList(),
+			TopK = InferenceParams.TopK,
+			TopP = (float) InferenceParams.TopP,
+			MinP = (float) InferenceParams.MinP,
+			Temperature = (float) InferenceParams.Temp,
+			RepeatPenalty = (float) InferenceParams.RepeatPenalty,
 		};
 	}
 
@@ -360,7 +363,7 @@ public partial class LlamaModelInstance : BackgroundJob
 	/*****************************
 	*  Model inference methods  *
 	*****************************/
-	public void StartInference(string promptText)
+	public void StartInference(string promptText, LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
 	{
 		Prompt = promptText;
 		_currentInferenceLine = "";
@@ -368,6 +371,23 @@ public partial class LlamaModelInstance : BackgroundJob
 		Running = true;
 
 		LoggerManager.LogDebug("Starting inference", "", "prompt", Prompt);
+
+		InferenceParams = ModelDefinition.ModelProfile.InferenceParams.DeepCopy();
+		LoadParams = ModelDefinition.ModelProfile.LoadParams.DeepCopy();
+
+		// if we parsed any inference params, merge them into the copy of the
+		// model profile's ones
+		if (loadParams != null)
+		{
+			LoggerManager.LogDebug("Load params before", "", "loadParams", LoadParams);
+			LoggerManager.LogDebug("Load params before from", "", "loadParams", loadParams);
+			LoadParams.MergeFrom(loadParams);
+			LoggerManager.LogDebug("Load params after", "", "loadParams", LoadParams);
+		}
+		if (inferenceParams != null)
+		{
+			InferenceParams.MergeFrom(inferenceParams);
+		}
 
 		LoadModel();
 	}
@@ -486,7 +506,6 @@ public partial class LlamaModelInstance : BackgroundJob
 	{
 		LoggerManager.LogDebug("Entered Setup state");
 
-		SetupLoadParams();
 		// if (_autorunOnLoad)
 		// {
 		// 	LoggerManager.LogDebug("Autorun on load enabled");
@@ -506,6 +525,8 @@ public partial class LlamaModelInstance : BackgroundJob
 	public async void _State_LoadModel_OnUpdate()
 	{
 		LoggerManager.LogDebug("Entered LoadModel update state");
+
+		SetupLoadParams();
 
 		// record current time before loading model
 		_modelLoadStartTime = DateTime.Now;
