@@ -34,6 +34,82 @@ public partial class LlamaInferenceService : Service
 		_modelManager = ServiceRegistry.Get<LlamaModelManager>();
 	}
 
+	/***********************
+	*  Inference methods  *
+	***********************/
+	
+	public LlamaModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	{
+		var modelInstance = QueueInferenceRequest(modelDefinitionId, prompt, stateful, existingInstanceId);	
+
+		return modelInstance;
+	}
+
+	public InferenceResult InferWait(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	{
+		// skip the queue and create the instance
+		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
+
+		// start the inference
+		modelInstance.StartInference(prompt);
+
+		// wait indefinitely until finished
+		while (!modelInstance.Finished)
+		{
+			System.Threading.Thread.Sleep(100);
+		}
+
+		return modelInstance.InferenceResult;
+	}
+
+	public async Task<InferenceResult> InferAsync(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	{
+		// call the normal infer which queues request
+		var modelInstance = Infer(modelDefinitionId, prompt, stateful, existingInstanceId);	
+
+		// wait for the model
+		while (!modelInstance.Finished)
+		{
+			// LoggerManager.LogDebug("Waiting for inference", "", "inferenceRequest", $"prompt:{prompt}, model:{modelDefinitionId}, instanceId:{modelInstance.InstanceId}, queueSize:{_inferenceQueue.Count}");
+			await Task.Delay(100);
+		}
+
+		return modelInstance.InferenceResult;
+	}
+
+	/*****************************
+	*  Inference queue methods  *
+	*****************************/
+
+	public LlamaModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
+	{
+		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
+
+		LoggerManager.LogDebug("Queuing inference request", "", "inferenceRequest", $"prompt:{prompt}, model:{modelDefinitionId}");
+
+		_inferenceQueue.Enqueue(new InferenceRequest(modelInstance, prompt));	
+
+		return modelInstance;
+	}
+
+	public override void _Process(double delta)
+	{
+		// if there's a queued request and there's no running instances, then
+		// dequeue a request and start inference
+		if (_inferenceQueue.TryPeek(out var request) && !IsRunningInstances())
+		{
+			_inferenceQueue.Dequeue();
+
+			LoggerManager.LogDebug("Running queued inference", "", "request", request);
+
+			request.ModelInstance.StartInference(request.Prompt);
+		}
+	}
+
+	/****************************
+	*  Model instance methods  *
+	****************************/
+	
 	public LlamaModelInstance CreateModelInstance(string modelDefinitionId, bool stateful = false, string existingInstanceId = "")
 	{
 		// check if the requested definition is valid
@@ -62,15 +138,6 @@ public partial class LlamaInferenceService : Service
 		return modelInstance;
 	}
 
-	public LlamaModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
-	{
-		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
-
-		// start the inference
-		modelInstance.StartInference(prompt);
-
-		return modelInstance;
-	}
 
 	public void AddModelInstance(LlamaModelInstance instance)
 	{
@@ -90,75 +157,6 @@ public partial class LlamaInferenceService : Service
 		}
 	}
 
-	public void DestroyExistingInstances()
-	{
-		LoggerManager.LogDebug("Destroying all instances");
-
-		foreach (var modelObj in _modelInstances)
-		{
-			modelObj.Value.DeleteInstanceState();
-		}
-	}
-
-	public InferenceResult InferWait(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
-	{
-		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
-
-		// start the inference
-		modelInstance.StartInference(prompt);
-
-		// wait indefinitely until finished
-		while (!modelInstance.Finished)
-		{
-			System.Threading.Thread.Sleep(100);
-		}
-
-		return modelInstance.InferenceResult;
-	}
-
-	/*****************************
-	*  Inference queue methods  *
-	*****************************/
-	
-	public async Task<InferenceResult> InferAsync(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
-	{
-		var modelInstance = QueueInferenceRequest(modelDefinitionId, prompt, stateful, existingInstanceId);	
-
-		// wait for the model
-		while (!modelInstance.Finished)
-		{
-			// LoggerManager.LogDebug("Waiting for inference", "", "inferenceRequest", $"prompt:{prompt}, model:{modelDefinitionId}, instanceId:{modelInstance.InstanceId}, queueSize:{_inferenceQueue.Count}");
-			await Task.Delay(100);
-		}
-
-		return modelInstance.InferenceResult;
-	}
-
-	public LlamaModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "")
-	{
-		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
-
-		LoggerManager.LogDebug("Queuing inference request", "", "inferenceRequest", $"prompt:{prompt}, model:{modelDefinitionId}");
-
-		_inferenceQueue.Enqueue(new InferenceRequest(modelInstance, prompt));	
-
-		return modelInstance;
-	}
-
-	public override void _Process(double delta)
-	{
-		// if there's a queued request and there's no running instances, then
-		// dequeue a request and start inference
-		if (_inferenceQueue.TryPeek(out var request) && !IsRunningInstances())
-		{
-			_inferenceQueue.Dequeue();
-
-			LoggerManager.LogDebug("Running queued inference", "", "request", request);
-
-			request.ModelInstance.StartInference(request.Prompt);
-		}
-	}
-
 	public bool IsRunningInstances()
 	{
 		foreach (var instance in _modelInstances)
@@ -170,6 +168,16 @@ public partial class LlamaInferenceService : Service
 		}
 
 		return false;
+	}
+
+	public void DestroyExistingInstances()
+	{
+		LoggerManager.LogDebug("Destroying all instances");
+
+		foreach (var modelObj in _modelInstances)
+		{
+			modelObj.Value.DeleteInstanceState();
+		}
 	}
 
 	/****************

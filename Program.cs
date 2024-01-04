@@ -144,7 +144,7 @@ class Program
 			LoggerManager.LogDebug("Waited for res1", "", "res1", res1.OutputStripped);
 
 			var res2 = inferenceService.InferWait("testmodel", "What's the time?");
-			LoggerManager.LogDebug("Waited for res2", "", "res1", res2.OutputStripped);
+			LoggerManager.LogDebug("Waited for res2", "", "res2", res2.OutputStripped);
 
 			app.Run();
 		}
