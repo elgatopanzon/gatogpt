@@ -112,30 +112,23 @@ class Program
 			// test LlamaInferenceService chaining instances
 			// test stateless infer chain, copying the generated output to the
 			// 2nd instance
-			var instance = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "Write a 3 paragraph story about fish", stateful:false);
+			var instance = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "Write 2 words about food", stateful:false);
 			instance.Subscribe<LlamaInferenceFinished>((e) => {
-				var instance = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", $"{e.Result.OutputStripped}\n\nWhat is a good title for it?", stateful:false);
+				var instance = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", $"{e.Result.OutputStripped}\n\nWrite 2 more?", stateful:false);
 
 				instance.Subscribe<LlamaInferenceFinished>((e) => {
+					ServiceRegistry.Get<LlamaInferenceService>().DestroyExistingInstances();
+
 					// test stateful infer chain, where the instance is the same and the
 					// model will keep it's context
-					var instance2 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "Write a 3 paragraph story about trees", stateful:true);
+					var instance2 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "Write a 3 paragraph story about birds", stateful:true);
 
 					instance2.Subscribe<LlamaInferenceFinished>((e) => {
-						// instance2.UnloadModel();
+						instance2 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "What is a good title for it?", stateful:true, instance2.InstanceId);
 
-						// instance2.SubscribeOwner<LlamaModelLoadFinished>((e) => {
-							instance2.StartInference($"What is a good title for it?");
-						// }, oneshot:true);
-						// instance2.SubscribeOwner<LlamaModelUnloadFinished>((e) => {
-						// 		LoggerManager.LogDebug("Model unloaded, proceed to infer");
-						// 	// var instance3 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", $"What is a good title for it?", stateful:true, instance2.InstanceId);
-						// 	// instance2.LoadModel();
-                        //
-						// 	instance2.SubscribeOwner<LlamaModelLoadFinished>((e) => {
-						// 		instance2.RunInference($"What is a good title for it?");
-						// 	}, oneshot:true);
-						// }, oneshot:true);
+							instance2.Subscribe<LlamaInferenceFinished>((e) => {
+								ServiceRegistry.Get<LlamaInferenceService>().DestroyExistingInstances();
+							}, oneshot:true);
 					}, oneshot:true);
 
 				}, oneshot:true);

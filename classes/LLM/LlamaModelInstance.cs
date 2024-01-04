@@ -256,6 +256,18 @@ public partial class LlamaModelInstance : BackgroundJob
 
 	public void LoadModel()
 	{
+		if (_llamaWeights != null)
+		{
+			_llamaWeights.Dispose();
+		}
+		_llamaWeights = null;
+		_executor = null;
+		_executorStateful = null;
+		_llamaContext = null;
+		_inferenceParams = null;
+
+		GC.Collect();
+
 		_state.Transition(LOAD_MODEL_STATE);
 	}
 
@@ -298,6 +310,35 @@ public partial class LlamaModelInstance : BackgroundJob
 		}
 
 		return true;
+	}
+
+	public void DeleteInstanceState()
+	{
+		if (File.Exists(_contextStatePath))
+		{
+			LoggerManager.LogDebug("Deleting context state file");
+			File.Delete(_contextStatePath);
+		}
+
+
+		if (File.Exists(_executorStatePath))
+		{
+			LoggerManager.LogDebug("Deleting executor state file");
+			File.Delete(_executorStatePath);
+		}
+
+		if (_llamaWeights != null)
+		{
+			_llamaWeights.Dispose();
+		}
+		_llamaWeights = null;
+		_modelParams = null;
+		_llamaContext = null;
+		_executor = null;
+		_executorStateful = null;
+		_inferenceParams = null;
+
+		GC.Collect();
 	}
 
 	/*****************************
@@ -516,6 +557,7 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		this.Emit<LlamaModelUnloadStart>((o) => o.SetInstanceId(_instanceId));
 
+		_llamaWeights.Dispose();
 		_llamaWeights = null;
 
 		if (!_stateful)
@@ -538,6 +580,8 @@ public partial class LlamaModelInstance : BackgroundJob
 	public void _State_InferenceFinished_OnEnter()
 	{
 		LoggerManager.LogDebug("Entered InferenceFinished state");
+
+		GC.Collect();
 		
 		this.Emit<LlamaInferenceFinished>((o) => {
 			o.SetInstanceId(_instanceId);
