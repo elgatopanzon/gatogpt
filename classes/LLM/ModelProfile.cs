@@ -206,6 +206,14 @@ public partial class InferenceParams : VObject
 		set { _n_threads.Value = value; }
 	}
 
+	internal readonly VValue<int> _keepTokens;
+
+	public int KeepTokens
+	{
+		get { return _keepTokens.Value; }
+		set { _keepTokens.Value = value; }
+	}
+
 	// number of tokens to generate
 	internal readonly VValue<int> _nPredict;
 
@@ -317,6 +325,10 @@ public partial class InferenceParams : VObject
 	    	.Default(0)
 		    .ChangeEventsEnabled();
 
+		_keepTokens = AddValidatedValue<int>(this)
+		    .Default(0)
+		    .ChangeEventsEnabled();
+
 		_nPredict = AddValidatedValue<int>(this)
 		    .Default(-1)
 		    .ChangeEventsEnabled();
@@ -364,8 +376,6 @@ public partial class InferenceParams : VObject
 		_prePromptSuffix = AddValidatedValue<string>(this)
 		    .Default("\n")
 		    .ChangeEventsEnabled();
-
-		Antiprompts.Add("");
 	}
 }
 

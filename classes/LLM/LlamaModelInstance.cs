@@ -209,6 +209,7 @@ public partial class LlamaModelInstance : BackgroundJob
 		_inferenceParams = new LLama.Common.InferenceParams()
 		{
 			// TODO: tokens keep from initial prompt
+			TokensKeep = _modelDefinition.ModelProfile.InferenceParams.KeepTokens,
 			MaxTokens = _modelDefinition.ModelProfile.InferenceParams.NPredict,
 			AntiPrompts = _modelDefinition.ModelProfile.InferenceParams.Antiprompts.Concat(new List<String>() { "" }).ToList(),
 			TopK = _modelDefinition.ModelProfile.InferenceParams.TopK,
