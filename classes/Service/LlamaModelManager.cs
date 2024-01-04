@@ -29,7 +29,20 @@ public partial class LlamaModelManager : Service
 	private LlamaModelPresetsConfig _presetsConfig = new LlamaModelPresetsConfig();
 	private LlamaModelDefinitionsConfig _definitionsConfig = new LlamaModelDefinitionsConfig();
 
+	public Dictionary<string, ModelDefinition> ModelDefinitions { 
+		get {
+			return _definitionsConfig.ModelDefinitions;
+		}
+	}
+
+
 	private Dictionary<string, Resource<LlamaModel>> _modelResources;
+
+	public Dictionary<string, Resource<LlamaModel>> ModelResources { 
+		get {
+			return _modelResources;
+		}
+	}
 
 	public LlamaModelManager()
 	{

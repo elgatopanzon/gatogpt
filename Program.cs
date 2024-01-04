@@ -2,6 +2,8 @@ namespace GatoGPT;
 
 using GodotEGPNonGame.ServiceWorkers;
 
+using GatoGPT.CLI;
+
 using GatoGPT.Service;
 using GatoGPT.Handler;
 using GatoGPT.Config;
@@ -22,8 +24,35 @@ class Program
 {
 	public static GodotEGP.Main GodotEGP;
 
-    static async Task Main(string[] args)
+    static async Task<int> Main(string[] args)
     {
+		// init GodotEGP
+		GodotEGP = new GodotEGP.Main();
+		SceneTree.Instance.Root.AddChild(GodotEGP);
+
+		var serviceWorker = new SceneTreeServiceWorker();
+
+		// init LLMConfigHandler
+		SceneTree.Instance.Root.AddChild(new LlamaConfigHandler());
+
+		// wait for services to be ready
+		if (!ServiceRegistry.WaitForServices(
+					typeof(ConfigManager), 
+					typeof(ResourceManager), 
+					typeof(ScriptService),
+					typeof(LlamaModelManager)
+					))
+			{
+			LoggerManager.LogCritical("Required services never became ready");
+
+			return 0;
+		}
+
+		LoggerManager.LogDebug("GodotEGP ready!");
+
+    	// CLI application
+    	var cli = new CommandLineInterface(args);
+
 		// var builder = WebApplication.CreateBuilder(args);
         //
 		// // Add services to the container.
@@ -79,66 +108,7 @@ class Program
 		// .WithName("GetWeatherForecast")
 		// .WithOpenApi();
 
-		// init GodotEGP
-		GodotEGP = new GodotEGP.Main();
-		SceneTree.Instance.Root.AddChild(GodotEGP);
-
-		var serviceWorker = new SceneTreeServiceWorker();
-
-		// init LLMConfigHandler
-		SceneTree.Instance.Root.AddChild(new LlamaConfigHandler());
-
-		// wait for services to be ready
-		if (ServiceRegistry.WaitForServices(
-					typeof(ConfigManager), 
-					typeof(ResourceManager), 
-					typeof(ScriptService),
-					typeof(LlamaModelManager)
-					))
-		{
-			LoggerManager.LogDebug("Required services ready");
-
-			// test LlamaInferenceService chaining instances
-			// test stateless infer chain, copying the generated output to the
-			// 2nd instance
-			// var instance = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "Write 2 words about food", stateful:false);
-			// instance.Subscribe<LlamaInferenceFinished>((e) => {
-			// 	var instance = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", $"{e.Result.OutputStripped}\n\nWrite 2 more?", stateful:false);
-            //
-			// 	instance.Subscribe<LlamaInferenceFinished>((e) => {
-			// 		ServiceRegistry.Get<LlamaInferenceService>().DestroyExistingInstances();
-            //
-			// 		// test stateful infer chain, where the instance is the same and the
-			// 		// model will keep it's context
-			// 		var instance2 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "Write a 3 paragraph story about birds", stateful:true);
-            //
-			// 		instance2.Subscribe<LlamaInferenceFinished>((e) => {
-			// 			instance2 = ServiceRegistry.Get<LlamaInferenceService>().Infer("testmodel", "What is a good title for it?", stateful:true, instance2.InstanceId);
-            //
-			// 				instance2.Subscribe<LlamaInferenceFinished>((e) => {
-			// 					ServiceRegistry.Get<LlamaInferenceService>().DestroyExistingInstances();
-			// 				}, oneshot:true);
-			// 		}, oneshot:true);
-            //
-			// 	}, oneshot:true);
-			// }, oneshot:true);
-
-			var inferenceService = ServiceRegistry.Get<LlamaInferenceService>();
-			
-			var res1 = inferenceService.InferWait("testmodel", "Write 2 works about cheese");
-			LoggerManager.LogDebug("Waited for res1", "", "res1", res1.OutputStripped);
-
-			var res2 = inferenceService.InferWait("testmodel", "What's the time?");
-			LoggerManager.LogDebug("Waited for res2", "", "res2", res2.OutputStripped);
-
-			// app.Run();
-		}
-		else
-		{
-			LoggerManager.LogCritical("Required services never became ready");
-		}
-
-		await Task.Delay(-1);
+		return await cli.Run();
     }
 }
 
