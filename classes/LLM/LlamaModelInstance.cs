@@ -216,6 +216,7 @@ public partial class LlamaModelInstance : BackgroundJob
 			RopeFrequencyBase = (float) LoadParams.RopeFreqBase,
 			RopeFrequencyScale = (float) LoadParams.RopeFreqScale,
 			UseFp16Memory = LoadParams.F16KV,
+			Threads = (uint) InferenceParams.NThreads,
 		};
 
 		LoggerManager.LogDebug("Setup model params", "", "params", _modelParams);
@@ -401,12 +402,12 @@ public partial class LlamaModelInstance : BackgroundJob
 	
 	public string FormatPrompt(string userPrompt)
 	{
-		var prePromptP = _modelDefinition.ModelProfile.InferenceParams.PrePromptPrefix;
-		var prePromptS = _modelDefinition.ModelProfile.InferenceParams.PrePromptSuffix;
-		var prePrompt = _modelDefinition.ModelProfile.InferenceParams.PrePrompt;
+		var prePromptP = InferenceParams.PrePromptPrefix;
+		var prePromptS = InferenceParams.PrePromptSuffix;
+		var prePrompt = InferenceParams.PrePrompt;
 
-		var InputP = _modelDefinition.ModelProfile.InferenceParams.InputPrefix;
-		var InputS = _modelDefinition.ModelProfile.InferenceParams.InputSuffix;
+		var InputP = InferenceParams.InputPrefix;
+		var InputS = InferenceParams.InputSuffix;
 
 		return $"{prePromptP}{prePrompt}{prePromptS}{InputP}{userPrompt}{InputS}";
 	}

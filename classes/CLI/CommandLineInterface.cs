@@ -155,14 +155,19 @@ public partial class CommandLineInterface
 		return Regex.IsMatch(cmd, "-[a-zA-Z0-9]+");
 	}
 
+	public bool ArgExists(string arg)
+	{
+		return (_argsParsed.ContainsKey(arg));
+	}
+
 	public List<string> GetArgumentValues(string arg)
 	{
 		return _argsParsed.GetValueOrDefault(arg, new List<string>());
 	}
 
-	public string GetArgumentValue(string arg)
+	public string GetArgumentValue(string arg, string defaultVal = "")
 	{
-		return GetArgumentValues(arg).SingleOrDefault("");
+		return GetArgumentValues(arg).SingleOrDefault(defaultVal);
 	}
 
 	public bool GetArgumentSwitchValue(string arg)
@@ -210,7 +215,6 @@ public partial class CommandLineInterface
 		{
 			// create a model instance
 			LlamaModelInstance instance = _inferenceService.CreateModelInstance(modelId, stateful:false);
-			string promptFull = instance.FormatPrompt(prompt);
 
 			// subscribe to token events as they are generated and print them
 			instance.SubscribeOwner<LlamaInferenceToken>((e) => {
@@ -220,6 +224,8 @@ public partial class CommandLineInterface
 			// print the full prompt when inference starts
 			instance.SubscribeOwner<LlamaInferenceStart>(async (e) => {
 				await Task.Delay(1000); // HACK: wait for the stateless context to log
+
+				string promptFull = instance.FormatPrompt(prompt);
 				Console.WriteLine("");
 				Console.WriteLine(promptFull);
 				Console.WriteLine("");
@@ -250,12 +256,82 @@ public partial class CommandLineInterface
 	{
 		var loadParams = new LoadParams();
 
+		if (ArgExists("--n-ctx"))
+			loadParams.NCtx = Convert.ToInt32(GetArgumentValue("--n-ctx", loadParams.NCtx.ToString()));
+		if (ArgExists("--n-batch"))
+			loadParams.NBatch = Convert.ToInt32(GetArgumentValue("--n-batch", loadParams.NBatch.ToString()));
+		if (ArgExists("--rope-freq-base"))
+			loadParams.RopeFreqBase = Convert.ToDouble(GetArgumentValue("--rope-freq-base", loadParams.RopeFreqBase.ToString()));
+		if (ArgExists("--rope-freq-scale"))
+			loadParams.RopeFreqScale = Convert.ToDouble(GetArgumentValue("--rope-freq-scale", loadParams.RopeFreqScale.ToString()));
+		if (ArgExists("--n-gpu-layers"))
+			loadParams.NGpuLayers = Convert.ToInt32(GetArgumentValue("--n-gpu-layers", loadParams.NGpuLayers.ToString()));
+		if (ArgExists("--main-gpu"))
+			loadParams.MainGpu = Convert.ToInt32(GetArgumentValue("--main-gpu", loadParams.MainGpu.ToString()));
+		if (ArgExists("--seed"))
+			loadParams.Seed = Convert.ToInt32(GetArgumentValue("--seed", loadParams.Seed.ToString()));
+
+		if (GetArgumentSwitchValue("--use-mlock"))
+		{
+			loadParams.UseMlock = true;
+		}
+		if (GetArgumentSwitchValue("--no-mlock"))
+		{
+			loadParams.UseMlock = false;
+		}
+		if (GetArgumentSwitchValue("--use-mmap"))
+		{
+			loadParams.UseMMap = true;
+		}
+		if (GetArgumentSwitchValue("--no-mmap"))
+		{
+			loadParams.UseMMap = false;
+		}
+		if (GetArgumentSwitchValue("--f16kv"))
+		{
+			loadParams.F16KV = true;
+		}
+		if (GetArgumentSwitchValue("--no-f16kv"))
+		{
+			loadParams.F16KV = false;
+		}
+
 		return loadParams;
 	}
 
 	public InferenceParams GetGenerationInferenceParams()
 	{
 		var inferenceParams = new InferenceParams();
+
+		if (ArgExists("--n-threads"))
+			inferenceParams.NThreads = Convert.ToInt32(GetArgumentValue("--n-threads", inferenceParams.NThreads.ToString()));
+		if (ArgExists("--keep"))
+			inferenceParams.KeepTokens = Convert.ToInt32(GetArgumentValue("--keep", inferenceParams.KeepTokens.ToString()));
+		if (ArgExists("--n-predict"))
+			inferenceParams.NPredict = Convert.ToInt32(GetArgumentValue("--n-predict", inferenceParams.NPredict.ToString()));
+		if (ArgExists("--top-k"))
+			inferenceParams.TopK = Convert.ToInt32(GetArgumentValue("--top-k", inferenceParams.TopK.ToString()));
+		if (ArgExists("--min-p"))
+			inferenceParams.MinP = Convert.ToDouble(GetArgumentValue("--min-p", inferenceParams.MinP.ToString()));
+		if (ArgExists("--top-p"))
+			inferenceParams.TopP = Convert.ToDouble(GetArgumentValue("--top-p", inferenceParams.TopP.ToString()));
+		if (ArgExists("--temperature"))
+			inferenceParams.Temp = Convert.ToDouble(GetArgumentValue("--temperature", inferenceParams.Temp.ToString()));
+		if (ArgExists("--repeat-penalty"))
+			inferenceParams.RepeatPenalty = Convert.ToDouble(GetArgumentValue("--repeat-penalty", inferenceParams.RepeatPenalty.ToString()));
+		if (ArgExists("--antiprompts"))
+			inferenceParams.Antiprompts = inferenceParams.Antiprompts.Concat(GetArgumentValues("--antiprompts")).ToList();
+
+		if (ArgExists("--input-prefix"))
+			inferenceParams.InputPrefix = GetArgumentValue("--input-prefix", inferenceParams.InputPrefix);
+		if (ArgExists("--input-suffix"))
+			inferenceParams.InputSuffix = GetArgumentValue("--input-suffix", inferenceParams.InputSuffix);
+		if (ArgExists("--pre-prompt"))
+			inferenceParams.PrePrompt = GetArgumentValue("--pre-prompt", inferenceParams.PrePrompt);
+		if (ArgExists("--pre-prompt-prefix"))
+			inferenceParams.PrePromptPrefix = GetArgumentValue("--pre-prompt-prefix", inferenceParams.PrePromptPrefix);
+		if (ArgExists("--pre-prompt-suffix"))
+			inferenceParams.PrePromptSuffix = GetArgumentValue("--pre-prompt-suffix", inferenceParams.PrePromptSuffix);
 
 		return inferenceParams;
 	}
