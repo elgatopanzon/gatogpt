@@ -86,6 +86,7 @@ public partial class LlamaModelInstance : BackgroundJob
 	private InstructExecutor _executorStateful;
 	private StatelessExecutor _executor;
 	private bool _stateful = false;
+	private bool _isFirstRun = true;
 
 	// current text prompt used for inference
 	public string Prompt;
@@ -412,6 +413,27 @@ public partial class LlamaModelInstance : BackgroundJob
 		return $"{prePromptP}{prePrompt}{prePromptS}{InputP}{userPrompt}{InputS}";
 	}
 
+	public string GetCurrentPrompt()
+	{
+		string currentPrompt = Prompt;
+
+		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
+
+		if ((_isFirstRun && _stateful) || !_stateful)
+		{
+			currentPrompt = FormatPrompt(Prompt);
+
+			LoggerManager.LogDebug("Full prompt", "", "fullPrompt", currentPrompt);
+		}
+
+		return currentPrompt;
+	}
+
+	public bool IsFirstRun()
+	{
+		return _isFirstRun;
+	}
+
 	public bool ProcessInference(string text)
 	{
     	if (InferenceResult.GenerationTokenCount == 0)
@@ -467,17 +489,17 @@ public partial class LlamaModelInstance : BackgroundJob
 		InferenceResult = new InferenceResult();
 
 		// format the input prompt
-		string formattedPrompt = FormatPrompt(Prompt);
-
-		InferenceResult.PromptTokenCount = _llamaWeights.NativeHandle.Tokenize(formattedPrompt, true, false, System.Text.Encoding.UTF8).Count();
+		string fullPrompt = GetCurrentPrompt();
 
 		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
-		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", formattedPrompt);
+		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);
+
+		InferenceResult.PromptTokenCount = _llamaWeights.NativeHandle.Tokenize(fullPrompt, true, false, System.Text.Encoding.UTF8).Count();
 
 		// start the inference loop
 		if (_stateful)
 		{
-			await foreach (var text in _executorStateful.InferAsync(formattedPrompt, _inferenceParams))
+			await foreach (var text in _executorStateful.InferAsync(fullPrompt, _inferenceParams))
     		{
     			if (ProcessInference(text))
     			{
@@ -487,7 +509,7 @@ public partial class LlamaModelInstance : BackgroundJob
 		}
 		else
 		{
-			await foreach (var text in _executor.InferAsync(formattedPrompt, _inferenceParams))
+			await foreach (var text in _executor.InferAsync(fullPrompt, _inferenceParams))
     		{
     			if (ProcessInference(text))
     			{
@@ -631,6 +653,7 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		InferenceResult.Finished = true;
 		Running = false;
+		_isFirstRun = false;
 		
 		this.Emit<LlamaInferenceFinished>((o) => {
 			o.SetInstanceId(_instanceId);

@@ -210,43 +210,70 @@ public partial class CommandLineInterface
 		LoadParams loadParams = GetGenerationLoadParams();
 		InferenceParams inferenceParams = GetGenerationInferenceParams();
 
-		// return a single inference request when not in chat mode
+		LlamaModelInstance instance;
+		bool isStateful = false;
+
 		if (!isChat)
 		{
-			// create a model instance
-			LlamaModelInstance instance = _inferenceService.CreateModelInstance(modelId, stateful:false);
+			instance = _inferenceService.CreateModelInstance(modelId, stateful:false);
+		}
+		else
+		{
+			instance = _inferenceService.CreateModelInstance(modelId, stateful:true);
+			isStateful = true;
+		}
 
-			// subscribe to token events as they are generated and print them
-			instance.SubscribeOwner<LlamaInferenceToken>((e) => {
-				Console.Write(e.Token);
-				});
+		// subscribe to token events as they are generated and print them
+		instance.SubscribeOwner<LlamaInferenceToken>((e) => {
+			Console.Write(e.Token);
+			});
 
-			// print the full prompt when inference starts
-			instance.SubscribeOwner<LlamaInferenceStart>(async (e) => {
-				await Task.Delay(1000); // HACK: wait for the stateless context to log
+		// print the full prompt when inference starts
+		instance.SubscribeOwner<LlamaInferenceStart>(async (e) => {
+			await Task.Delay(1000); // HACK: wait for the stateless context to log
 
-				string promptFull = instance.FormatPrompt(prompt);
+			if (instance.IsFirstRun())
+			{
+				string promptFull = instance.GetCurrentPrompt();
 				Console.WriteLine("");
 				Console.WriteLine(promptFull);
 				Console.WriteLine("");
-				});
+			}
+			});
 
-			// print empty line after inference finished
-			instance.SubscribeOwner<LlamaInferenceFinished>((e) => {
-				Console.Write("");
-				});
+		// print empty line after inference finished
+		instance.SubscribeOwner<LlamaInferenceFinished>((e) => {
+			Console.Write("");
+			});
 
+		while(true)
+		{
 			// await for the inference result using the created instance ID
-			InferenceResult result = await _inferenceService.InferAsync(modelId, prompt, stateful:false, existingInstanceId:instance.InstanceId, loadParams, inferenceParams);
+			InferenceResult result = await _inferenceService.InferAsync(modelId, prompt, isStateful, existingInstanceId:instance.InstanceId, loadParams, inferenceParams);
 
-			// print the final result
-			Console.WriteLine("");
-			Console.WriteLine($"GenerationTime: {result.GenerationTime.TotalMilliseconds} ms");
-			Console.WriteLine($"PromptTokenCount: {result.PromptTokenCount}");
-			Console.WriteLine($"GeneratedTokenCount: {result.GenerationTokenCount}");
-			Console.WriteLine($"TotalTokenCount: {result.TotalTokenCount}");
-			Console.WriteLine($"TimeToFirstToken: {result.TimeToFirstToken.TotalMilliseconds} ms");
-			Console.WriteLine($"TokensPerSec: {result.TokensPerSec}");
+			// print the final result when not in chat mode
+			if (!isChat)
+			{
+				Console.WriteLine("");
+				Console.WriteLine($"GenerationTime: {result.GenerationTime.TotalMilliseconds} ms");
+				Console.WriteLine($"PromptTokenCount: {result.PromptTokenCount}");
+				Console.WriteLine($"GeneratedTokenCount: {result.GenerationTokenCount}");
+				Console.WriteLine($"TotalTokenCount: {result.TotalTokenCount}");
+				Console.WriteLine($"TimeToFirstToken: {result.TimeToFirstToken.TotalMilliseconds} ms");
+				Console.WriteLine($"TokensPerSec: {result.TokensPerSec}");
+
+				break;
+			}
+			else
+			{
+				Console.WriteLine("");
+				Console.Write("> ");
+				prompt = Console.ReadLine();
+				if (prompt == null)
+				{
+					prompt = "";
+				}
+			}
 		}
 
 		return 0;

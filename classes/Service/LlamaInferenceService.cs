@@ -132,6 +132,7 @@ public partial class LlamaInferenceService : Service
 			LoggerManager.LogDebug("Using existing instance", "", "instanceId", existingInstanceId);
 
 			modelInstance = _modelInstances[existingInstanceId];
+			modelInstance.InferenceResult = null;
 		}
 
 		// return the instance for external management
