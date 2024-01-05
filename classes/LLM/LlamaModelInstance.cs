@@ -231,13 +231,17 @@ public partial class LlamaModelInstance : BackgroundJob
 			// TODO: tokens keep from initial prompt
 			TokensKeep = InferenceParams.KeepTokens,
 			MaxTokens = InferenceParams.NPredict,
-			AntiPrompts = InferenceParams.Antiprompts.Concat(new List<String>() { "" }).ToList(),
+			AntiPrompts = InferenceParams.Antiprompts,
 			TopK = InferenceParams.TopK,
 			TopP = (float) InferenceParams.TopP,
 			MinP = (float) InferenceParams.MinP,
 			Temperature = (float) InferenceParams.Temp,
 			RepeatPenalty = (float) InferenceParams.RepeatPenalty,
+			FrequencyPenalty = (float) InferenceParams.FrequencyPenalty,
+			PresencePenalty = (float) InferenceParams.PresencePenalty,
 		};
+
+		LoggerManager.LogDebug("Setup inference params", "", "params", _inferenceParams);
 	}
 
 	public void LoadModelWeights()
@@ -374,6 +378,7 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		LoggerManager.LogDebug("Starting inference", "", "prompt", Prompt);
 
+
 		InferenceParams = ModelDefinition.ModelProfile.InferenceParams.DeepCopy();
 		LoadParams = ModelDefinition.ModelProfile.LoadParams.DeepCopy();
 
@@ -485,6 +490,7 @@ public partial class LlamaModelInstance : BackgroundJob
 
 	public async Task<bool> ExecuteInference()
 	{
+
 		// set the inference start time
 		InferenceResult = new InferenceResult();
 
@@ -495,6 +501,8 @@ public partial class LlamaModelInstance : BackgroundJob
 		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);
 
 		InferenceResult.PromptTokenCount = _llamaWeights.NativeHandle.Tokenize(fullPrompt, true, false, System.Text.Encoding.UTF8).Count();
+
+		SetupInferenceParams();
 
 		// start the inference loop
 		if (_stateful)

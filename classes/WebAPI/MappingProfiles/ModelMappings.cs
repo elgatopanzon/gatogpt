@@ -25,5 +25,6 @@ public class ModelMappings : Profile
     public ModelMappings()
     {
         CreateMap<ModelEntity, ModelDto>().ReverseMap();
+        CreateMap<ModelEntity, ModelFullDto>().ReverseMap();
     }
 }

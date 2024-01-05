@@ -29,7 +29,7 @@ public partial class InferenceResult
 		}
 	}
 
-	public List<string> Tokens { get; set; }
+	internal List<string> Tokens { get; set; }
 
 	public TimeSpan TimeToFirstToken {
 		get {
@@ -70,7 +70,7 @@ public partial class InferenceResult
 		}
 	}
 
-	public bool Finished { get; set; }
+	internal bool Finished { get; set; }
 
 	public InferenceResult()
 	{

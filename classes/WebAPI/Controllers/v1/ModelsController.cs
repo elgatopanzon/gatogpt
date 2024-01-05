@@ -56,20 +56,18 @@ public partial class ModelsController : ControllerBase
     }
 
     [HttpGet("{model}", Name = nameof(GetModel))]
-    public ActionResult<ModelDto> GetModel(ApiVersion version, string model)
+    public ActionResult<ModelFullDto> GetModel(ApiVersion version, string model)
     {
     	if (_modelManager.ModelDefinitions.ContainsKey(model))
     	{
-    		ModelDto modelDto = GetModelEntities().Where(x => x.Id == model).Select(x => _mapper.Map<ModelDto>(x)).FirstOrDefault();
+    		ModelFullDto modelDto = GetModelEntities().Where(x => x.Id == model).Select(x => _mapper.Map<ModelFullDto>(x)).FirstOrDefault();
+
+    		modelDto.Definition = _modelManager.GetModelDefinition(model);
 
         	return Ok(modelDto);
     	}
 
-    	return NotFound(new InvalidRequestErrorDto() {
-			Message = $"The model '{model}' does not exist",
-			Code = "model_not_found",
-			Param = "model",
-    	});
+    	return NotFound(new InvalidRequestErrorDto(message:$"The model '{model}' does not exist", code:"model_not_found", param:"model"));
     }
 
 	[ApiExplorerSettings(IgnoreApi = true)]

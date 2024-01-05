@@ -86,6 +86,8 @@ public partial class CommandLineInterface
 		_commandArgs["generate"].Add(("--min-p", "N", "Value for MinP", false));
 		_commandArgs["generate"].Add(("--top-p", "N", "Value for TopP", false));
 		_commandArgs["generate"].Add(("--temperature", "N", "Controls amount of randomisation", false));
+		_commandArgs["generate"].Add(("--frequency-penalty", "N", "Penalise for repeating frequent tokens", false));
+		_commandArgs["generate"].Add(("--presence-penalty", "N", "Penalise for repeating existing tokens", false));
 		_commandArgs["generate"].Add(("--repeat-penalty", "N", "Penalise for repeating tokens", false));
 		_commandArgs["generate"].Add(("--antiprompts", "[string1] [string2...]", "List of strings to stop generation", false));
 		_commandArgs["generate"].Add(("--input-prefix", "PREFIX", "Prefix to apply to prompt", false));
@@ -398,6 +400,10 @@ public partial class CommandLineInterface
 			inferenceParams.TopP = Convert.ToDouble(GetArgumentValue("--top-p", inferenceParams.TopP.ToString()));
 		if (ArgExists("--temperature"))
 			inferenceParams.Temp = Convert.ToDouble(GetArgumentValue("--temperature", inferenceParams.Temp.ToString()));
+		if (ArgExists("--frequency-penalty"))
+			inferenceParams.FrequencyPenalty = Convert.ToDouble(GetArgumentValue("--frequency-penalty", inferenceParams.RepeatPenalty.ToString()));
+		if (ArgExists("--presence-penalty"))
+			inferenceParams.PresencePenalty = Convert.ToDouble(GetArgumentValue("--presence-penalty", inferenceParams.RepeatPenalty.ToString()));
 		if (ArgExists("--repeat-penalty"))
 			inferenceParams.RepeatPenalty = Convert.ToDouble(GetArgumentValue("--repeat-penalty", inferenceParams.RepeatPenalty.ToString()));
 		if (ArgExists("--antiprompts"))

@@ -6,6 +6,8 @@
 
 namespace GatoGPT.WebAPI.Dtos;
 
+using GatoGPT.LLM;
+
 using Godot;
 using GodotEGP.Objects.Extensions;
 using GodotEGP.Logging;
@@ -25,6 +27,11 @@ public partial class ModelDto : BaseDto
 		Object = "model";
 		OwnedBy = "local";
 	}
+}
+
+public partial class ModelFullDto : ModelDto
+{
+	public ModelDefinition Definition { get; set; }
 }
 
 public partial class ModelListDto : ListBaseDto<ModelDto>

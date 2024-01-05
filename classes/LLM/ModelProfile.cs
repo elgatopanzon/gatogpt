@@ -267,6 +267,24 @@ public partial class InferenceParams : VObject
 		set { _repeatPenalty.Value = value; }
 	}
 
+	// penalty for frequency
+	internal readonly VValue<double> _frequencyPenalty;
+
+	public double FrequencyPenalty
+	{
+		get { return _frequencyPenalty.Value; }
+		set { _frequencyPenalty.Value = value; }
+	}
+
+	// penalty for presence
+	internal readonly VValue<double> _presencePenalty;
+
+	public double PresencePenalty
+	{
+		get { return _presencePenalty.Value; }
+		set { _presencePenalty.Value = value; }
+	}
+
 	// prompt and input related config
 	internal readonly VValue<List<string>> _antiprompts;
 
@@ -351,6 +369,14 @@ public partial class InferenceParams : VObject
 
 		_repeatPenalty = AddValidatedValue<double>(this)
 		    .Default(1.1)
+		    .ChangeEventsEnabled();
+
+		_frequencyPenalty = AddValidatedValue<double>(this)
+		    .Default(0)
+		    .ChangeEventsEnabled();
+
+		_presencePenalty = AddValidatedValue<double>(this)
+		    .Default(0)
 		    .ChangeEventsEnabled();
 
 		_antiprompts = AddValidatedValue<List<string>>(this)
