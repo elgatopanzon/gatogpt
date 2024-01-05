@@ -1,12 +1,10 @@
 /**
  * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
- * @file        : CompletionChoiceDto
- * @created     : Friday Jan 05, 2024 00:18:23 CST
+ * @file        : ChatCompletionCreateResponseFormatDto
+ * @created     : Friday Jan 05, 2024 13:08:30 CST
  */
 
 namespace GatoGPT.WebAPI.Dtos;
-
-using GatoGPT.LLM;
 
 using Godot;
 using GodotEGP.Objects.Extensions;
@@ -15,8 +13,13 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class CompletionChoiceDto : CompletionChoiceBaseDto
+public partial class ChatCompletionCreateResponseFormatDto
 {
-	public string Text { get; set; }
+	public string Type { get; set; }
+
+	public ChatCompletionCreateResponseFormatDto()
+	{
+		Type = "text";
+	}
 }
 

@@ -1,12 +1,10 @@
 /**
  * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
- * @file        : CompletionChoiceDto
- * @created     : Friday Jan 05, 2024 00:18:23 CST
+ * @file        : ChatCompletionDto
+ * @created     : Friday Jan 05, 2024 12:51:26 CST
  */
 
 namespace GatoGPT.WebAPI.Dtos;
-
-using GatoGPT.LLM;
 
 using Godot;
 using GodotEGP.Objects.Extensions;
@@ -15,8 +13,10 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class CompletionChoiceDto : CompletionChoiceBaseDto
+public partial class ChatCompletionDto : CompletionBaseDto<ChatCompletionChoiceDto>
 {
-	public string Text { get; set; }
+	public ChatCompletionDto()
+	{
+		Object = "chat.completion";
+	}
 }
-

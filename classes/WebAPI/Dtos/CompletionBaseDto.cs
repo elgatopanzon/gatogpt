@@ -1,7 +1,7 @@
 /**
  * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
- * @file        : CompletionDto
- * @created     : Friday Jan 05, 2024 00:14:54 CST
+ * @file        : CompletionBaseDto
+ * @created     : Friday Jan 05, 2024 12:54:07 CST
  */
 
 namespace GatoGPT.WebAPI.Dtos;
@@ -13,18 +13,19 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class CompletionDto : CompletionBaseDto<CompletionChoiceDto>
+public partial class CompletionBaseDto<TChoiceDto> : BaseDto
 {
 	public string Id { get; set; }
-	public List<CompletionChoiceDto> Choices { get; set; }
+	public List<TChoiceDto> Choices { get; set; }
 	public long Created { get; set; }
 	public string Model { get; set; }
 	public string SystemFingerprint { get; set; }
 	public CompletionUsageDto Usage { get; set; }
 
-	public CompletionDto()
+	public CompletionBaseDto()
 	{
-		Object = "text_completion";
+		Choices = new();
+		Usage = new();
 	}
 }
 
