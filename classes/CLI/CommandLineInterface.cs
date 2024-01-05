@@ -329,6 +329,12 @@ public partial class CommandLineInterface
 				{
 					prompt = "";
 				}
+
+				if (prompt == "quit")
+				{
+					_inferenceService.DestroyExistingInstances();
+					break;
+				}
 			}
 		}
 

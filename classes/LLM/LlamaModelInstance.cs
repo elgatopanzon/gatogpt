@@ -202,7 +202,7 @@ public partial class LlamaModelInstance : BackgroundJob
 		}
 
 		// move existing state if id changed
-		if (InstanceStateExists() && _instanceId != id)
+		if (_instanceId != null && InstanceStateExists() && _instanceId != id)
 		{
 			LoggerManager.LogDebug("Moving instance state", "", "move", $"from:{_instanceId}, to:{id}");
 
@@ -370,6 +370,10 @@ public partial class LlamaModelInstance : BackgroundJob
 
 			LoggerManager.LogDebug("Deleting executor state file");
 			File.Delete(_executorStatePath);
+
+			// delete base path
+			Directory.Delete(_contextStatePath.Replace("/"+_contextStatePath.GetFile(), ""));
+			// Directory.Delete(_executorStatePath.Replace("/"+_executorStatePath.GetFile(), ""));
 		}
 
 		if (_llamaWeights != null)
