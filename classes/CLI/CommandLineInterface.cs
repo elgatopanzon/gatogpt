@@ -467,7 +467,19 @@ public partial class CommandLineInterface
 
 	public async Task<int> CommandApi()
 	{
-		Console.WriteLine("Api");
+		LoggerManager.LogDebug("Starting web API");
+		Console.WriteLine("Starting API server");
+
+		string host = GetArgumentValue("--host", "");
+		int port = Convert.ToInt32(GetArgumentValue("--port", "0"));
+
+		if ((host.Length > 0 && port == 0) || (host.Length == 0 && port > 0))
+		{
+			Console.WriteLine("Error: Both --host and --port must be used together");
+			return 1;
+		}
+
+		var webApi = new WebAPI.Application(_args, host, port);
 
 		return 0;
 	}

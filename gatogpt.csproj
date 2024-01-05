@@ -12,6 +12,9 @@
     <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.8.1" />
     <PackageReference Include="LLamaSharp.Backend.Cuda11" Version="0.8.1" />
     <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.8.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
