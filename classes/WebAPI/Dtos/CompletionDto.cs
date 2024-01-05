@@ -15,13 +15,6 @@ using GodotEGP.Config;
 
 public partial class CompletionDto : CompletionBaseDto<CompletionChoiceDto>
 {
-	public string Id { get; set; }
-	public List<CompletionChoiceDto> Choices { get; set; }
-	public long Created { get; set; }
-	public string Model { get; set; }
-	public string SystemFingerprint { get; set; }
-	public CompletionUsageDto Usage { get; set; }
-
 	public CompletionDto()
 	{
 		Object = "text_completion";
