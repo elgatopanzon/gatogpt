@@ -35,12 +35,12 @@ public partial class LlamaModelInstance : BackgroundJob
 
 	private string _contextStatePath {
 		get {
-			return Path.Combine(OS.GetUserDataDir(), InstanceId+"-context");
+			return Path.Combine(OS.GetUserDataDir(), "State", InstanceId, "context");
 		}
 	}
 	private string _executorStatePath {
 		get {
-			return Path.Combine(OS.GetUserDataDir(), InstanceId+"-executor");
+			return Path.Combine(OS.GetUserDataDir(), "State", InstanceId, "executor");
 		}
 	}
 
@@ -312,6 +312,9 @@ public partial class LlamaModelInstance : BackgroundJob
 	public async Task<bool> SaveInstanceState()
 	{
 		LoggerManager.LogDebug("Saving state to file");
+
+		Directory.CreateDirectory(_contextStatePath.Replace("/"+_contextStatePath.GetFile(), ""));
+		Directory.CreateDirectory(_executorStatePath.Replace("/"+_executorStatePath.GetFile(), ""));
 
 		_llamaContext.SaveState(_contextStatePath);
 		await _executorStateful.SaveState(_executorStatePath);
