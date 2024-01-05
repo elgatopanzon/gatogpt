@@ -194,14 +194,29 @@ public partial class LlamaModelInstance : BackgroundJob
 		LoggerManager.LogDebug("Created model instance", "", "instanceId", _instanceId);
 	}
 
-	public void SetInstanceId(string id = "")
+	public void SetInstanceId(string id = "", bool keepState = true)
 	{
 		if (id == "")
 		{
 			id = $"{_modelDefinition.Id}-{GetHashCode()}";
 		}
 
+		// move existing state if id changed
+		if (InstanceStateExists() && _instanceId != id)
+		{
+			LoggerManager.LogDebug("Moving instance state", "", "move", $"from:{_instanceId}, to:{id}");
+
+			string prevContextState = _contextStatePath;
+			string prevExecutorState = _executorStatePath;
+
+			_instanceId = id;
+
+			File.Move(prevContextState, _contextStatePath);
+			File.Move(prevExecutorState, _executorStatePath);
+		}
+
 		_instanceId = id;
+
 	}
 
 	/***********************************
