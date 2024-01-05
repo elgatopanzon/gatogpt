@@ -6,6 +6,9 @@
 
 namespace GatoGPT.WebAPI;
 
+using GatoGPT.WebAPI.Extensions;
+using GatoGPT.WebAPI.MappingProfiles;
+
 using Godot;
 using GodotEGP.Objects.Extensions;
 using GodotEGP.Logging;
@@ -21,7 +24,6 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Serialization;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-using GatoGPT.WebAPI.Extensions;
 
 public partial class Application
 {
@@ -33,12 +35,18 @@ public partial class Application
 		builder = WebApplication.CreateBuilder(args);
 
 		// add services to the app
-		// app.Services.AddControllers()
-        //         .AddNewtonsoftJson(options =>
-        //                options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver());
+		builder.Services.AddControllers()
+        	.AddNewtonsoftJson(options => options.SerializerSettings.ContractResolver = new DefaultContractResolver() { NamingStrategy = new SnakeCaseNamingStrategy() });
+
+        builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+		{
+    		options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
+    		options.SerializerOptions.WriteIndented = true;
+		});
 
         builder.Services.AddEndpointsApiExplorer();
 		builder.Services.AddSwaggerGen();
+		builder.Services.AddSwaggerGenNewtonsoftSupport();
 
 		builder.Services.AddCustomCors("AllowAllOrigins");
 
@@ -55,6 +63,9 @@ public partial class Application
 		{
 			builder.WebHost.UseUrls($"http://{host}:{port}");
 		}
+
+		// add automatter services
+		builder.Services.AddAutoMapper(typeof(ModelMappings));
 
 		// build app
 		app = builder.Build();
