@@ -21,6 +21,7 @@ using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
 using System.Text.RegularExpressions;
+using System.Linq;
 
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -31,7 +32,8 @@ public partial class CommandLineInterface
 	private Dictionary <string, List<string>> _argsParsed { get; set; }
 	private Dictionary <string, string> _argAliases = new();
 
-	private Dictionary<string, Func<Task<int>>> _commands = new();
+	private Dictionary<string, (Func<Task<int>> Command, string Description)> _commands = new();
+	private Dictionary<string, List<(string Arg, string Example, string Description, bool Required)>> _commandArgs = new();
 
 	// services
 	private LlamaInferenceService _inferenceService = ServiceRegistry.Get<LlamaInferenceService>();
@@ -46,15 +48,55 @@ public partial class CommandLineInterface
     	LoggerManager.LogDebug("CLI arguments parsed", "", "argsParsed", _argsParsed);
 
     	// add commands
-    	_commands.Add("help", CommandHelp);
-    	_commands.Add("generate", CommandGenerate);
-    	_commands.Add("models", CommandModels);
-    	_commands.Add("api", CommandApi);
+    	_commands.Add("help", (CommandHelp, "Show help text with command usage"));
+    	_commands.Add("generate", (CommandGenerate, "Load a model and generate text"));
+    	_commands.Add("models", (CommandModels, "List configured models"));
+    	_commands.Add("api", (CommandApi, "Start the OpenAI API service"));
 
     	// arg aliases
     	_argAliases.Add("-m", "--model");
     	_argAliases.Add("-p", "--prompt");
     	_argAliases.Add("-c", "--chat");
+
+    	// command args
+		_commandArgs.Add("help", new());
+		_commandArgs.Add("models", new());
+		_commandArgs.Add("generate", new());
+
+		_commandArgs["generate"].Add(("--model", "MODEL_ID", "Model Definition ID to run generation with", true));
+		_commandArgs["generate"].Add(("--prompt", "e.g. \"Hello there\"", "Prompt text to begin generation", true));
+		_commandArgs["generate"].Add(("--chat", "", "Chat interactively with the model", false));
+		_commandArgs["generate"].Add(("--n-ctx", "N", "Context size in tokens", false));
+		_commandArgs["generate"].Add(("--n-batch", "N", "Batch size for token processing", false));
+		_commandArgs["generate"].Add(("--n-gpu-layers", "N", "Number of layers to offload to GPU", false));
+		_commandArgs["generate"].Add(("--main-gpu", "N", "GPU device ID to use for offloading", false));
+		_commandArgs["generate"].Add(("--rope-freq-base", "N", "Rope Frequency Base", false));
+		_commandArgs["generate"].Add(("--rope-freq-scale", "N", "Rope Frequency Scale", false));
+		_commandArgs["generate"].Add(("--use-mlock", "", "Enable mlock call", false));
+		_commandArgs["generate"].Add(("--no-mlock", "", "Use without mlock", false));
+		_commandArgs["generate"].Add(("--use-mmap", "", "Enable mmap", false));
+		_commandArgs["generate"].Add(("--no-mmap", "", "Use without mmap", false));
+		_commandArgs["generate"].Add(("--seed", "N", "Seed used for generation", false));
+		_commandArgs["generate"].Add(("--f16kv", "", "Use F16 k/v store", false));
+		_commandArgs["generate"].Add(("--no-f16kv", "", "Disable F16 k/v store", false));
+		_commandArgs["generate"].Add(("--n-threads", "N", "CPU threads to use for inference", false));
+		_commandArgs["generate"].Add(("--keep", "N", "Tokens to keep from initial prompt", false));
+		_commandArgs["generate"].Add(("--n-predict", "N", "Max tokens to generate", false));
+		_commandArgs["generate"].Add(("--top-k", "N", "Value for TopK", false));
+		_commandArgs["generate"].Add(("--min-p", "N", "Value for MinP", false));
+		_commandArgs["generate"].Add(("--top-p", "N", "Value for TopP", false));
+		_commandArgs["generate"].Add(("--temperature", "N", "Controls amount of randomisation", false));
+		_commandArgs["generate"].Add(("--repeat-penalty", "N", "Penalise for repeating tokens", false));
+		_commandArgs["generate"].Add(("--antiprompts", "[string1] [string2...]", "List of strings to stop generation", false));
+		_commandArgs["generate"].Add(("--input-prefix", "PREFIX", "Prefix to apply to prompt", false));
+		_commandArgs["generate"].Add(("--input-suffix", "SUFFIX", "Suffix to apply to prompt", false));
+		_commandArgs["generate"].Add(("--pre-prompt", "PRE_PROMPT", "System prompt to use before main prompt", false));
+		_commandArgs["generate"].Add(("--pre-prompt-prefix", "PRE_PREFIX", "Prefix to apply to pre-prompt", false));
+		_commandArgs["generate"].Add(("--pre-prompt-suffix", "PRE_SUFFIX", "Suffix to apply to pre-prompt", false));
+
+		_commandArgs.Add("api", new());
+		_commandArgs["api"].Add(("--host", "IP", "Host address to listen on", false));
+		_commandArgs["api"].Add(("--port", "PORT", "Port to listen on", false));
 
 		SetLogLevel();
 	}
@@ -84,7 +126,7 @@ public partial class CommandLineInterface
 			// invoke the matching command
 			if (_commands.ContainsKey(cmd))
 			{
-				return await _commands[cmd]();
+				return await _commands[cmd].Command();
 			}
 		}
 
@@ -181,7 +223,19 @@ public partial class CommandLineInterface
 
 	public async Task<int> CommandHelp()
 	{
-		Console.WriteLine("Help text (todo)");
+		Console.WriteLine($"usage: {System.Reflection.Assembly.GetEntryAssembly().GetName().Name} [command] [options]");
+		Console.WriteLine("");
+
+		Console.WriteLine("commands:");
+		foreach (var cmd in _commands)
+		{
+			Console.WriteLine("");
+			Console.WriteLine($"{cmd.Key}: {cmd.Value.Description}");
+			foreach (var arg in _commandArgs[cmd.Key])
+			{
+				Console.WriteLine($"\n  {((arg.Arg)+" "+(arg.Example))}\n  {arg.Description}");
+			}
+		}
 
 		return 0;
 	}
