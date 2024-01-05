@@ -194,9 +194,14 @@ public partial class LlamaModelInstance : BackgroundJob
 		LoggerManager.LogDebug("Created model instance", "", "instanceId", _instanceId);
 	}
 
-	public void SetInstanceId()
+	public void SetInstanceId(string id = "")
 	{
-		_instanceId = $"{_modelDefinition.Id}-{GetHashCode()}";
+		if (id == "")
+		{
+			id = $"{_modelDefinition.Id}-{GetHashCode()}";
+		}
+
+		_instanceId = id;
 	}
 
 	/***********************************
@@ -324,15 +329,11 @@ public partial class LlamaModelInstance : BackgroundJob
 
 	public async Task<bool> LoadInstanceState()
 	{
-		if (File.Exists(_contextStatePath))
+		if (InstanceStateExists())
 		{
 			LoggerManager.LogDebug("Loading context state from file");
 			_llamaContext.LoadState(_contextStatePath);
-		}
 
-
-		if (File.Exists(_executorStatePath))
-		{
 			LoggerManager.LogDebug("Loading executor state from file");
 			await _executorStateful.LoadState(_executorStatePath);
 		}
@@ -340,17 +341,18 @@ public partial class LlamaModelInstance : BackgroundJob
 		return true;
 	}
 
+	public bool InstanceStateExists()
+	{
+		return (File.Exists(_contextStatePath) && File.Exists(_executorStatePath));
+	}
+
 	public void DeleteInstanceState()
 	{
-		if (File.Exists(_contextStatePath))
+		if (InstanceStateExists())
 		{
 			LoggerManager.LogDebug("Deleting context state file");
 			File.Delete(_contextStatePath);
-		}
 
-
-		if (File.Exists(_executorStatePath))
-		{
 			LoggerManager.LogDebug("Deleting executor state file");
 			File.Delete(_executorStatePath);
 		}
