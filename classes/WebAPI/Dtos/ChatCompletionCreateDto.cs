@@ -17,11 +17,27 @@ public partial class ChatCompletionCreateDto : CompletionCreateBaseDto
 {
 	public ChatCompletionCreateResponseFormatDto ResponseFormat { get; set; }
 	public List<ChatCompletionMessageCreateDto> Messages { get; set; }
-	// TODO: Tools and ToolChoice properties
+	public List<ChatCompletionCreateToolDto> Tools { get; set; }
+	public object ToolChoice { get; set; }
 
 	public ChatCompletionCreateDto()
 	{
 		ResponseFormat = new();
+		Tools = new();
+		ToolChoice = new();
+	}
+
+	public string GetToolChoice()
+	{
+		if (ToolChoice is string ts)
+			return ts;
+		else
+			return "";
+	}
+
+	public ChatCompletionToolChoiceDto GetToolChoiceObject()
+	{
+		return (ChatCompletionToolChoiceDto) ToolChoice;
 	}
 }
 

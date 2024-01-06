@@ -6,6 +6,8 @@
 
 namespace GatoGPT.LLM;
 
+using GatoGPT.WebAPI.Dtos; // TODO: make this into an entity to be more clean
+
 using GatoGPT.Service;
 
 using Godot;
@@ -249,6 +251,7 @@ public partial class StatefulChatMessage
 	public string Content { get; set; }
 	public string Role { get; set; }
 	internal string Name { get; set; }
+	public List<ChatCompletionToolCallDto> ToolCalls { get; set; }
 
 	public string Format()
 	{

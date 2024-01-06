@@ -1,7 +1,7 @@
 /**
  * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
- * @file        : ChatCompletionMessageCreateDto
- * @created     : Friday Jan 05, 2024 17:06:13 CST
+ * @file        : ChatCompletionToolFunctionDto
+ * @created     : Saturday Jan 06, 2024 01:18:28 CST
  */
 
 namespace GatoGPT.WebAPI.Dtos;
@@ -13,13 +13,14 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class ChatCompletionMessageCreateDto : ChatCompletionMessageDto
+public partial class ChatCompletionToolFunctionDto
 {
 	public string Name { get; set; }
+	public string Arguments { get; set; }
 
-	public ChatCompletionMessageCreateDto()
+	public ChatCompletionToolFunctionDto()
 	{
-		Name = "";
+		
 	}
 }
 

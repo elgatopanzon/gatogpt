@@ -452,7 +452,7 @@ public partial class LlamaModelInstance : BackgroundJob
 		{
 			currentPrompt = FormatPrompt(Prompt);
 
-			LoggerManager.LogDebug("Full prompt", "", "fullPrompt", currentPrompt);
+			Console.WriteLine(currentPrompt);
 		}
 
 		return currentPrompt;
