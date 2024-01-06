@@ -35,13 +35,15 @@ class Program
 
 		// init LLMConfigHandler
 		SceneTree.Instance.Root.AddChild(new LlamaConfigHandler());
+		SceneTree.Instance.Root.AddChild(new EmbeddingConfigHandler());
 
 		// wait for services to be ready
 		if (!ServiceRegistry.WaitForServices(
 					typeof(ConfigManager), 
 					typeof(ResourceManager), 
 					typeof(ScriptService),
-					typeof(LlamaModelManager)
+					typeof(LlamaModelManager),
+					typeof(EmbeddingModelManager)
 					))
 			{
 			LoggerManager.LogCritical("Required services never became ready");

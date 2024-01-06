@@ -100,3 +100,58 @@ public partial class ModelDefinition : VObject
 	}
 }
 
+
+// WIP: generic class for model definition
+public partial class ModelDefinition<TModelResource> : VObject where TModelResource : Resource
+{
+	// friendly ID of the model definition
+	private string _id;
+	public string Id
+	{
+		get { return _id; }
+		set { _id = value; }
+	}
+
+	// model profile preset code (used to override the filename one)
+	internal readonly VValue<string> _profilePreset;
+
+	public string ProfilePreset
+	{
+		get { return _profilePreset.Value; }
+		set { _profilePreset.Value = value; }
+	}
+
+	// instance of the model resource to load for this model definition
+	internal readonly VValue<Resource<TModelResource>> _modelResource;
+
+	public Resource<TModelResource> ModelResource
+	{
+		get { return _modelResource.Value; }
+		set { _modelResource.Value = value; }
+	}
+
+	internal readonly VValue<string> _modelResourceId;
+
+	public string ModelResourceId
+	{
+		get { return _modelResourceId.Value; }
+		set { _modelResourceId.Value = value; }
+	}
+
+	public ModelDefinition(string modelResourceId, string profilePreset = "")
+	{
+		_profilePreset = AddValidatedValue<string>(this)
+		    .Default("")
+		    .ChangeEventsEnabled();
+
+		_modelResource = AddValidatedValue<Resource<TModelResource>>(this)
+		    .ChangeEventsEnabled();
+
+		_modelResourceId = AddValidatedValue<string>(this)
+		    .Default("")
+		    .ChangeEventsEnabled();
+
+		ModelResourceId = modelResourceId;
+		ProfilePreset = profilePreset;
+	}
+}
