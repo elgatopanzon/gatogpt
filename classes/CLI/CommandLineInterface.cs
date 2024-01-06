@@ -52,6 +52,7 @@ public partial class CommandLineInterface
     	_commands.Add("generate", (CommandGenerate, "Load a model and generate text"));
     	_commands.Add("models", (CommandModels, "List configured models"));
     	_commands.Add("api", (CommandApi, "Start the OpenAI API service"));
+    	_commands.Add("clean", (CommandClean, "Clean up cache and old states"));
 
     	// arg aliases
     	_argAliases.Add("-m", "--model");
@@ -99,6 +100,8 @@ public partial class CommandLineInterface
 		_commandArgs.Add("api", new());
 		_commandArgs["api"].Add(("--host", "IP", "Host address to listen on", false));
 		_commandArgs["api"].Add(("--port", "PORT", "Port to listen on", false));
+
+		_commandArgs.Add("clean", new());
 
 		SetLogLevel();
 	}
@@ -492,6 +495,18 @@ public partial class CommandLineInterface
 		}
 
 		var webApi = new WebAPI.Application(_args, host, port);
+
+		return 0;
+	}
+
+	public async Task<int> CommandClean()
+	{
+		LoggerManager.LogDebug("Cleaning up cache/old states");
+
+		System.IO.DirectoryInfo directory = new DirectoryInfo(Path.Combine(OS.GetUserDataDir(), "State"));
+
+		foreach(System.IO.FileInfo file in directory.GetFiles()) file.Delete();
+    	foreach(System.IO.DirectoryInfo subDirectory in directory.GetDirectories()) subDirectory.Delete(true);
 
 		return 0;
 	}
