@@ -32,18 +32,23 @@ using Microsoft.AspNetCore.Mvc;
 // using GatoGPT.WebAPI.Entities;
 using System.Text.Json;
 
+using AllMiniLmL6V2Sharp;
+using AllMiniLmL6V2Sharp.Tokenizer;
+
 [ApiController]
 [ApiVersion("1.0")]
 [Route("v{version:apiVersion}/[controller]")]
 public partial class EmbeddingsController : ControllerBase
 {
 	private readonly IMapper _mapper;
+	private readonly ResourceManager _resourceManager;
 	private readonly LlamaModelManager _modelManager;
 	private readonly LlamaInferenceService _inferenceService;
 
 	public EmbeddingsController(IMapper mapper)
 	{
 		_mapper = mapper;
+		 _resourceManager = ServiceRegistry.Get<ResourceManager>();
 		 _modelManager = ServiceRegistry.Get<LlamaModelManager>();
 		 _inferenceService = ServiceRegistry.Get<LlamaInferenceService>();
 	}
@@ -53,7 +58,7 @@ public partial class EmbeddingsController : ControllerBase
     {
     	LoggerManager.LogDebug("Recieved embeddingCreateDto", "", "create", embeddingCreateDto);
 
-    	// validate required params
+    	// // validate required params
 		if (embeddingCreateDto.Model.Length == 0)
 		{
 			return BadRequest(new InvalidRequestErrorDto(
@@ -69,6 +74,14 @@ public partial class EmbeddingsController : ControllerBase
     		return NotFound(new InvalidRequestErrorDto(message:$"The model '{embeddingCreateDto.Model}' does not exist", code:"model_not_found", param:"model"));
 		}
 
+        // var sentanceTransformers = _resourceManager.GetResources<SentenceTransformerModel>();
+        var modelDefinition = _modelManager.GetModelDefinition(embeddingCreateDto.Model);
+        string modelPath = modelDefinition.ModelResource.Definition.Path;
+        string modelVocabPath = modelPath.Replace("/"+modelPath.GetFile(), "")+"/vocab.txt";
+
+        LoggerManager.LogDebug("Embeddings model path", "", "modelPath", modelPath);
+        LoggerManager.LogDebug("Embeddings model vocab", "", "modelVocabPath", modelVocabPath);
+
 		// create the EmbeddingsDto object
         EmbeddingsDto embeddingsDto = new EmbeddingsDto() {
 			Model = embeddingCreateDto.Model
@@ -79,8 +92,13 @@ public partial class EmbeddingsController : ControllerBase
         {
         	string input = embeddingCreateDto.GetInputs()[i];
 
+			BertTokenizer tokenizer = new BertTokenizer(modelVocabPath);
+			var onnxEmbedder = new AllMiniLmL6V2Embedder(modelPath: modelPath, tokenizer: tokenizer);
+			var onnxEmbedding = onnxEmbedder.GenerateEmbedding(input);
+
         	EmbeddingDto embedding = new EmbeddingDto() {
 				Index = i,
+				Embedding = onnxEmbedding.ToArray(),
         	};
 
         	embeddingsDto.Data.Add(embedding);
