@@ -140,66 +140,108 @@ public partial class ChatController : ControllerBase
 			LoggerManager.LogDebug("Tool choice set to none");
 		}
 
+		// init new chat instance
+    	StatefulChat chatInstance = new(false, loadParams, inferenceParams);
+    	List<StatefulChatMessage> messageEntities = new();
+
+    	foreach (var messageCreateDto in chatCompletionCreateDto.Messages)
+    	{
+    		messageEntities.Add(new StatefulChatMessage() {
+				Content = messageCreateDto.Content,
+				Role = messageCreateDto.Role,
+				Name = messageCreateDto.Name,
+				ToolCalls = messageCreateDto.ToolCalls,
+    			});
+    	}
+
+
 		// inject a list of tools into the system prompt
 		List<string> validFunctionNames = new();
 		if (toolChoice != "none" && chatCompletionCreateDto.Tools.Count > 0)
 		{
+			// create respond function
+			var respondFunction = new ChatCompletionCreateToolDto() {
+				Type = "function",
+				Function = new ChatCompletionCreateFunctionDto() {
+					Name = "respond",
+					Description = "Write a regular response to the user (used when no function call is required)",
+					Parameters = new ChatCompletionCreateFunctionParametersDto() {
+						Type = "function",
+						Properties = new Dictionary<string, ChatCompletionCreateFunctionPropertyDto>() {
+							{ "response", new() {
+								Description = "Your response to the user's query"
+							} }
+						},
+						Required = new() {
+							"response"
+						}
+					},
+				},
+			};
+			// chatCompletionCreateDto.Tools.Add(respondFunction);
+			LoggerManager.LogDebug("Respond function", "", "respondFunction", respondFunction);
+
 			var lastMessage = chatCompletionCreateDto.Messages.Last();
+			var toolsSystemMessage = new StatefulChatMessage() {
+				Role = "system",
+			};
 
 			string messageOriginalContent = lastMessage.Content;
-			lastMessage.Content = "";
+			toolsSystemMessage.Content += $"As an AI assistant you have access to a range of tools. Please select the most suitable function and parameters from the list of available functions below. Provide your response in JSON format when calling a function, otherwise respond as a human would.";
+			toolsSystemMessage.Content += $"\nAvailable functions:";
 
-			lastMessage.Content += $"As an AI assistant you have access to a range of tools. Please select the most suitable function and parameters from the list of available functions below. Provide your response in JSON format when calling a function, otherwise respond as a human would.";
-			lastMessage.Content += $"\nAvailable functions:";
+			validFunctionNames.Add("respond");
+			toolsSystemMessage.Content += $"\n  respond (Respond normally to the users request without calling a tool):\n    Parameters:\n      response:\n        required: True";
+			toolsSystemMessage.Content += "\n      { \"function\": \"respond\", \"arguments\": {\"response\": \"Your response to the user in plain-text.\"}}";
 
 			foreach (var tool in chatCompletionCreateDto.Tools)
 			{
 				validFunctionNames.Add(tool.Function.Name);
 
-				lastMessage.Content += $"\n{tool.Function.Name}";
+				toolsSystemMessage.Content += $"\n  {tool.Function.Name}";
 
 				if (tool.Function.Description.Length > 0)
 				{
-					lastMessage.Content += $" ({tool.Function.Description})";
+					toolsSystemMessage.Content += $" ({tool.Function.Description}):";
 				}
 
 				LoggerManager.LogDebug("Params parsed", "", "params", tool.Function.GetParametersDto());
 
 				var functionParams = tool.Function.GetParametersDto();
 
-				lastMessage.Content += $"\n  Parameters:";
+				toolsSystemMessage.Content += $"\n    Parameters:";
 
 				foreach (var param in functionParams.Properties)
 				{
-					lastMessage.Content += $"\n    {param.Key}:";
+					toolsSystemMessage.Content += $"\n      {param.Key}:";
 
-					lastMessage.Content += $"\n      data_type: {param.Value.Type}";
+					toolsSystemMessage.Content += $"\n        data_type: {param.Value.Type}";
 
 					if (param.Value.Description.Length > 0)
 					{
-						lastMessage.Content += $"\n      description: {param.Value.Description}";
+						toolsSystemMessage.Content += $"\n        description: {param.Value.Description}";
 					}
 
 					if (param.Value.Enum.Count > 0)
 					{
-						lastMessage.Content += $"\n      allowed_values: {String.Join(", ", param.Value.Enum)}";
+						toolsSystemMessage.Content += $"\n        allowed_values: {String.Join(", ", param.Value.Enum)}";
 					}
 
-					lastMessage.Content += $"\n      required: {(functionParams.Required.Contains(param.Key)).ToString()}";
+					toolsSystemMessage.Content += $"\n        required: {(functionParams.Required.Contains(param.Key)).ToString()}";
 					
 				}
 
-				lastMessage.Content += "\n  Example responses:";
-				lastMessage.Content += "\n  { \"function\": \""+tool.Function.Name+"\", \"arguments\": {\"argument_name\": \"argument_value\"}}";
+				toolsSystemMessage.Content += "\n    Example responses:";
+				toolsSystemMessage.Content += "\n      { \"function\": \""+tool.Function.Name+"\", \"arguments\": {\"argument_name\": \"argument_value\"}}";
 
 
 				foreach (var includeAllParams in new List<bool>() { true, false })
 				{
-					lastMessage.Content += "\n  { \"function\": \""+tool.Function.Name+"\"";
+					toolsSystemMessage.Content += "\n      { \"function\": \""+tool.Function.Name+"\"";
 
 					if (functionParams.Properties.Count > 0)
 					{
-						lastMessage.Content += "{ \"arguments\": ";
+						toolsSystemMessage.Content += "{ \"arguments\": ";
 
 						foreach (var param in functionParams.Properties)
 						{
@@ -214,43 +256,28 @@ public partial class ChatController : ControllerBase
 								functionExampleValue = $"e.g. {String.Join(", ", param.Value.Enum)}";
 							}
 
-							lastMessage.Content += "{\""+param.Key+"\": \""+functionExampleValue+"\"},";
+							toolsSystemMessage.Content += "{\""+param.Key+"\": \""+functionExampleValue+"\"},";
 						}
 
-						lastMessage.Content = lastMessage.Content.TrimEnd(',');
+						// toolsSystemMessage.Content = lastMessage.Content.TrimEnd(',');
 
-						lastMessage.Content += "}";
+						toolsSystemMessage.Content += "}";
 					}
 
-					lastMessage.Content += "}";
+					toolsSystemMessage.Content += "}";
 				}
-				lastMessage.Content += $"\n";
+				toolsSystemMessage.Content += $"\n";
 			}
 
-			if (toolChoice == "auto")
-			{
-				lastMessage.Content += $"\nYou can choose to ignore the above functions and respond normally to the user's request if the request has nothing related to your available functions.";
-			}
+			// if (toolChoice == "auto")
+			// {
+			// 	toolsSystemMessage.Content += $"\nYou can choose to ignore the above functions and respond normally to the user's request if the request has nothing related to your available functions.";
+			// }
 
-			inferenceParams.PrePrompt = lastMessage.Content;
-			lastMessage.Content = messageOriginalContent;
+			messageEntities.Add(toolsSystemMessage);
 		}
 
 		LoggerManager.LogDebug("Available tools", "", "tools", chatCompletionCreateDto.Tools);
-
-		// init new chat instance
-    	StatefulChat chatInstance = new(false, loadParams, inferenceParams);
-    	List<StatefulChatMessage> messageEntities = new();
-
-    	foreach (var messageCreateDto in chatCompletionCreateDto.Messages)
-    	{
-    		messageEntities.Add(new StatefulChatMessage() {
-				Content = messageCreateDto.Content,
-				Role = messageCreateDto.Role,
-				Name = messageCreateDto.Name,
-				ToolCalls = messageCreateDto.ToolCalls,
-    			});
-    	}
 
     	chatInstance.SetChatMessages(messageEntities);
 
@@ -297,6 +324,7 @@ public partial class ChatController : ControllerBase
 				}
 
 				// parse into toolcall dto
+				bool parseResult = false;
 				if (finishReason == "tool_call")
 				{
 					try
@@ -324,7 +352,15 @@ public partial class ChatController : ControllerBase
 						}
 						else
 						{
-							messageDto.ToolCalls.Add(toolCallDto);
+							parseResult = true;
+							if (toolCallDto.Function.Name == "respond" && toolCallRawDto.Arguments.TryGetValue("response", out object r))
+							{
+								messageDto.Content = r.ToString();
+								finishReason = (modelInstance.InferenceResult.Tokens.Count >= chatCompletionCreateDto.MaxTokens ? "length" : "stop");
+							}
+							else
+								messageDto.Content = null;
+								messageDto.ToolCalls.Add(toolCallDto);
 						}
 
 					}
@@ -335,25 +371,16 @@ public partial class ChatController : ControllerBase
 
 						toolParseResult = "Not a valid JSON response";
 					}
-				}
-
-				if (finishReason != "tool_call")
-				{
-					LoggerManager.LogDebug("Result not valid JSON");
-					modelInstance.InferenceParams.Temp -= Math.Max(0, 0.1);
-
-    				messageEntities.Add(new StatefulChatMessage() {
-						Content = messageDto.Content,
-						Role = "assistant",
-    					});
-    				messageEntities.Add(new StatefulChatMessage() {
-						Content = $"The function call was invalid. Reason: {toolParseResult}",
-						Role = "user",
-    					});
-
-    				chatInstance.SetChatMessages(messageEntities);
-
-					continue;
+                    //
+					// // repeat the inference if we failed to call a tool
+					// // TODO: maybe remove this?
+					// if (finishReason != "tool_call" && !parseResult)
+					// {
+					// 	LoggerManager.LogDebug("Result not valid JSON");
+					// 	modelInstance.InferenceParams.Temp -= Math.Max(0, 0.1);
+                    //
+					// 	continue;
+					// }
 				}
 			}
 
