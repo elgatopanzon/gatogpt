@@ -49,7 +49,10 @@ public partial class StatefulChat
 	public void SetChatMessages(List<StatefulChatMessage> messages)
 	{
 		_chatHistory = messages;
+	}
 
+	public void UpdateStatefulInstanceId()
+	{
 		// find existing state instances by looping over the provided messages
 		// while adding 1 extra message each time
 		// if a state exists for any of the chat, then use that state ID and
@@ -60,7 +63,7 @@ public partial class StatefulChat
 
 		if (_stateful)
 		{
-			for (int i = messages.Count - 1; i > -1; i--)
+			for (int i = _chatHistory.Count - 1; i > -1; i--)
 			{
 				// pass the ignore N value
 				var messagesHash = GetStateInstanceId(i);
@@ -84,8 +87,11 @@ public partial class StatefulChat
 
 				_instanceStateId = GetInstanceId(foundStateHash);
 			}
+			else
+			{
+				_instanceStateId = GetInstanceId(GetStateInstanceId(0));
+			}
 		}
-
 
 		// get reversed chat history and take N off the end for generation
 		List<StatefulChatMessage> newMessages = _chatHistory.Skip(_chatHistory.Count - lastNIndex).ToList();
@@ -102,7 +108,7 @@ public partial class StatefulChat
 
 	public string GetInstanceId(string hash)
 	{
-		return $"chat-{_modelInstance.InstanceId}-{hash}";
+		return $"chat-{_modelInstance.ModelDefinition.Id}-{hash}";
 	}
 
 	public string GetStateInstanceId(int ignoreLastN = 0)
@@ -227,6 +233,13 @@ public partial class StatefulChat
 	{
 		_modelInstance = modelInstance;
 
+		// calculate the instance ID hash from messages
+		UpdateStatefulInstanceId();
+
+		// set the current instance ID based on the hash (could also be found
+		// state)
+		_inferenceService.SetModelInstanceId(_modelInstance.InstanceId, _instanceStateId);
+
 		InferenceResult inferenceResult = await _inferenceService.InferAsync(modelInstance.ModelDefinition.Id, GetPrompt(), stateful:_stateful, (_instanceStateId.Length > 0 ? _instanceStateId : _modelInstance.InstanceId), _loadParams, _inferenceParams);
 
 		string content = inferenceResult.OutputStripped;
@@ -238,6 +251,8 @@ public partial class StatefulChat
 			content = content.Replace($"{name}:", "");
 			content = content.Trim();
 		}
+
+		LoggerManager.LogDebug("Instance state id", "", "instanceStateId", _instanceStateId);
 
 		return new StatefulChatMessage() {
 			Role = "assistant",

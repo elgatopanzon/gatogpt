@@ -141,7 +141,7 @@ public partial class ChatController : ControllerBase
 		}
 
 		// init new chat instance
-    	StatefulChat chatInstance = new(false, loadParams, inferenceParams);
+    	StatefulChat chatInstance = new(true, loadParams, inferenceParams);
     	List<StatefulChatMessage> messageEntities = new();
 
     	foreach (var messageCreateDto in chatCompletionCreateDto.Messages)
@@ -281,7 +281,7 @@ public partial class ChatController : ControllerBase
 
     	chatInstance.SetChatMessages(messageEntities);
 
-    	LoggerManager.LogDebug("Prompt to send", "", "prompt", chatInstance.GetPrompt());
+    	// LoggerManager.LogDebug("Prompt to send", "", "prompt", chatInstance.GetPrompt());
 
 		ChatCompletionDto chatCompletionDto = new();
 

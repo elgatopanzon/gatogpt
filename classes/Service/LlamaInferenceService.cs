@@ -145,6 +145,12 @@ public partial class LlamaInferenceService : Service
 		_modelInstances.Add(instance.InstanceId, instance);
 	}
 
+	public void SetModelInstanceId(string instanceId, string newInstanceId)
+	{
+		_modelInstances[newInstanceId] = _modelInstances[instanceId];
+		_modelInstances[newInstanceId].SetInstanceId(newInstanceId);
+	}
+
 	public void UnloadExistingModels(string excludeInstanceId = "")
 	{
 		foreach (var modelObj in _modelInstances)
