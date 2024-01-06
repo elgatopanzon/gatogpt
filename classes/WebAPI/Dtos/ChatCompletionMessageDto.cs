@@ -18,5 +18,9 @@ public partial class ChatCompletionMessageDto
 	public string Content { get; set; }
 	public string Role { get; set; }
 	// public object ToolCalls { get; set; } // TODO
+	
+	public ChatCompletionMessageDto()
+	{
+	}
 }
 
