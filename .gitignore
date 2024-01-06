@@ -488,3 +488,5 @@ $RECYCLE.BIN/
 # Managed by git-multi (sub repo ssh://git@gitlab.elgatopanzon.io:2224/godot/addons/godotegp-framework/godotegp-framework-nongame.git) (commit 28c4cd1fa85b6f590cc7dbbe25fd873e20622bbb) 
 /libs/godotegp-framework-nongame 
 
+# Managed by git-multi (sub repo https://github.com/ksanman/AllMiniLML6v2Sharp) (commit 697e2aa4e9068cf725f61a339160e63dee17510f) 
+/libs/AllMiniLML6v2Sharp 
