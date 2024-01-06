@@ -36,7 +36,7 @@ public partial class StatefulChat
 
 	public List<string> _knownUserNames { get; set; }
 
-	public StatefulChat(bool stateful, LLM.LoadParams loadParams, LLM.InferenceParams inferenceParams)
+	public StatefulChat(bool stateful,  LLM.LoadParams loadParams, LLM.InferenceParams inferenceParams)
 	{
 		_stateful = stateful;
 		_loadParams = loadParams;
@@ -147,7 +147,7 @@ public partial class StatefulChat
 		List<string> formattedMessages = new();
 		List<string> systemPrompts = new();
 
-		formattedMessages.Add("Below is a conversation:");
+		// formattedMessages.Add("Below is a conversation:");
 
 		string formattedPrompt = "";
 
