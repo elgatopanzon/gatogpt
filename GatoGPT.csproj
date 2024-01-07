@@ -13,7 +13,7 @@
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="libtorch-cpu-win-x64" Version="2.1.0.1" />
     <PackageReference Include="LLamaSharp" Version="0.8.1" />
-    <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.8.1" />
+    <!-- <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.8.1" /> -->
     <PackageReference Include="LLamaSharp.Backend.Cuda11" Version="0.8.1" />
     <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.8.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
