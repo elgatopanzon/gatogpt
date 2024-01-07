@@ -32,7 +32,7 @@ public partial class CommandLineInterface
 	private Dictionary <string, List<string>> _argsParsed { get; set; }
 	private Dictionary <string, string> _argAliases = new();
 
-	private Dictionary<string, (Func<Task<int>> Command, string Description)> _commands = new();
+	private Dictionary<string, (Func<Task<int>> Command, string Description, bool includeInHelp)> _commands = new();
 	private Dictionary<string, List<(string Arg, string Example, string Description, bool Required)>> _commandArgs = new();
 
 	// services
@@ -48,11 +48,17 @@ public partial class CommandLineInterface
     	LoggerManager.LogDebug("CLI arguments parsed", "", "argsParsed", _argsParsed);
 
     	// add commands
-    	_commands.Add("help", (CommandHelp, "Show help text with command usage"));
-    	_commands.Add("generate", (CommandGenerate, "Load a model and generate text"));
-    	_commands.Add("models", (CommandModels, "List configured models"));
-    	_commands.Add("api", (CommandApi, "Start the OpenAI API service"));
-    	_commands.Add("clean", (CommandClean, "Clean up cache and old states"));
+    	_commands.Add("help", (CommandHelp, "Show help text with command usage", true));
+    	_commands.Add("generate", (CommandGenerate, "Load a model and generate text", true));
+    	_commands.Add("models", (CommandModels, "List configured models", true));
+    	_commands.Add("api", (CommandApi, "Start the OpenAI API service", true));
+    	_commands.Add("clean", (CommandClean, "Clean up cache and old states", true));
+
+		// enable the testing command on debug build
+    	if (OS.IsDebugBuild())
+    	{
+    		_commands.Add("testing", (CommandTest, "Run testing code", false));
+    	}
 
     	// arg aliases
     	_argAliases.Add("-m", "--model");
@@ -234,6 +240,11 @@ public partial class CommandLineInterface
 		Console.WriteLine("commands:");
 		foreach (var cmd in _commands)
 		{
+			if (!cmd.Value.includeInHelp)
+			{
+				continue;
+			}
+			 
 			Console.WriteLine("");
 			Console.WriteLine($"{cmd.Key}: {cmd.Value.Description}");
 			foreach (var arg in _commandArgs[cmd.Key])
@@ -507,6 +518,15 @@ public partial class CommandLineInterface
 
 		foreach(System.IO.FileInfo file in directory.GetFiles()) file.Delete();
     	foreach(System.IO.DirectoryInfo subDirectory in directory.GetDirectories()) subDirectory.Delete(true);
+
+		return 0;
+	}
+
+	public async Task<int> CommandTest()
+	{
+		LoggerManager.LogDebug("Running testing code");
+
+		var testing = new CodeTesting(_args);
 
 		return 0;
 	}
