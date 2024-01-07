@@ -29,7 +29,6 @@ public partial class EmbeddingService : Service
 
 	public EmbeddingService()
 	{
-		// TODO: create an EmbeddingsModelManager if embeddings get out of hand
 		_modelManager = ServiceRegistry.Get<EmbeddingModelManager>();
 	}
 
@@ -56,6 +55,18 @@ public partial class EmbeddingService : Service
 		GC.Collect();
 
 		return embedding;
+	}
+
+	public List<float[]> GenerateEmbeddings(string modelDefinitionId, IEnumerable<string> inputs)
+	{
+		List<float[]> results = new();
+
+		foreach (var input in inputs)
+		{
+			results.Add(GenerateEmbedding(modelDefinitionId, input));
+		}
+
+		return results;
 	}
 }
 
