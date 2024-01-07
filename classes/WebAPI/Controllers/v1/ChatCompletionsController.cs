@@ -320,13 +320,7 @@ public partial class ChatController : ControllerBase
 						finishReason = "tool_call";
 					}
 
-					match = match.NextMatch();
-				}
-
-				// parse into toolcall dto
-				bool parseResult = false;
-				if (finishReason == "tool_call")
-				{
+					bool parseResult = false;
 					try
 					{
 						var toolCallRawDto = JsonConvert.DeserializeObject<ChatCompletionToolCallRawDto>(messageDto.Content);;
@@ -371,16 +365,8 @@ public partial class ChatController : ControllerBase
 
 						toolParseResult = "Not a valid JSON response";
 					}
-                    //
-					// // repeat the inference if we failed to call a tool
-					// // TODO: maybe remove this?
-					// if (finishReason != "tool_call" && !parseResult)
-					// {
-					// 	LoggerManager.LogDebug("Result not valid JSON");
-					// 	modelInstance.InferenceParams.Temp -= Math.Max(0, 0.1);
-                    //
-					// 	continue;
-					// }
+
+					match = match.NextMatch();
 				}
 			}
 
