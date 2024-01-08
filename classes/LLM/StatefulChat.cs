@@ -18,6 +18,8 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
+using Newtonsoft.Json;
+
 using System.Security.Cryptography;
 
 public partial class StatefulChat
@@ -82,6 +84,7 @@ public partial class StatefulChat
 			if (foundStateHash.Length > 0)
 			{
 				LoggerManager.LogDebug("State found!", "", "hash", foundStateHash);
+				lastNIndex++;
 				LoggerManager.LogDebug("Messages to skip", "", "skipCount", _chatHistory.Count - lastNIndex);
 				LoggerManager.LogDebug("Number of new messages", "", "processCount", lastNIndex);
 
@@ -125,7 +128,7 @@ public partial class StatefulChat
 		{
 			byte[] bytes;
 			using (HashAlgorithm algorithm = SHA256.Create())
-        		 bytes = algorithm.ComputeHash(System.Text.Encoding.UTF8.GetBytes($"{messagesHash}{message.Role}{message.Content}{message.Name}"));
+        		 bytes = algorithm.ComputeHash(System.Text.Encoding.UTF8.GetBytes($"{messagesHash}{message.Role}{message.Content}{message.Name}{_loadParams.Seed}"));
 
 			messagesHash = "";
         	foreach (byte b in bytes)
@@ -175,7 +178,6 @@ public partial class StatefulChat
 			if (message.Role == "assistant")
 			{
 				assistantName = message.GetUserName();
-				systemPrompts.Add($"Your name is {assistantName}.");
 			}
 			if (message.Role == "user")
 			{
@@ -201,6 +203,18 @@ public partial class StatefulChat
 		if (systemPrompts.Count > 0)
 		{
 			_inferenceParams.PrePrompt = String.Join(". ", systemPrompts);
+		}
+
+		// ignore system messages if it's a stateful chat and there's some
+		// skipped messages
+		if ((_stateful && ChatStateExistsForHash(GetStateInstanceId(0))))
+		{
+			LoggerManager.LogDebug("Removing system prompt when state exists");
+			_inferenceParams.PrePrompt = "";
+			_inferenceParams.PrePromptPrefix = "";
+			_inferenceParams.PrePromptSuffix = "";
+			// _inferenceParams.InputPrefix = "";
+			// _inferenceParams.InputSuffix = "";
 		}
 
 		// add the next expected reply to the end of the conversation based on

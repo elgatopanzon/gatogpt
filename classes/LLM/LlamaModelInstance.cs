@@ -560,7 +560,10 @@ public partial class LlamaModelInstance : BackgroundJob
 		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
 		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);
 
-		InferenceResult.PromptTokenCount = _llamaWeights.NativeHandle.Tokenize(fullPrompt, true, false, System.Text.Encoding.UTF8).Count();
+		if (fullPrompt.Length > 0)
+		{
+			InferenceResult.PromptTokenCount = _llamaWeights.NativeHandle.Tokenize(fullPrompt, true, false, System.Text.Encoding.UTF8).Count();
+		}
 
 		SetupInferenceParams();
 
