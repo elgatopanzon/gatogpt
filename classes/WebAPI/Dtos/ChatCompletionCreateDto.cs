@@ -37,7 +37,12 @@ public partial class ChatCompletionCreateDto : CompletionCreateBaseDto
 
 	public ChatCompletionToolChoiceDto GetToolChoiceObject()
 	{
-		return (ChatCompletionToolChoiceDto) ToolChoice;
+		if (ToolChoice is ChatCompletionToolChoiceDto dto)
+		{
+			return dto;
+		}
+
+		return new();
 	}
 }
 
