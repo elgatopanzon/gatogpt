@@ -349,7 +349,7 @@ public partial class ChatController : ControllerBase
 				Role = message.Role,
 			};
 
-			string finishReason = (modelInstance.InferenceResult.Tokens.Count >= chatCompletionCreateDto.MaxTokens ? "length" : "stop");
+			string finishReason = ((modelInstance.InferenceResult.Tokens.Count >= chatCompletionCreateDto.MaxTokens && chatCompletionCreateDto.MaxTokens > -1) ? "length" : "stop");
 
 			// parse tool calls
 			string toolParseResult = "";
@@ -399,7 +399,7 @@ public partial class ChatController : ControllerBase
 							if (toolCallDto.Function.Name == "respond" && toolCallRawDto.Arguments.TryGetValue("response", out object r))
 							{
 								messageDto.Content = r.ToString();
-								finishReason = (modelInstance.InferenceResult.Tokens.Count >= chatCompletionCreateDto.MaxTokens ? "length" : "stop");
+								finishReason = ((modelInstance.InferenceResult.Tokens.Count >= chatCompletionCreateDto.MaxTokens && chatCompletionCreateDto.MaxTokens > -1) ? "length" : "stop");
 							}
 							else
 								messageDto.Content = null;
