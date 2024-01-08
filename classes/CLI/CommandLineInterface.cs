@@ -527,8 +527,7 @@ public partial class CommandLineInterface
 		LoggerManager.LogDebug("Running testing code");
 
 		var testing = new CodeTesting(_args);
-
-		return 0;
+		return await testing.Run();
 	}
 }
 
