@@ -236,7 +236,7 @@ public partial class LlamaModelInstance : BackgroundJob
 			BatchSize = (uint) LoadParams.NBatch,
 			RopeFrequencyBase = (float) LoadParams.RopeFreqBase,
 			RopeFrequencyScale = (float) LoadParams.RopeFreqScale,
-			UseFp16Memory = LoadParams.F16KV,
+			// UseFp16Memory = LoadParams.F16KV,
 			Threads = (uint) InferenceParams.NThreads,
 		};
 
