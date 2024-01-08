@@ -318,10 +318,41 @@ public partial class LlamaModelInstance : BackgroundJob
 
 	public void UnloadModel()
 	{
-		if (_state.CurrentSubState != _unloadModelState)
+		// _state.Transition(UNLOAD_MODEL_STATE);
+		ProcessUnloadModel();
+	}
+
+	public void ProcessUnloadModel()
+	{
+		LoggerManager.LogDebug("Unloading model");
+
+		this.Emit<LlamaModelUnloadStart>((o) => o.SetInstanceId(_instanceId));
+
+		if (_llamaWeights != null)
 		{
-			_state.Transition(UNLOAD_MODEL_STATE);
+			_llamaWeights.Dispose();
+			_llamaWeights.NativeHandle.Close();
+			_llamaWeights.NativeHandle.Dispose();
 		}
+		_llamaWeights = null;
+
+		if (!_stateful)
+		{
+			_modelParams = null;
+			if (_llamaContext != null)
+			{
+				_llamaContext.Dispose();
+				_llamaContext.NativeHandle.Close();
+				_llamaContext.NativeHandle.Dispose();
+			}
+			_llamaContext = null;
+		}
+		_executor = null;
+		_inferenceParams = null;
+
+		GC.Collect();
+
+		this.Emit<LlamaModelUnloadFinished>((o) => o.SetInstanceId(_instanceId));
 	}
 
 	public bool SafeToUnloadModel()
@@ -361,9 +392,9 @@ public partial class LlamaModelInstance : BackgroundJob
 		return (File.Exists(_contextStatePath) && File.Exists(_executorStatePath));
 	}
 
-	public void DeleteInstanceState()
+	public void DeleteInstanceState(bool keepStateFiles = true)
 	{
-		if (InstanceStateExists())
+		if (InstanceStateExists() && !keepStateFiles)
 		{
 			LoggerManager.LogDebug("Deleting context state file");
 			File.Delete(_contextStatePath);
@@ -382,6 +413,11 @@ public partial class LlamaModelInstance : BackgroundJob
 		}
 		_llamaWeights = null;
 		_modelParams = null;
+
+		if (_llamaContext != null)
+		{
+			_llamaContext.Dispose();
+		}
 		_llamaContext = null;
 		_executor = null;
 		_executorStateful = null;
@@ -655,22 +691,7 @@ public partial class LlamaModelInstance : BackgroundJob
 	{
 		LoggerManager.LogDebug("Entered UnloadModel update state");
 
-		this.Emit<LlamaModelUnloadStart>((o) => o.SetInstanceId(_instanceId));
-
-		_llamaWeights.Dispose();
-		_llamaWeights = null;
-
-		if (!_stateful)
-		{
-			_modelParams = null;
-			_llamaContext = null;
-		}
-		_executor = null;
-		_inferenceParams = null;
-
-		GC.Collect();
-
-		this.Emit<LlamaModelUnloadFinished>((o) => o.SetInstanceId(_instanceId));
+		ProcessUnloadModel();
 
 		// transition to inference finished state after unloading model
 		_state.Transition(INFERENCE_FINISHED_STATE);

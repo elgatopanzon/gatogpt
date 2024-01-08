@@ -177,13 +177,16 @@ public partial class LlamaInferenceService : Service
 		return false;
 	}
 
-	public void DestroyExistingInstances()
+	public void DestroyExistingInstances(bool keepStateFiles = true)
 	{
-		LoggerManager.LogDebug("Destroying all instances");
+		LoggerManager.LogDebug("Destroying all instances", "", "keepStateFiles", keepStateFiles);
 
 		foreach (var modelObj in _modelInstances)
 		{
-			modelObj.Value.DeleteInstanceState();
+			if (modelObj.Value.SafeToUnloadModel())
+			{
+				modelObj.Value.DeleteInstanceState(keepStateFiles);
+			}
 		}
 	}
 

@@ -300,7 +300,6 @@ public partial class ChatController : ControllerBase
 		while (chatCompletionDto.Choices.Count < chatCompletionCreateDto.N)
 		{
     		LlamaModelInstance modelInstance = _inferenceService.CreateModelInstance(chatCompletionCreateDto.Model, stateful:true);
-
     		// initiate SSE if stream = true
     		if (chatCompletionCreateDto.Stream)
     		{
@@ -446,6 +445,8 @@ public partial class ChatController : ControllerBase
 				});
 
 			currentIndex++;
+
+			_inferenceService.DestroyExistingInstances();
 		}
 
 		LoggerManager.LogDebug("Returning chatCompletionDto", "", "chatCompletionDto", chatCompletionDto);

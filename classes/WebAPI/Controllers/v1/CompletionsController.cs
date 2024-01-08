@@ -169,6 +169,8 @@ public partial class CompletionsController : ControllerBase
 				});
 
 			currentIndex++;
+
+			_inferenceService.DestroyExistingInstances();
 		}
 
 		completionDto.Id = $"cmpl-{GetHashCode()}-{completionDto.GetHashCode()}-{completionCreateDto.GetHashCode()}";
