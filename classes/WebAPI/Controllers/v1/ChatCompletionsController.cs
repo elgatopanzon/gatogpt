@@ -8,6 +8,7 @@ namespace GatoGPT.WebAPI.v1.Controllers;
 
 using GatoGPT.Service;
 using GatoGPT.Config;
+using GatoGPT.Event;
 using GatoGPT.LLM;
 using GatoGPT.WebAPI.Dtos;
 using GatoGPT.WebAPI.Entities;
@@ -285,11 +286,59 @@ public partial class ChatController : ControllerBase
 
 		ChatCompletionDto chatCompletionDto = new();
 
+		chatCompletionDto.Id = $"cmpl-{GetHashCode()}-{chatCompletionDto.GetHashCode()}-{chatCompletionCreateDto.GetHashCode()}";
+		chatCompletionDto.Created = ((DateTimeOffset) DateTime.UtcNow).ToUnixTimeSeconds();
+		chatCompletionDto.Model = chatCompletionCreateDto.Model;
+		chatCompletionDto.SystemFingerprint = GetHashCode().ToString();
+
+		// create SSE manager instance for handling sending of server side
+		// events
+    	var sse = new ServerSentEventManager(HttpContext);
+
 		// queue and generate responses until N is reached
 		int currentIndex = 0;
 		while (chatCompletionDto.Choices.Count < chatCompletionCreateDto.N)
 		{
     		LlamaModelInstance modelInstance = _inferenceService.CreateModelInstance(chatCompletionCreateDto.Model, stateful:true);
+
+    		// initiate SSE if stream = true
+    		if (chatCompletionCreateDto.Stream)
+    		{
+    			LoggerManager.LogDebug("Running in stream mode");
+
+    			sse.Start();
+
+				// stream responses when there's no tool calls
+				if (chatCompletionCreateDto.Stream && chatCompletionCreateDto.Tools.Count == 0)
+				{
+    				modelInstance.SubscribeOwner<LlamaInferenceToken>(async (e) => {
+						LoggerManager.LogDebug("Stream mode dispatching token SSE", "", "token", e.Token);
+
+						await sse.SendEvent(new ChatCompletionChunkDto() {
+							Id = chatCompletionDto.Id,
+							Model = chatCompletionCreateDto.Model,
+							Choices = new() {new() {
+								Index = currentIndex,
+								Delta = new() {
+									Role = "assistant",
+									Content = e.Token,
+								}}
+							},
+							InferenceResult = modelInstance.InferenceResult,
+						});
+
+    				}, isHighPriority: true);
+				}
+
+    			modelInstance.SubscribeOwner<LlamaInferenceFinished>(async (e) => {
+    				if (chatCompletionDto.Choices.Count >= (chatCompletionCreateDto.N - 1))
+    				{
+						LoggerManager.LogDebug("Stream mode finished");
+						await sse.Done();
+    				}
+    			}, isHighPriority:true);
+    		}
+
 			StatefulChatMessage message = await chatInstance.ChatAsync(modelInstance);
 
 			chatCompletionDto.Usage.PromptTokens += modelInstance.InferenceResult.PromptTokenCount;
@@ -370,6 +419,25 @@ public partial class ChatController : ControllerBase
 				}
 			}
 
+			if (chatCompletionCreateDto.Tools.Count > 0)
+			{
+				
+				await sse.SendEvent(new ChatCompletionChunkDto() {
+					Id = chatCompletionDto.Id,
+					Model = chatCompletionCreateDto.Model,
+					Choices = new() {new() {
+						Index = currentIndex,
+						Delta = new() {
+							Role = "assistant",
+							Content = messageDto.Content,
+							ToolCalls = messageDto.ToolCalls,
+						}}
+					},
+					InferenceResult = modelInstance.InferenceResult,
+				});
+			}
+
+
 			chatCompletionDto.Choices.Add(new ChatCompletionChoiceDto() {
 				FinishReason = finishReason,
 				Index = currentIndex,
@@ -380,12 +448,20 @@ public partial class ChatController : ControllerBase
 			currentIndex++;
 		}
 
-		chatCompletionDto.Id = $"cmpl-{GetHashCode()}-{chatCompletionDto.GetHashCode()}-{chatCompletionCreateDto.GetHashCode()}";
-		chatCompletionDto.Created = ((DateTimeOffset) DateTime.UtcNow).ToUnixTimeSeconds();
-		chatCompletionDto.Model = chatCompletionCreateDto.Model;
-		chatCompletionDto.SystemFingerprint = GetHashCode().ToString();
 
-    	return Ok(chatCompletionDto);
+		if (!chatCompletionCreateDto.Stream)
+		{
+    		return Ok(chatCompletionDto);
+		}
+		else {
+			LoggerManager.LogDebug("Waiting for SSE to finish");
+
+			await sse.WaitDone();
+
+			LoggerManager.LogDebug("SSE finished!");
+
+			return new EmptyResult();
+		}
     }
 }
 
