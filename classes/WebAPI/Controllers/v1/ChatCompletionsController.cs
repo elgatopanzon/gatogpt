@@ -448,6 +448,7 @@ public partial class ChatController : ControllerBase
 			currentIndex++;
 		}
 
+		LoggerManager.LogDebug("Returning chatCompletionDto", "", "chatCompletionDto", chatCompletionDto);
 
 		if (!chatCompletionCreateDto.Stream)
 		{

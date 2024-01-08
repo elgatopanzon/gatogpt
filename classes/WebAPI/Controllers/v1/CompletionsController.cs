@@ -176,6 +176,8 @@ public partial class CompletionsController : ControllerBase
 		completionDto.Model = completionCreateDto.Model;
 		completionDto.SystemFingerprint = GetHashCode().ToString();
 
+		LoggerManager.LogDebug("Returning completionDto", "", "completionDto", completionDto);
+
     	return Ok(completionDto);
     }
 }
