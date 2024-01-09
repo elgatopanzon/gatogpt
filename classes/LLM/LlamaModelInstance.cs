@@ -245,6 +245,7 @@ public partial class LlamaModelInstance : BackgroundJob
 			RopeFrequencyScale = (float) LoadParams.RopeFreqScale,
 			// UseFp16Memory = LoadParams.F16KV,
 			Threads = (uint) InferenceParams.NThreads,
+			NoKqvOffload = (!(LoadParams.KVOffload) || _stateful),
 		};
 
 		LoggerManager.LogDebug("Setup model params", "", "params", _modelParams);

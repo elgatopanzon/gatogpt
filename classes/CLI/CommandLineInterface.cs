@@ -86,6 +86,8 @@ public partial class CommandLineInterface
 		_commandArgs["generate"].Add(("--seed", "N", "Seed used for generation", false));
 		_commandArgs["generate"].Add(("--f16kv", "", "Use F16 k/v store", false));
 		_commandArgs["generate"].Add(("--no-f16kv", "", "Disable F16 k/v store", false));
+		_commandArgs["generate"].Add(("--kv-offload", "", "Offload KV store to GPU", false));
+		_commandArgs["generate"].Add(("--no-kv-offload", "", "Disable offloading KV store to GPU", false));
 		_commandArgs["generate"].Add(("--n-threads", "N", "CPU threads to use for inference", false));
 		_commandArgs["generate"].Add(("--keep", "N", "Tokens to keep from initial prompt", false));
 		_commandArgs["generate"].Add(("--n-predict", "N", "Max tokens to generate", false));
@@ -395,6 +397,14 @@ public partial class CommandLineInterface
 			loadParams.F16KV = true;
 		}
 		if (GetArgumentSwitchValue("--no-f16kv"))
+		{
+			loadParams.F16KV = false;
+		}
+		if (GetArgumentSwitchValue("--kv-offload"))
+		{
+			loadParams.F16KV = true;
+		}
+		if (GetArgumentSwitchValue("--no-kv-offload"))
 		{
 			loadParams.F16KV = false;
 		}

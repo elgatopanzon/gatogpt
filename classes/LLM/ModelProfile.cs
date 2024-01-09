@@ -149,6 +149,14 @@ public partial class LoadParams : VObject
 		set { _useMMap.Value = value; }
 	}
 
+	internal readonly VValue<bool> _kvOffload;
+
+	public bool KVOffload
+	{
+		get { return _kvOffload.Value; }
+		set { _kvOffload.Value = value; }
+	}
+
 
 	public LoadParams()
 	{
@@ -189,6 +197,10 @@ public partial class LoadParams : VObject
 	    	.ChangeEventsEnabled();
 
 		_useMMap = AddValidatedValue<bool>(this)
+		    .Default(true)
+		    .ChangeEventsEnabled();
+
+		_kvOffload = AddValidatedValue<bool>(this)
 		    .Default(true)
 		    .ChangeEventsEnabled();
 	}
