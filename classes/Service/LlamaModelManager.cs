@@ -85,7 +85,7 @@ public partial class LlamaModelManager : Service
 				def.Value.ModelResource = GetModelResource(def.Value.ModelResourceId);
 
 				// find matching preset for filename
-				def.Value.ModelProfile = _presetsConfig.GetPresetForFilename(def.Value.ModelResource.Definition.Path);
+				def.Value.ModelProfile = _presetsConfig.GetPresetForFilename(def.Value.ModelResource.Definition.Path).DeepCopy();
 
 				// merge profile with profile overrides, if set
 				if (def.Value.ModelProfileOverride != null)
