@@ -211,8 +211,15 @@ public partial class LlamaModelInstance : BackgroundJob
 
 			_instanceId = id;
 
+			// create the folder to hold the new state
+			Directory.CreateDirectory(_contextStatePath.Replace(_contextStatePath.GetFile(), ""));
+
+			// move the state files
 			File.Move(prevContextState, _contextStatePath);
 			File.Move(prevExecutorState, _executorStatePath);
+
+			// remove the old state folder
+			Directory.Delete(prevContextState.Replace(prevContextState.GetFile(), ""));
 		}
 
 		_instanceId = id;
