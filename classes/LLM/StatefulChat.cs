@@ -84,7 +84,7 @@ public partial class StatefulChat
 			if (foundStateHash.Length > 0)
 			{
 				LoggerManager.LogDebug("State found!", "", "hash", foundStateHash);
-				lastNIndex++;
+				// lastNIndex++;
 				LoggerManager.LogDebug("Messages to skip", "", "skipCount", _chatHistory.Count - lastNIndex);
 				LoggerManager.LogDebug("Number of new messages", "", "processCount", lastNIndex);
 
@@ -223,12 +223,12 @@ public partial class StatefulChat
 		{
 			if (lastMessage.Role == "user")
 			{
-				// formattedMessages.Add($"Write your response as if you were {assistantName}, without \"{assistantName}: \"");
+				formattedMessages.Add($"{assistantName}: ");
 				_inferenceParams.Antiprompts.Add(lastMessage.GetUserName()+":");
 			}
 			else
 			{
-				// formattedMessages.Add($"Write your response as if you were {assistantName}, without \"{assistantName}: \"");
+				formattedMessages.Add($"{userName}: ");
 				_inferenceParams.Antiprompts.Add(lastMessage.GetUserName()+":");
 			}
 		}
@@ -256,15 +256,22 @@ public partial class StatefulChat
 
 		InferenceResult inferenceResult = await _inferenceService.InferAsync(modelInstance.ModelDefinition.Id, GetPrompt(), stateful:_stateful, (_instanceStateId.Length > 0 ? _instanceStateId : _modelInstance.InstanceId), _loadParams, _inferenceParams);
 
-		string content = inferenceResult.OutputStripped;
+		string content = inferenceResult.Output;
 
-		// strip out chat names from the response
-		foreach (string name in _knownUserNames)
-		{
-			content = content.Replace($"{name}: ", "");
-			content = content.Replace($"{name}:", "");
-			content = content.Trim();
-		}
+		// append message to history and save context
+		_chatHistory.Add(new StatefulChatMessage() {
+			Content = inferenceResult.Output,
+			Role = "assistant",
+		});
+		_inferenceService.SetModelInstanceId(_modelInstance.InstanceId, GetInstanceId(GetStateInstanceId(0)));
+
+		// // strip out chat names from the response
+		// foreach (string name in _knownUserNames)
+		// {
+		// 	content = content.Replace($"{name}: ", "");
+		// 	content = content.Replace($"{name}:", "");
+		// 	content = content.Trim();
+		// }
 
 		LoggerManager.LogDebug("Instance state id", "", "instanceStateId", _instanceStateId);
 
