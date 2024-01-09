@@ -80,12 +80,24 @@ public partial class LlamaModelManager : Service
 			if (def.Value.ModelResourceId.Length > 0)
 			{
 				def.Value.Id = def.Key;
+
+				LoggerManager.LogDebug("Preparing model definition profile", "", "modelDefinition", def.Key);
 				
 				// fetch the resource object from resources
 				def.Value.ModelResource = GetModelResource(def.Value.ModelResourceId);
 
 				// find matching preset for filename
-				def.Value.ModelProfile = _presetsConfig.GetPresetForFilename(def.Value.ModelResource.Definition.Path).DeepCopy();
+				if (def.Value.ProfilePreset != null && def.Value.ProfilePreset.Length > 0 && _presetsConfig.PresetExists(def.Value.ProfilePreset))
+				{
+					LoggerManager.LogDebug("Overriding model with preset", "", "preset", $"{def.Key}={def.Value.ProfilePreset}");
+
+					def.Value.ModelProfile = _presetsConfig.GetDefaultProfile(def.Value.ProfilePreset).DeepCopy();
+
+				}
+				else
+				{
+					def.Value.ModelProfile = _presetsConfig.GetPresetForFilename(def.Value.ModelResource.Definition.Path).DeepCopy();
+				}
 
 				// merge profile with profile overrides, if set
 				if (def.Value.ModelProfileOverride != null)
@@ -94,6 +106,8 @@ public partial class LlamaModelManager : Service
 
 					def.Value.ModelProfile.MergeFrom(def.Value.ModelProfileOverride);
 				}
+
+				LoggerManager.LogDebug("Final model profile", "", def.Key, def.Value.ModelProfile);
 			}
 		}
 	}

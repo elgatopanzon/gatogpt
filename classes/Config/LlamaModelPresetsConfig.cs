@@ -76,6 +76,11 @@ public partial class LlamaModelPresetsConfig : VConfig
 		throw new InvalidModelPreset($"The model preset {profileKey} does not exist in DefaultModelProfiles!");
 	}
 
+	public bool PresetExists(string profileKey)
+	{
+		return DefaultModelProfiles.ContainsKey(profileKey);
+	}
+
 	private String WildCardToRegular(String value) {
   		return "^" + Regex.Escape(value).Replace("\\*", ".*") + "$"; 
 	}
