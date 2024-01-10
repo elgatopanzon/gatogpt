@@ -149,6 +149,8 @@ public partial class LlamaCacheManager
 
 	public void DeleteCache()
 	{
+		LoggerManager.LogDebug("Deleting all cache", "", "stateId", _stateId);
+
 		Directory.Delete(GetCacheBaseDir(), true);
 	}
 }

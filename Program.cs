@@ -53,38 +53,13 @@ class Program
 
 		LoggerManager.LogDebug("GodotEGP ready!");
 
+		// init LlamaCacheService
+		ServiceRegistry.Get<LlamaCacheService>();
+
     	// CLI application
     	var cli = new CommandLineInterface(args);
 
 		// execute the CLI parser
 		return await cli.Run();
     }
-}
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
-
-public class TestNode : Node
-{
-	public override void _Ready()
-	{
-		LoggerManager.LogDebug("This node is ready!");
-	}
-
-	public override void _Process(double delta)
-	{
-		// LoggerManager.LogDebug("This node is being processed!", "", "delta", delta);
-	}
-
-	public void TestMethod()
-	{
-		LoggerManager.LogDebug("Test method");
-	}
-
-	public void TestCallDeferred()
-	{
-		CallDeferred("TestMethod");
-	}
 }
