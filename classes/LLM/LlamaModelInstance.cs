@@ -33,16 +33,7 @@ public partial class LlamaModelInstance : BackgroundJob
 		set { _instanceId = value; }
 	}
 
-	private string _contextStatePath {
-		get {
-			return Path.Combine(OS.GetUserDataDir(), "State", InstanceId, "context");
-		}
-	}
-	private string _executorStatePath {
-		get {
-			return Path.Combine(OS.GetUserDataDir(), "State", InstanceId, "executor");
-		}
-	}
+	private LlamaCacheManager _cacheManager { get; set; }
 
 	public bool Finished
 	{
@@ -82,7 +73,6 @@ public partial class LlamaModelInstance : BackgroundJob
 	private LLamaContext _llamaContext;
 
 	// the LLamaSharp executor, accepting the created context
-	// private StatelessExecutor _executor;
 	private InstructExecutor _executorStateful;
 	private StatelessExecutor _executor;
 	private bool _stateful = false;
@@ -167,18 +157,6 @@ public partial class LlamaModelInstance : BackgroundJob
 		// if we want to re-run inferrence, we need to restart from loadModel state
 		_state.AddTransition(_inferenceFinishedState, _loadModelState, LOAD_MODEL_STATE);
 
-		// // 1. unload the model
-		// _state.AddTransition(_inferenceFinishedState, _unloadModelState, UNLOAD_MODEL_STATE);
-		// // // 2. re-setup the model if the definition changed
-		// // _state.AddTransition(_inferenceFinishedState, _setupState, SETUP_STATE);
-		// // _state.AddTransition(_inferenceFinishedState, _loadModelState, LOAD_MODEL_STATE);
-        //
-		// // from the unload model state we have to re-setup the params before we
-		// // load the model again
-		// _state.AddTransition(_unloadModelState, _setupState, SETUP_STATE);
-		// _state.AddTransition(_unloadModelState, _setupState, INFERENCE_RUNNING_STATE);
-		// _state.AddTransition(_unloadModelState, _loadModelState, LOAD_MODEL_STATE);
-
 		// subscribe to thread events
 		this.SubscribeOwner<LlamaModelLoadStart>(_On_ModelLoadStart, true);
 		this.SubscribeOwner<LlamaModelLoadFinished>(_On_ModelLoadFinished, true);
@@ -199,27 +177,6 @@ public partial class LlamaModelInstance : BackgroundJob
 		if (id == "")
 		{
 			id = $"{_modelDefinition.Id}-{GetHashCode()}";
-		}
-
-		// move existing state if id changed
-		if (_instanceId != null && InstanceStateExists() && _instanceId != id)
-		{
-			LoggerManager.LogDebug("Moving instance state", "", "move", $"from:{_instanceId}, to:{id}");
-
-			string prevContextState = _contextStatePath;
-			string prevExecutorState = _executorStatePath;
-
-			_instanceId = id;
-
-			// create the folder to hold the new state
-			Directory.CreateDirectory(_contextStatePath.Replace(_contextStatePath.GetFile(), ""));
-
-			// move the state files
-			File.Move(prevContextState, _contextStatePath);
-			File.Move(prevExecutorState, _executorStatePath);
-
-			// remove the old state folder
-			Directory.Delete(prevContextState.Replace(prevContextState.GetFile(), ""));
 		}
 
 		_instanceId = id;
@@ -368,60 +325,11 @@ public partial class LlamaModelInstance : BackgroundJob
 		return (_state.CurrentSubState != _loadModelState && _state.CurrentSubState != _inferenceRunningState);
 	}
 
-	public async Task<bool> SaveInstanceState(string subStateId = "")
+	public void DeleteInstanceState(bool keepCache = true)
 	{
-		LoggerManager.LogDebug("Saving state to file");
-
-		string instanceIdBk = InstanceId;
-
-		if (subStateId.Length > 0)
+		if (!keepCache)
 		{
-			InstanceId += "-"+subStateId;
-		}
-
-		Directory.CreateDirectory(_contextStatePath.Replace("/"+_contextStatePath.GetFile(), ""));
-		Directory.CreateDirectory(_executorStatePath.Replace("/"+_executorStatePath.GetFile(), ""));
-
-		_llamaContext.SaveState(_contextStatePath);
-		await _executorStateful.SaveState(_executorStatePath);
-
-		InstanceId = instanceIdBk;
-
-		return true;
-	}
-
-	public async Task<bool> LoadInstanceState()
-	{
-		if (InstanceStateExists())
-		{
-			LoggerManager.LogDebug("Loading context state from file");
-			_llamaContext.LoadState(_contextStatePath);
-
-			LoggerManager.LogDebug("Loading executor state from file");
-			await _executorStateful.LoadState(_executorStatePath);
-		}
-
-		return true;
-	}
-
-	public bool InstanceStateExists()
-	{
-		return (File.Exists(_contextStatePath) && File.Exists(_executorStatePath));
-	}
-
-	public void DeleteInstanceState(bool keepStateFiles = true)
-	{
-		if (InstanceStateExists() && !keepStateFiles)
-		{
-			LoggerManager.LogDebug("Deleting context state file");
-			File.Delete(_contextStatePath);
-
-			LoggerManager.LogDebug("Deleting executor state file");
-			File.Delete(_executorStatePath);
-
-			// delete base path
-			Directory.Delete(_contextStatePath.Replace("/"+_contextStatePath.GetFile(), ""));
-			// Directory.Delete(_executorStatePath.Replace("/"+_executorStatePath.GetFile(), ""));
+			_cacheManager.DeleteCache();
 		}
 
 		if (_llamaWeights != null)
@@ -577,23 +485,56 @@ public partial class LlamaModelInstance : BackgroundJob
 		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
 		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);
 
+		SetupInferenceParams();
+
+		// re-calculate tokens per second in case it was altered by cache
 		if (fullPrompt.Length > 0)
 		{
 			InferenceResult.PromptTokenCount = _llamaWeights.NativeHandle.Tokenize(fullPrompt, true, false, System.Text.Encoding.UTF8).Count();
 		}
 
-		SetupInferenceParams();
-
 		// start the inference loop
 		if (_stateful)
 		{
+			// load prompt cache and get adjusted prompt string
+			fullPrompt = await _cacheManager.GetCachedPrompt(fullPrompt, InferenceParams, _llamaContext, _executorStateful);
+
+
+			LoggerManager.LogDebug("Full prompt after cache", "", "fullPrompt", fullPrompt);
+
+			// create the state with nPredict = 0 to not predict anything and
+			// use this as a pre-generation state
+			// why? allows us to issue the same prompt and it will act as a
+			// re-generation except from cache
+			var maxTokens = _inferenceParams.MaxTokens;
+			_inferenceParams.MaxTokens = 0;
+
 			await foreach (var text in _executorStateful.InferAsync(fullPrompt, _inferenceParams))
+    		{
+    			LoggerManager.LogDebug("Pre-state token generated", "", "preStateToken", text);
+    		}
+
+			// save prompt cache pre-generation
+			await _cacheManager.SavePromptCache(fullPrompt, _llamaContext, _executorStateful);
+
+			_inferenceParams.MaxTokens = maxTokens;
+
+			// generate without passing a prompt (the prompt should be in the
+			// context already)
+			await foreach (var text in _executorStateful.InferAsync(" ", _inferenceParams))
     		{
     			if (ProcessInference(text))
     			{
     				break;
     			}
     		}
+
+			// // save prompt cache including the generated output
+			string promptPrev = Prompt;
+			Prompt += InferenceResult.Output;
+			string combinedPrompt = GetCurrentPrompt();
+			Prompt = promptPrev;
+			await _cacheManager.SavePromptCache(combinedPrompt, _llamaContext, _executorStateful);
 		}
 		else
 		{
@@ -609,36 +550,14 @@ public partial class LlamaModelInstance : BackgroundJob
     	return true;
 	}
 
-	public async Task<bool> ExecuteInferencePreState()
+	/***************************
+	*  Cache manager methods  *
+	***************************/
+	public void InitCacheManager()
 	{
-
-		// set the inference start time
-		var preStateInference = new InferenceResult();
-
-		// format the input prompt
-		string fullPrompt = GetCurrentPrompt();
-
-		LoggerManager.LogDebug("Full prompt before inference", "", "fullPrompt", fullPrompt);
-
-		SetupInferenceParams();
-
-		var inferenceParamsPreState = _inferenceParams;
-		inferenceParamsPreState.MaxTokens = 0;
-
-		// start the inference loop
-		if (_stateful)
-		{
-			await foreach (var text in _executorStateful.InferAsync(" ", inferenceParamsPreState))
-    		{
-    			LoggerManager.LogDebug("Pre-state token generated", "", "preStateToken", text);
-    		}
-		}
-
-		// save the state
-		await SaveInstanceState("pre");
-
-    	return true;
+		_cacheManager = new LlamaCacheManager(_modelParams.ContextSize, _modelParams.RopeFrequencyBase, _modelParams.RopeFrequencyScale, _modelDefinition.Id, _modelDefinition.ModelResource.Definition.FileHash);
 	}
+	
 
 	/*******************
 	*  State methods  *
@@ -647,13 +566,6 @@ public partial class LlamaModelInstance : BackgroundJob
 	public void _State_Setup_OnEnter()
 	{
 		LoggerManager.LogDebug("Entered Setup state");
-
-		// if (_autorunOnLoad)
-		// {
-		// 	LoggerManager.LogDebug("Autorun on load enabled");
-        //
-		// 	_state.Transition(INFERENCE_RUNNING_STATE);
-		// }
 	}
 
 	public void _State_LoadModel_OnEnter()
@@ -683,6 +595,8 @@ public partial class LlamaModelInstance : BackgroundJob
 
 		if (_stateful)
 		{
+			InitCacheManager();
+
 			// only create a new context if one doesn't exist
 			if (_llamaContext == null)
 			{
@@ -691,9 +605,6 @@ public partial class LlamaModelInstance : BackgroundJob
 
 			// create new executor instance
 			CreateInferenceExecutor();
-
-			// reload the state if it exists
-			await LoadInstanceState();
 		}
 		else {
 			CreateStatelessInferenceExecutor();
@@ -721,11 +632,6 @@ public partial class LlamaModelInstance : BackgroundJob
 	{
 		LoggerManager.LogDebug("Entered InferenceRunning update state");
 
-		if (_stateful)
-		{
-			await ExecuteInferencePreState();
-		}
-
 		await ExecuteInference();
 
 		_state.Transition(UNLOAD_MODEL_STATE);
@@ -734,11 +640,6 @@ public partial class LlamaModelInstance : BackgroundJob
 	public async void _State_UnloadModel_OnEnter()
 	{
 		LoggerManager.LogDebug("Entered UnloadModel state");
-
-		if (_stateful)
-		{
-			await SaveInstanceState();
-		}
 
 		Run();
 	}
