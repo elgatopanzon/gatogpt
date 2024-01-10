@@ -368,15 +368,24 @@ public partial class LlamaModelInstance : BackgroundJob
 		return (_state.CurrentSubState != _loadModelState && _state.CurrentSubState != _inferenceRunningState);
 	}
 
-	public async Task<bool> SaveInstanceState()
+	public async Task<bool> SaveInstanceState(string subStateId = "")
 	{
 		LoggerManager.LogDebug("Saving state to file");
+
+		string instanceIdBk = InstanceId;
+
+		if (subStateId.Length > 0)
+		{
+			InstanceId += "-"+subStateId;
+		}
 
 		Directory.CreateDirectory(_contextStatePath.Replace("/"+_contextStatePath.GetFile(), ""));
 		Directory.CreateDirectory(_executorStatePath.Replace("/"+_executorStatePath.GetFile(), ""));
 
 		_llamaContext.SaveState(_contextStatePath);
 		await _executorStateful.SaveState(_executorStatePath);
+
+		InstanceId = instanceIdBk;
 
 		return true;
 	}
@@ -600,6 +609,37 @@ public partial class LlamaModelInstance : BackgroundJob
     	return true;
 	}
 
+	public async Task<bool> ExecuteInferencePreState()
+	{
+
+		// set the inference start time
+		var preStateInference = new InferenceResult();
+
+		// format the input prompt
+		string fullPrompt = GetCurrentPrompt();
+
+		LoggerManager.LogDebug("Full prompt before inference", "", "fullPrompt", fullPrompt);
+
+		SetupInferenceParams();
+
+		var inferenceParamsPreState = _inferenceParams;
+		inferenceParamsPreState.MaxTokens = 0;
+
+		// start the inference loop
+		if (_stateful)
+		{
+			await foreach (var text in _executorStateful.InferAsync(" ", inferenceParamsPreState))
+    		{
+    			LoggerManager.LogDebug("Pre-state token generated", "", "preStateToken", text);
+    		}
+		}
+
+		// save the state
+		await SaveInstanceState("pre");
+
+    	return true;
+	}
+
 	/*******************
 	*  State methods  *
 	*******************/
@@ -680,6 +720,11 @@ public partial class LlamaModelInstance : BackgroundJob
 	public async void _State_InferenceRunning_OnUpdate()
 	{
 		LoggerManager.LogDebug("Entered InferenceRunning update state");
+
+		if (_stateful)
+		{
+			await ExecuteInferencePreState();
+		}
 
 		await ExecuteInference();
 
