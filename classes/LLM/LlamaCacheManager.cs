@@ -114,7 +114,7 @@ public partial class LlamaCacheManager
     		LoggerManager.LogDebug("", "", "cachePrompt", promptCache);
     		LoggerManager.LogDebug("", "", "currentPrompt", currentPrompt);
 
-    		if (promptCache.StartsWith(currentPrompt));
+    		if (promptCache.StartsWith(currentPrompt))
     		{
     			LoggerManager.LogDebug("Prompt cache hit!");
 
