@@ -105,14 +105,14 @@ public partial class LlamaCacheManager
 
 		foreach (DirectoryInfo cacheDir in dirs)
 		{
-    		LoggerManager.LogDebug("Found cache dir", "", "cacheDir", cacheDir.ToString());
+    		// LoggerManager.LogDebug("Found cache dir", "", "cacheDir", cacheDir.ToString());
 
 			// strip the input prefix and suffix when comparing the prompts
     		string promptCache = File.ReadAllText(Path.Combine(cacheDir.ToString(), "prompt")).Replace(inferenceParams.InputPrefix, "").Replace(inferenceParams.InputSuffix, "");
     		string currentPrompt = prompt.Replace(inferenceParams.InputPrefix, "").Replace(inferenceParams.InputSuffix, "");
 
-    		LoggerManager.LogDebug("", "", "cachePrompt", promptCache);
-    		LoggerManager.LogDebug("", "", "currentPrompt", currentPrompt);
+    		// LoggerManager.LogDebug("", "", "cachePrompt", promptCache);
+    		// LoggerManager.LogDebug("", "", "currentPrompt", currentPrompt);
 
     		if (promptCache.StartsWith(currentPrompt))
     		{
@@ -133,6 +133,8 @@ public partial class LlamaCacheManager
     		}
 
 		}
+
+		LoggerManager.LogDebug("Cache miss!");
 
 		return prompt;
 	}
