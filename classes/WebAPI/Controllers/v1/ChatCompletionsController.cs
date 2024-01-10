@@ -142,7 +142,7 @@ public partial class ChatController : ControllerBase
 		}
 
 		// init new chat instance
-    	StatefulChat chatInstance = new(true, loadParams, inferenceParams);
+    	StatefulChat chatInstance = new(false, loadParams, inferenceParams);
     	List<StatefulChatMessage> messageEntities = new();
 
     	foreach (var messageCreateDto in chatCompletionCreateDto.Messages)
