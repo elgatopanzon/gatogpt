@@ -110,7 +110,7 @@
       },
       "InferenceParams": {
         "InputPrefix": "[INST]",
-        "InputSuffix": "[/INST] ",
+        "InputSuffix": "[/INST]",
         "PrePromptPrefix": "",
         "PrePromptSuffix": "",
         "Antiprompts": [
