@@ -30,9 +30,6 @@ class Program
 		GodotEGP = new GodotEGP.Main();
 		SceneTree.Instance.Root.AddChild(GodotEGP);
 
-		var serviceWorker = new SceneTreeServiceWorker();
-		await serviceWorker.StartAsync(new CancellationToken());
-
 		// init LLMConfigHandler
 		SceneTree.Instance.Root.AddChild(new LlamaConfigHandler());
 		SceneTree.Instance.Root.AddChild(new EmbeddingConfigHandler());
@@ -51,7 +48,13 @@ class Program
 			return 0;
 		}
 
-		LoggerManager.LogDebug("GodotEGP ready!");
+		LoggerManager.LogInfo("Services ready");
+
+		// create SceneTree service worker instance
+		var serviceWorker = new SceneTreeServiceWorker();
+		await serviceWorker.StartAsync(new CancellationToken());
+
+		LoggerManager.LogInfo("GodotEGP ready!");
 
 		// init LlamaCacheService
 		ServiceRegistry.Get<LlamaCacheService>();
