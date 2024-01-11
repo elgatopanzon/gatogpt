@@ -24,6 +24,7 @@ using GodotEGP.Handler;
 public partial class LlamaConfigHandler : Handler
 {
 	private LlamaModelManager _LLMModelManager;
+	private LlamaCacheService _LlamaCacheService;
 
 	public LlamaConfigHandler()
 	{
@@ -34,6 +35,7 @@ public partial class LlamaConfigHandler : Handler
 		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectType(typeof(ResourceManager)));
 		
 		_LLMModelManager = ServiceRegistry.Get<LlamaModelManager>();
+		_LlamaCacheService = ServiceRegistry.Get<LlamaCacheService>();
 	}
 
 	public void _On_ConfigManager_Ready(IEvent e)
@@ -50,6 +52,12 @@ public partial class LlamaConfigHandler : Handler
 
 		// trigger changed event
 		_On_ModelsConfig_Changed(sc, pc, dc);
+
+		// subscribe to LlamaCacheManagerConfig
+		var cm = ServiceRegistry.Get<ConfigManager>().Get<LlamaCacheManagerConfig>();
+		cm.SubscribeOwner<ValidatedValueChanged>(_On_CacheConfig_ValueChanged, isHighPriority: true);
+
+		_On_CacheConfig_Changed(cm);
 	}
 
 	public void _On_ModelsConfig_ValueChanged(IEvent e)
@@ -66,6 +74,18 @@ public partial class LlamaConfigHandler : Handler
 		_LLMModelManager.SetConfig(managerConfig, presetsConfig, definitionsConfig);
 
 		_LLMModelManager.SetModelResources(ServiceRegistry.Get<ResourceManager>().GetResources<LlamaModel>());
+	}
+
+	public void _On_CacheConfig_ValueChanged(IEvent e)
+	{
+		var cm = ServiceRegistry.Get<ConfigManager>().Get<LlamaCacheManagerConfig>();
+
+		_On_CacheConfig_Changed(cm);
+	}
+
+	public void _On_CacheConfig_Changed(LlamaCacheManagerConfig cm)
+	{
+		_LlamaCacheService.SetConfig(cm);
 	}
 }
 

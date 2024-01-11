@@ -6,6 +6,8 @@
 
 namespace GatoGPT.Service;
 
+using GatoGPT.Config;
+
 using Godot;
 using GodotEGP.Objects.Extensions;
 using GodotEGP.Logging;
@@ -17,13 +19,33 @@ using GodotEGP.Misc;
 public partial class LlamaCacheService : Service
 {
 	private string _cacheBaseDir { get; set; } = Path.Combine(OS.GetUserDataDir(), "Cache");
-	private long _maxCachesSizeMb { get; set; } = 10000; // TODO: add this to a global deployable config
-	private int _maxCacheAgeMin { get; set; } = 60;
-	private int _cacheCleanTimeout { get; set; } = 60;
+
+	private LlamaCacheManagerConfig _config { get; set; }
+
+	private Timer _cleanupTimer;
 
 	public LlamaCacheService()
 	{
-		
+		_cleanupTimer = new Timer();
+	}
+
+	public void SetConfig(LlamaCacheManagerConfig config)
+	{
+		LoggerManager.LogDebug("Setting cache config", "", "config", config);
+
+		_config = config;
+
+		_cleanupTimer.WaitTime = _config.CacheTimeoutSec;
+
+		if (!GetReady())
+		{
+			_SetServiceReady(true);
+		}
+
+		_cleanupTimer.Stop();
+		_cleanupTimer.Start(_config.CacheTimeoutSec);
+
+		Cleanup();
 	}
 
 	// Called when the node enters the scene tree for the first time.
@@ -39,7 +61,6 @@ public partial class LlamaCacheService : Service
 	// Called when service is registered in manager
 	public override void _OnServiceRegistered()
 	{
-		_SetServiceReady(true);
 	}
 
 	// Called when service is deregistered from manager
@@ -54,16 +75,15 @@ public partial class LlamaCacheService : Service
 		// setup a Timer node to run the cleanup process
 		LoggerManager.LogDebug("Setting up cleanup timer");
 
-		var cleanupTimer = new Timer();
-		cleanupTimer.WaitTime = _cacheCleanTimeout;
-		cleanupTimer.Autostart = true;
-		cleanupTimer.OneShot = false;
-		cleanupTimer.SubscribeSignal(StringNames.Instance["timeout"], false, _On_CleanupTimer_Timeout);
+		_cleanupTimer.WaitTime = _config.CacheTimeoutSec;
+		_cleanupTimer.Autostart = true;
+		_cleanupTimer.OneShot = false;
+		_cleanupTimer.SubscribeSignal(StringNames.Instance["timeout"], false, _On_CleanupTimer_Timeout);
 
-		AddChild(cleanupTimer);
+		AddChild(_cleanupTimer);
 	}
 
-	public void _On_CleanupTimer_Timeout(IEvent e)
+	public void Cleanup()
 	{
 		if (!Directory.Exists(_cacheBaseDir))
 		{
@@ -87,32 +107,40 @@ public partial class LlamaCacheService : Service
 				long cacheSize = GetDirectoryTotalSize(cache);
 				totalCacheSizeMb += cacheSize;
 
-				if ((DateTime.Now - cache.CreationTime).TotalMinutes > _maxCacheAgeMin)
+				if ((DateTime.Now - cache.CreationTime).TotalMinutes > _config.MaxCacheAgeMin)
 				{
 					allCaches.Add(cache);
 				}
 			}
 		}
 
-		LoggerManager.LogDebug("Total cache size", "", "totalCacheSize", $"{totalCacheSizeMb}, maxCacheSize:{_maxCachesSizeMb}");
-		LoggerManager.LogDebug("Caches eligable for cleaning", "", "total", allCaches.Count);
-
-		// cleanup caches until cache size is below the max
-		if (totalCacheSizeMb > _maxCachesSizeMb)
+		if (allCaches.Count > 0)
 		{
-			foreach(var c in allCaches.OrderBy(p => p.CreationTime).ToArray())
+			LoggerManager.LogDebug("Caches eligable for cleaning", "", "total", allCaches.Count);
+			LoggerManager.LogDebug("Total cache size", "", "totalCacheSize", $"{totalCacheSizeMb}, maxCacheSize:{_config.MaxCacheSizeMb}");
+
+			// cleanup caches until cache size is below the max
+			if (totalCacheSizeMb > _config.MaxCacheSizeMb)
 			{
-				LoggerManager.LogDebug("Purging cache dir", "", "cacheDir", $"{c.ToString()}, CreationTime:{c.CreationTime}");
-
-				totalCacheSizeMb -= GetDirectoryTotalSize(c);
-				Directory.Delete(c.ToString(), true);
-
-				if (totalCacheSizeMb < _maxCachesSizeMb)
+				foreach(var c in allCaches.OrderBy(p => p.CreationTime).ToArray())
 				{
-					break;
+					LoggerManager.LogDebug("Purging cache dir", "", "cacheDir", $"{c.ToString()}, CreationTime:{c.CreationTime}");
+
+					totalCacheSizeMb -= GetDirectoryTotalSize(c);
+					Directory.Delete(c.ToString(), true);
+
+					if (totalCacheSizeMb < _config.MaxCacheSizeMb)
+					{
+						break;
+					}
 				}
 			}
 		}
+	}
+
+	public void _On_CleanupTimer_Timeout(IEvent e)
+	{
+		Cleanup();
 	}
 
 	public long BytesToMb(long bytes)
