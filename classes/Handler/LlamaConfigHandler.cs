@@ -47,7 +47,7 @@ public partial class LlamaConfigHandler : Handler
 		var pc = ServiceRegistry.Get<ConfigManager>().Get<LlamaModelPresetsConfig>();
 		pc.SubscribeOwner<ValidatedValueChanged>(_On_ModelsConfig_ValueChanged, isHighPriority: true);
 
-		var dc = ServiceRegistry.Get<ConfigManager>().Get<LlamaModelDefinitionsConfig>();
+		var dc = ServiceRegistry.Get<ConfigManager>().Get<TextGenerationModelDefinitionsConfig>();
 		dc.SubscribeOwner<ValidatedValueChanged>(_On_ModelsConfig_ValueChanged, isHighPriority: true);
 
 		// trigger changed event
@@ -64,12 +64,12 @@ public partial class LlamaConfigHandler : Handler
 	{
 		var sc = ServiceRegistry.Get<ConfigManager>().Get<TextGenerationModelManagerConfig>();
 		var pc = ServiceRegistry.Get<ConfigManager>().Get<LlamaModelPresetsConfig>();
-		var dc = ServiceRegistry.Get<ConfigManager>().Get<LlamaModelDefinitionsConfig>();
+		var dc = ServiceRegistry.Get<ConfigManager>().Get<TextGenerationModelDefinitionsConfig>();
 
 		_On_ModelsConfig_Changed(sc, pc, dc);
 	}
 
-	public void _On_ModelsConfig_Changed(TextGenerationModelManagerConfig managerConfig, LlamaModelPresetsConfig presetsConfig, LlamaModelDefinitionsConfig definitionsConfig)
+	public void _On_ModelsConfig_Changed(TextGenerationModelManagerConfig managerConfig, LlamaModelPresetsConfig presetsConfig, TextGenerationModelDefinitionsConfig definitionsConfig)
 	{
 		_LLMModelManager.SetConfig(managerConfig, presetsConfig, definitionsConfig);
 
