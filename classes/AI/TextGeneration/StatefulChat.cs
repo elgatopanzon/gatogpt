@@ -27,8 +27,8 @@ public partial class StatefulChat
 	public bool _stateful { get; set; }
 	public LlamaModelInstance _modelInstance  { get; set; }
 
-	public AI.TextGeneration.LoadParams _loadParams { get; set; }
-	public AI.TextGeneration.InferenceParams _inferenceParams { get; set; }
+	public AI.TextGeneration.LlamaLoadParams _loadParams { get; set; }
+	public AI.TextGeneration.LlamaInferenceParams _inferenceParams { get; set; }
 
 	public List<StatefulChatMessage> _chatHistory { get; set; }
 	public List<StatefulChatMessage> _chatHistoryNew { get; set; }
@@ -38,7 +38,7 @@ public partial class StatefulChat
 
 	public List<string> _knownUserNames { get; set; }
 
-	public StatefulChat(bool stateful,  AI.TextGeneration.LoadParams loadParams, AI.TextGeneration.InferenceParams inferenceParams)
+	public StatefulChat(bool stateful,  AI.TextGeneration.LlamaLoadParams loadParams, AI.TextGeneration.LlamaInferenceParams inferenceParams)
 	{
 		_stateful = stateful;
 		_loadParams = loadParams;

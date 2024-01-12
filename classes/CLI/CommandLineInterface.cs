@@ -279,8 +279,8 @@ public partial class CommandLineInterface
 
 		LoggerManager.LogDebug("Starting generation", "", "modelId", modelId);
 
-		LoadParams loadParams = GetGenerationLoadParams();
-		InferenceParams inferenceParams = GetGenerationInferenceParams();
+		LlamaLoadParams loadParams = GetGenerationLoadParams();
+		LlamaInferenceParams inferenceParams = GetGenerationInferenceParams();
 
 		LlamaModelInstance instance;
 		bool isStateful = false;
@@ -363,9 +363,9 @@ public partial class CommandLineInterface
 		return 0;
 	}
 
-	public LoadParams GetGenerationLoadParams()
+	public LlamaLoadParams GetGenerationLoadParams()
 	{
-		var loadParams = new LoadParams();
+		var loadParams = new LlamaLoadParams();
 
 		if (ArgExists("--n-ctx"))
 			loadParams.NCtx = Convert.ToInt32(GetArgumentValue("--n-ctx", loadParams.NCtx.ToString()));
@@ -418,9 +418,9 @@ public partial class CommandLineInterface
 		return loadParams;
 	}
 
-	public InferenceParams GetGenerationInferenceParams()
+	public LlamaInferenceParams GetGenerationInferenceParams()
 	{
-		var inferenceParams = new InferenceParams();
+		var inferenceParams = new LlamaInferenceParams();
 
 		if (ArgExists("--n-threads"))
 			inferenceParams.NThreads = Convert.ToInt32(GetArgumentValue("--n-threads", inferenceParams.NThreads.ToString()));

@@ -90,8 +90,8 @@ public partial class ChatController : ControllerBase
 		LoggerManager.LogDebug("Completion dto extracted stops", "", "stops", stops);
 
 		// create LoadParams and InferenceParams objects from dto
-		AI.TextGeneration.LoadParams loadParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
-		AI.TextGeneration.InferenceParams inferenceParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
+		AI.TextGeneration.LlamaLoadParams loadParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
+		AI.TextGeneration.LlamaInferenceParams inferenceParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
 
 		var completionCreateDtoDefault = new CompletionCreateDto();
 

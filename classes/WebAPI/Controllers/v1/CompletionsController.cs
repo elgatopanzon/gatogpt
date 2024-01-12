@@ -93,8 +93,8 @@ public partial class CompletionsController : ControllerBase
 		List<LlamaModelInstance> inferenceInstances = new();
 
 		// create LoadParams and InferenceParams objects from dto
-		AI.TextGeneration.LoadParams loadParams = _modelManager.GetModelDefinition(completionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
-		AI.TextGeneration.InferenceParams inferenceParams = _modelManager.GetModelDefinition(completionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
+		AI.TextGeneration.LlamaLoadParams loadParams = _modelManager.GetModelDefinition(completionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
+		AI.TextGeneration.LlamaInferenceParams inferenceParams = _modelManager.GetModelDefinition(completionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
 
 		var completionCreateDtoDefault = new CompletionCreateDto();
 

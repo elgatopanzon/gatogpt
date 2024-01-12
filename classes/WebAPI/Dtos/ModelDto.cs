@@ -32,7 +32,7 @@ public partial class ModelDto : BaseDto
 
 public partial class ModelFullDto : ModelDto
 {
-	public TextGenerationModelDefinition Definition { get; set; }
+	public LlamaModelDefinition Definition { get; set; }
 }
 
 public partial class ModelListDto : ListBaseDto<ModelDto>

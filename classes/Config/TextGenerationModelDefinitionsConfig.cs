@@ -23,19 +23,19 @@ using System.Collections.Generic;
 public partial class TextGenerationModelDefinitionsConfig : VConfig
 {
 	// holds model definitions
-	internal readonly VValue<Dictionary<string, TextGenerationModelDefinition>> _modelDefinitions;
+	internal readonly VValue<Dictionary<string, LlamaModelDefinition>> _llamaModelDefinitions;
 
-	public Dictionary<string, TextGenerationModelDefinition> ModelDefinitions
+	public Dictionary<string, LlamaModelDefinition> LlamaModelDefinitions
 	{
-		get { return _modelDefinitions.Value; }
-		set { _modelDefinitions.Value = value; }
+		get { return _llamaModelDefinitions.Value; }
+		set { _llamaModelDefinitions.Value = value; }
 	}
 
 
 	public TextGenerationModelDefinitionsConfig()
 	{
-		_modelDefinitions = AddValidatedValue<Dictionary<string, TextGenerationModelDefinition>>(this)
-		    .Default(new Dictionary<string, TextGenerationModelDefinition>())
+		_llamaModelDefinitions = AddValidatedValue<Dictionary<string, LlamaModelDefinition>>(this)
+		    .Default(new Dictionary<string, LlamaModelDefinition>())
 		    .ChangeEventsEnabled();
 	}
 }

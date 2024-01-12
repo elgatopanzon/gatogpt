@@ -22,9 +22,9 @@ using System.Text.RegularExpressions;
 public partial class LlamaModelPresetsConfig : VConfig
 {
 	// holds definitions for default model profiles
-	internal readonly VValue<Dictionary<string, ModelProfile>> _defaultModelProfiles;
+	internal readonly VValue<Dictionary<string, LlamaModelProfile>> _defaultModelProfiles;
 
-	public Dictionary<string, ModelProfile> DefaultModelProfiles
+	public Dictionary<string, LlamaModelProfile> DefaultModelProfiles
 	{
 		get { return _defaultModelProfiles.Value; }
 		set { _defaultModelProfiles.Value = value; }
@@ -42,8 +42,8 @@ public partial class LlamaModelPresetsConfig : VConfig
 
 	public LlamaModelPresetsConfig()
 	{
-		_defaultModelProfiles = AddValidatedValue<Dictionary<string, ModelProfile>>(this)
-		    .Default(new Dictionary<string, ModelProfile>() {  })
+		_defaultModelProfiles = AddValidatedValue<Dictionary<string, LlamaModelProfile>>(this)
+		    .Default(new Dictionary<string, LlamaModelProfile>() {  })
 		    .ChangeEventsEnabled();
 
 		_filenamePresetMap = AddValidatedValue<Dictionary<string, string>>(this)
@@ -51,7 +51,7 @@ public partial class LlamaModelPresetsConfig : VConfig
 		    .ChangeEventsEnabled();
 	}
 
-	public ModelProfile GetPresetForFilename(string filename)
+	public LlamaModelProfile GetPresetForFilename(string filename)
 	{
 		foreach (var obj in FilenamePresetMap)
 		{
@@ -63,10 +63,10 @@ public partial class LlamaModelPresetsConfig : VConfig
 			}
 		}
 
-		return new ModelProfile();
+		return new LlamaModelProfile();
 	}
 
-	public ModelProfile GetDefaultProfile(string profileKey)
+	public LlamaModelProfile GetDefaultProfile(string profileKey)
 	{
 		if (DefaultModelProfiles.ContainsKey(profileKey))
 		{

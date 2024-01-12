@@ -30,9 +30,9 @@ public partial class TextGenerationModelManager : Service
 	private LlamaModelPresetsConfig _presetsConfig = new LlamaModelPresetsConfig();
 	private TextGenerationModelDefinitionsConfig _definitionsConfig = new TextGenerationModelDefinitionsConfig();
 
-	public Dictionary<string, TextGenerationModelDefinition> ModelDefinitions { 
+	public Dictionary<string, LlamaModelDefinition> ModelDefinitions { 
 		get {
-			return _definitionsConfig.ModelDefinitions;
+			return _definitionsConfig.LlamaModelDefinitions;
 		}
 	}
 
@@ -71,12 +71,12 @@ public partial class TextGenerationModelManager : Service
 	public void PrepareDefinitionConfigs()
 	{
 		// check there's resources and model definitions before processing
-		if (_definitionsConfig.ModelDefinitions.Count == 0 || _modelResources == null || _modelResources.Count == 0)
+		if (_definitionsConfig.LlamaModelDefinitions.Count == 0 || _modelResources == null || _modelResources.Count == 0)
 		{
 			return;
 		}
 
-		foreach (var def in _definitionsConfig.ModelDefinitions)
+		foreach (var def in _definitionsConfig.LlamaModelDefinitions)
 		{
 			if (def.Value.ModelResourceId.Length > 0)
 			{
@@ -161,12 +161,12 @@ public partial class TextGenerationModelManager : Service
 	
 	public bool ModelDefinitionIsValid(string id)
 	{
-		return _definitionsConfig.ModelDefinitions.ContainsKey(id);
+		return _definitionsConfig.LlamaModelDefinitions.ContainsKey(id);
 	}
 
-	public TextGenerationModelDefinition GetModelDefinition(string id)
+	public LlamaModelDefinition GetModelDefinition(string id)
 	{
-		return _definitionsConfig.ModelDefinitions[id];
+		return _definitionsConfig.LlamaModelDefinitions[id];
 	}
 }
 
