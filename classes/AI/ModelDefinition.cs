@@ -19,111 +19,59 @@ using GodotEGP.Resource;
 
 using GodotEGP.Objects.Validated;
 
-public partial class ModelDefinition : VObject
-{
-	// friendly ID of the model definition
-	private string _id;
-	public string Id
-	{
-		get { return _id; }
-		set { _id = value; }
-	}
-
-	// the profile instance used for the model definition
-	internal readonly VNative<ModelProfile> _modelProfile;
-
-	public ModelProfile ModelProfile
-	{
-		get { return _modelProfile.Value; }
-		set { _modelProfile.Value = value; }
-	}
-
-	internal readonly VNative<ModelProfile> _modelProfileOverride;
-
-	public ModelProfile ModelProfileOverride
-	{
-		get { return _modelProfileOverride.Value; }
-		set { _modelProfileOverride.Value = value; }
-	}
-
-	// model profile preset code (used to override the filename one)
-	internal readonly VValue<string> _profilePreset;
-
-	public string ProfilePreset
-	{
-		get { return _profilePreset.Value; }
-		set { _profilePreset.Value = value; }
-	}
-
-	// instance of the model resource to load for this model definition
-	internal readonly VValue<Resource<LlamaModel>> _modelResource;
-
-	public Resource<LlamaModel> ModelResource
-	{
-		get { return _modelResource.Value; }
-		set { _modelResource.Value = value; }
-	}
-
-	internal readonly VValue<string> _modelResourceId;
-
-	public string ModelResourceId
-	{
-		get { return _modelResourceId.Value; }
-		set { _modelResourceId.Value = value; }
-	}
-
-	internal readonly VValue<string> _ownedBy;
-
-	public string OwnedBy
-	{
-		get { return _ownedBy.Value; }
-		set { _ownedBy.Value = value; }
-	}
-
-	internal readonly VValue<string> _backend;
-
-	public string Backend
-	{
-		get { return _backend.Value; }
-		set { _backend.Value = value; }
-	}
-
-	public ModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null)
-	{
-		_modelProfile = AddValidatedNative<ModelProfile>(this)
-		    .ChangeEventsEnabled();
-
-		_modelProfileOverride = AddValidatedNative<ModelProfile>(this)
-		    .ChangeEventsEnabled();
-
-		_profilePreset = AddValidatedValue<string>(this)
-		    .Default("")
-		    .ChangeEventsEnabled();
-
-		_modelResource = AddValidatedValue<Resource<LlamaModel>>(this)
-		    .ChangeEventsEnabled();
-
-		_modelResourceId = AddValidatedValue<string>(this)
-		    .Default("")
-		    .ChangeEventsEnabled();
-
-		_ownedBy = AddValidatedValue<string>(this)
-		    .Default("local")
-		    .ChangeEventsEnabled();
-
-		_backend = AddValidatedValue<string>(this)
-		    .Default("builtin")
-		    .ChangeEventsEnabled();
-
-		ModelResourceId = modelResourceId;
-		ProfilePreset = profilePreset;
-
-		if (modelProfile != null)
-		{
-			ModelProfileOverride = modelProfile;
-		}
-	}
-}
+// public partial class ModelDefinition : VObject
+// {
+// 	// friendly ID of the model definition
+// 	private string _id;
+// 	public string Id
+// 	{
+// 		get { return _id; }
+// 		set { _id = value; }
+// 	}
+//
+// 	// model profile preset code (used to override the filename one)
+// 	internal readonly VValue<string> _profilePreset;
+//
+// 	public string ProfilePreset
+// 	{
+// 		get { return _profilePreset.Value; }
+// 		set { _profilePreset.Value = value; }
+// 	}
+//
+// 	// instance of the model resource to load for this model definition
+// 	internal readonly VValue<Resource<LlamaModel>> _modelResource;
+//
+// 	public Resource<LlamaModel> ModelResource
+// 	{
+// 		get { return _modelResource.Value; }
+// 		set { _modelResource.Value = value; }
+// 	}
+//
+// 	internal readonly VValue<string> _modelResourceId;
+//
+// 	public string ModelResourceId
+// 	{
+// 		get { return _modelResourceId.Value; }
+// 		set { _modelResourceId.Value = value; }
+// 	}
+//
+// 	public ModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null)
+// 	{
+// 		_profilePreset = AddValidatedValue<string>(this)
+// 		    .Default("")
+// 		    .ChangeEventsEnabled();
+//
+// 		_modelResource = AddValidatedValue<Resource<LlamaModel>>(this)
+// 		    .ChangeEventsEnabled();
+//
+// 		_modelResourceId = AddValidatedValue<string>(this)
+// 		    .Default("")
+// 		    .ChangeEventsEnabled();
+//
+// 		ModelResourceId = modelResourceId;
+// 		ProfilePreset = profilePreset;
+// 	}
+// }
 
 
 // WIP: generic class for model definition
@@ -163,6 +111,23 @@ public partial class ModelDefinition<TModelResource> : VObject where TModelResou
 		set { _modelResourceId.Value = value; }
 	}
 
+
+	internal readonly VValue<string> _ownedBy;
+
+	public string OwnedBy
+	{
+		get { return _ownedBy.Value; }
+		set { _ownedBy.Value = value; }
+	}
+
+	internal readonly VValue<string> _backend;
+
+	public string Backend
+	{
+		get { return _backend.Value; }
+		set { _backend.Value = value; }
+	}
+
 	public ModelDefinition(string modelResourceId, string profilePreset = "")
 	{
 		_profilePreset = AddValidatedValue<string>(this)
@@ -174,6 +139,14 @@ public partial class ModelDefinition<TModelResource> : VObject where TModelResou
 
 		_modelResourceId = AddValidatedValue<string>(this)
 		    .Default("")
+		    .ChangeEventsEnabled();
+
+		_ownedBy = AddValidatedValue<string>(this)
+		    .Default("local")
+		    .ChangeEventsEnabled();
+
+		_backend = AddValidatedValue<string>(this)
+		    .Default("builtin")
 		    .ChangeEventsEnabled();
 
 		ModelResourceId = modelResourceId;

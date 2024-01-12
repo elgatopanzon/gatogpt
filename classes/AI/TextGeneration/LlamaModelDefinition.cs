@@ -17,37 +17,37 @@ using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
 // WIP: new class using generic modeldefinition class
-public partial class LlamaModelDefinition : ModelDefinition<LlamaModel>
-{
-	// the profile instance used for the model definition
-	internal readonly VNative<ModelProfile> _modelProfile;
-
-	public ModelProfile ModelProfile
-	{
-		get { return _modelProfile.Value; }
-		set { _modelProfile.Value = value; }
-	}
-
-	internal readonly VNative<ModelProfile> _modelProfileOverride;
-
-	public ModelProfile ModelProfileOverride
-	{
-		get { return _modelProfileOverride.Value; }
-		set { _modelProfileOverride.Value = value; }
-	}
-
-	public LlamaModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null) : base(modelResourceId, profilePreset)
-	{
-		_modelProfile = AddValidatedNative<ModelProfile>(this)
-		    .ChangeEventsEnabled();
-
-		_modelProfileOverride = AddValidatedNative<ModelProfile>(this)
-		    .ChangeEventsEnabled();
-
-		if (modelProfile != null)
-		{
-			ModelProfileOverride = modelProfile;
-		}
-	}
-}
-
+// public partial class LlamaModelDefinition : ModelDefinition<LlamaModel>
+// {
+// 	// the profile instance used for the model definition
+// 	internal readonly VNative<ModelProfile> _modelProfile;
+//
+// 	public ModelProfile ModelProfile
+// 	{
+// 		get { return _modelProfile.Value; }
+// 		set { _modelProfile.Value = value; }
+// 	}
+//
+// 	internal readonly VNative<ModelProfile> _modelProfileOverride;
+//
+// 	public ModelProfile ModelProfileOverride
+// 	{
+// 		get { return _modelProfileOverride.Value; }
+// 		set { _modelProfileOverride.Value = value; }
+// 	}
+//
+// 	public LlamaModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null) : base(modelResourceId, profilePreset)
+// 	{
+// 		_modelProfile = AddValidatedNative<ModelProfile>(this)
+// 		    .ChangeEventsEnabled();
+//
+// 		_modelProfileOverride = AddValidatedNative<ModelProfile>(this)
+// 		    .ChangeEventsEnabled();
+//
+// 		if (modelProfile != null)
+// 		{
+// 			ModelProfileOverride = modelProfile;
+// 		}
+// 	}
+// }
+//

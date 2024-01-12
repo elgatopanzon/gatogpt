@@ -1,0 +1,42 @@
+/**
+ * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
+ * @file        : LLMModelDefinitionsConfig
+ * @created     : Tuesday Jan 02, 2024 00:05:41 CST
+ */
+
+namespace GatoGPT.Config;
+
+using GatoGPT.AI;
+using GatoGPT.AI.TextGeneration;
+
+using Godot;
+using GodotEGP.Objects.Extensions;
+using GodotEGP.Logging;
+using GodotEGP.Service;
+using GodotEGP.Event.Events;
+using GodotEGP.Config;
+
+using GodotEGP.Objects.Validated;
+
+using System.Collections.Generic;
+
+public partial class TextGenerationModelDefinitionsConfig : VConfig
+{
+	// holds model definitions
+	internal readonly VValue<Dictionary<string, TextGenerationModelDefinition>> _modelDefinitions;
+
+	public Dictionary<string, TextGenerationModelDefinition> ModelDefinitions
+	{
+		get { return _modelDefinitions.Value; }
+		set { _modelDefinitions.Value = value; }
+	}
+
+
+	public TextGenerationModelDefinitionsConfig()
+	{
+		_modelDefinitions = AddValidatedValue<Dictionary<string, TextGenerationModelDefinition>>(this)
+		    .Default(new Dictionary<string, TextGenerationModelDefinition>())
+		    .ChangeEventsEnabled();
+	}
+}
+

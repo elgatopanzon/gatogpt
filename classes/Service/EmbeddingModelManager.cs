@@ -1,19 +1,17 @@
 /**
  * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
- * @file        : LLMModelManager
- * @created     : Tuesday Jan 02, 2024 00:19:47 CST
+ * @file        : EmbeddingModelManager
+ * @created     : Friday Jan 05, 2024 22:47:23 CST
  */
 
 namespace GatoGPT.Service;
 
-using GatoGPT.AI;
-using GatoGPT.AI.TextGeneration;
+using GatoGPT.AI.Embedding;
 using GatoGPT.Config;
 using GatoGPT.Resource;
 using GatoGPT.Event;
 
 using Godot;
-using GodotEGP;
 using GodotEGP.Objects.Extensions;
 using GodotEGP.Logging;
 using GodotEGP.Service;
@@ -21,43 +19,35 @@ using GodotEGP.Event.Events;
 using GodotEGP.Config;
 using GodotEGP.Resource;
 
-using LLama;
-using LLama.Common;
-
-public partial class TextGenerationModelManager : Service
+public partial class EmbeddingModelManager : Service
 {
-	private TextGenerationModelManagerConfig _config = new TextGenerationModelManagerConfig();
-	private LlamaModelPresetsConfig _presetsConfig = new LlamaModelPresetsConfig();
-	private TextGenerationModelDefinitionsConfig _definitionsConfig = new TextGenerationModelDefinitionsConfig();
+	private EmbeddingModelManagerConfig _config = new EmbeddingModelManagerConfig();
+	// private EmbeddingModelPresetsConfig _presetsConfig = new EmbeddingModelPresetsConfig();
+	private EmbeddingModelDefinitionsConfig _definitionsConfig = new EmbeddingModelDefinitionsConfig();
 
-	public Dictionary<string, TextGenerationModelDefinition> ModelDefinitions { 
+	public Dictionary<string, EmbeddingModelDefinition> ModelDefinitions { 
 		get {
 			return _definitionsConfig.ModelDefinitions;
 		}
 	}
 
 
-	private Dictionary<string, Resource<LlamaModel>> _modelResources;
+	private Dictionary<string, Resource<EmbeddingModel>> _modelResources;
 
-	public Dictionary<string, Resource<LlamaModel>> ModelResources { 
+	public Dictionary<string, Resource<EmbeddingModel>> ModelResources { 
 		get {
 			return _modelResources;
 		}
 	}
 
-	public TextGenerationModelManager()
-	{
-		
-	}
-
-	public void SetConfig(TextGenerationModelManagerConfig config, LlamaModelPresetsConfig presetsConfig, TextGenerationModelDefinitionsConfig definitionsConfig)
+	public void SetConfig(EmbeddingModelManagerConfig config, EmbeddingModelDefinitionsConfig definitionsConfig)
 	{
 		LoggerManager.LogDebug("Setting config", "", "config", config);
-		LoggerManager.LogDebug("Setting model presets config", "", "modelPresets", presetsConfig);
+		// LoggerManager.LogDebug("Setting model presets config", "", "modelPresets", presetsConfig);
 		LoggerManager.LogDebug("Setting model definitions config", "", "modelDefinitions", definitionsConfig);
 
 		_config = config;
-		_presetsConfig = presetsConfig;
+		// _presetsConfig = presetsConfig;
 		_definitionsConfig = definitionsConfig;
 
 		PrepareDefinitionConfigs();
@@ -81,44 +71,30 @@ public partial class TextGenerationModelManager : Service
 			if (def.Value.ModelResourceId.Length > 0)
 			{
 				def.Value.Id = def.Key;
-
-				LoggerManager.LogDebug("Preparing model definition profile", "", "modelDefinition", def.Key);
 				
 				// fetch the resource object from resources
 				def.Value.ModelResource = GetModelResource(def.Value.ModelResourceId);
 
 				// find matching preset for filename
-				if (def.Value.ProfilePreset != null && def.Value.ProfilePreset.Length > 0 && _presetsConfig.PresetExists(def.Value.ProfilePreset))
-				{
-					LoggerManager.LogDebug("Overriding model with preset", "", "preset", $"{def.Key}={def.Value.ProfilePreset}");
-
-					def.Value.ModelProfile = _presetsConfig.GetDefaultProfile(def.Value.ProfilePreset).DeepCopy();
-
-				}
-				else
-				{
-					def.Value.ModelProfile = _presetsConfig.GetPresetForFilename(def.Value.ModelResource.Definition.Path).DeepCopy();
-				}
+				// def.Value.ModelProfile = _presetsConfig.GetPresetForFilename(def.Value.ModelResource.Definition.Path);
 
 				// merge profile with profile overrides, if set
-				if (def.Value.ModelProfileOverride != null)
-				{
-					LoggerManager.LogDebug("Applying model profile overrides", "", "overrides", def.Value.ModelProfileOverride);
-
-					def.Value.ModelProfile.MergeFrom(def.Value.ModelProfileOverride);
-				}
-
-				LoggerManager.LogDebug("Final model profile", "", def.Key, def.Value.ModelProfile);
+				// if (def.Value.ModelProfileOverride != null)
+				// {
+				// 	LoggerManager.LogDebug("Applying model profile overrides", "", "overrides", def.Value.ModelProfileOverride);
+                //
+				// 	def.Value.ModelProfile.MergeFrom(def.Value.ModelProfileOverride);
+				// }
 			}
 		}
 	}
 
-	public Resource<LlamaModel> GetModelResource(string resourceId)
+	public Resource<EmbeddingModel> GetModelResource(string resourceId)
 	{
 		return _modelResources[resourceId];
 	}
 
-	public void SetModelResources(Dictionary<string, Resource<LlamaModel>> modelResources)
+	public void SetModelResources(Dictionary<string, Resource<EmbeddingModel>> modelResources)
 	{
 		LoggerManager.LogDebug("Setting model resources config", "", "modelResources", modelResources);
 
@@ -164,7 +140,7 @@ public partial class TextGenerationModelManager : Service
 		return _definitionsConfig.ModelDefinitions.ContainsKey(id);
 	}
 
-	public TextGenerationModelDefinition GetModelDefinition(string id)
+	public EmbeddingModelDefinition GetModelDefinition(string id)
 	{
 		return _definitionsConfig.ModelDefinitions[id];
 	}
