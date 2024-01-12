@@ -27,7 +27,7 @@ using LLama.Common;
 public partial class TextGenerationModelManager : Service
 {
 	private TextGenerationModelManagerConfig _config = new TextGenerationModelManagerConfig();
-	private LlamaModelPresetsConfig _presetsConfig = new LlamaModelPresetsConfig();
+	private TextGenerationPresetsConfig _presetsConfig = new TextGenerationPresetsConfig();
 	private ModelDefinitionsConfig _definitionsConfig = new ModelDefinitionsConfig();
 
 	public Dictionary<string, TextGenerationModelDefinition> ModelDefinitions { 
@@ -50,7 +50,7 @@ public partial class TextGenerationModelManager : Service
 		
 	}
 
-	public void SetConfig(TextGenerationModelManagerConfig config, LlamaModelPresetsConfig presetsConfig, ModelDefinitionsConfig definitionsConfig)
+	public void SetConfig(TextGenerationModelManagerConfig config, TextGenerationPresetsConfig presetsConfig, ModelDefinitionsConfig definitionsConfig)
 	{
 		LoggerManager.LogDebug("Setting config", "", "config", config);
 		LoggerManager.LogDebug("Setting model presets config", "", "modelPresets", presetsConfig);

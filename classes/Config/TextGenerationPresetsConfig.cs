@@ -19,7 +19,7 @@ using GodotEGP.Objects.Validated;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-public partial class LlamaModelPresetsConfig : VConfig
+public partial class TextGenerationPresetsConfig : VConfig
 {
 	// holds definitions for default model profiles
 	internal readonly VValue<Dictionary<string, LlamaModelProfile>> _defaultModelProfiles;
@@ -40,7 +40,7 @@ public partial class LlamaModelPresetsConfig : VConfig
 	}
 
 
-	public LlamaModelPresetsConfig()
+	public TextGenerationPresetsConfig()
 	{
 		_defaultModelProfiles = AddValidatedValue<Dictionary<string, LlamaModelProfile>>(this)
 		    .Default(new Dictionary<string, LlamaModelProfile>() {  })
