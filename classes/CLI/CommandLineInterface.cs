@@ -318,10 +318,14 @@ public partial class CommandLineInterface
 			Console.Write("");
 			});
 
+		var fullPrompt = prompt;
+
 		while(true)
 		{
 			// await for the inference result using the created instance ID
-			InferenceResult result = await _inferenceService.InferAsync(modelId, prompt, isStateful, existingInstanceId:instance.InstanceId, loadParams, inferenceParams);
+			InferenceResult result = await _inferenceService.InferAsync(modelId, fullPrompt, isStateful, existingInstanceId:instance.InstanceId, loadParams, inferenceParams);
+
+			fullPrompt += " "+result.Output;
 
 			// print the final result when not in chat mode
 			if (!isChat)
@@ -351,6 +355,8 @@ public partial class CommandLineInterface
 					_inferenceService.DestroyExistingInstances();
 					break;
 				}
+
+				fullPrompt += " "+prompt;
 			}
 		}
 
