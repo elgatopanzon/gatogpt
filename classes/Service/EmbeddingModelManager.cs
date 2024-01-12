@@ -23,11 +23,11 @@ public partial class EmbeddingModelManager : Service
 {
 	private EmbeddingModelManagerConfig _config = new EmbeddingModelManagerConfig();
 	// private EmbeddingModelPresetsConfig _presetsConfig = new EmbeddingModelPresetsConfig();
-	private EmbeddingModelDefinitionsConfig _definitionsConfig = new EmbeddingModelDefinitionsConfig();
+	private ModelDefinitionsConfig _definitionsConfig = new ModelDefinitionsConfig();
 
 	public Dictionary<string, EmbeddingModelDefinition> ModelDefinitions { 
 		get {
-			return _definitionsConfig.ModelDefinitions;
+			return _definitionsConfig.Embedding;
 		}
 	}
 
@@ -40,7 +40,7 @@ public partial class EmbeddingModelManager : Service
 		}
 	}
 
-	public void SetConfig(EmbeddingModelManagerConfig config, EmbeddingModelDefinitionsConfig definitionsConfig)
+	public void SetConfig(EmbeddingModelManagerConfig config, ModelDefinitionsConfig definitionsConfig)
 	{
 		LoggerManager.LogDebug("Setting config", "", "config", config);
 		// LoggerManager.LogDebug("Setting model presets config", "", "modelPresets", presetsConfig);
@@ -61,12 +61,12 @@ public partial class EmbeddingModelManager : Service
 	public void PrepareDefinitionConfigs()
 	{
 		// check there's resources and model definitions before processing
-		if (_definitionsConfig.ModelDefinitions.Count == 0 || _modelResources == null || _modelResources.Count == 0)
+		if (_definitionsConfig.Embedding.Count == 0 || _modelResources == null || _modelResources.Count == 0)
 		{
 			return;
 		}
 
-		foreach (var def in _definitionsConfig.ModelDefinitions)
+		foreach (var def in _definitionsConfig.Embedding)
 		{
 			if (def.Value.ModelResourceId.Length > 0)
 			{
@@ -137,12 +137,12 @@ public partial class EmbeddingModelManager : Service
 	
 	public bool ModelDefinitionIsValid(string id)
 	{
-		return _definitionsConfig.ModelDefinitions.ContainsKey(id);
+		return _definitionsConfig.Embedding.ContainsKey(id);
 	}
 
 	public EmbeddingModelDefinition GetModelDefinition(string id)
 	{
-		return _definitionsConfig.ModelDefinitions[id];
+		return _definitionsConfig.Embedding[id];
 	}
 }
 

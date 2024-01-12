@@ -45,7 +45,7 @@ public partial class EmbeddingConfigHandler : Handler
 		// var pc = ServiceRegistry.Get<ConfigManager>().Get<EmbeddingModelPresetsConfig>();
 		// pc.SubscribeOwner<ValidatedValueChanged>(_On_ModelsConfig_ValueChanged, isHighPriority: true);
 
-		var dc = ServiceRegistry.Get<ConfigManager>().Get<EmbeddingModelDefinitionsConfig>();
+		var dc = ServiceRegistry.Get<ConfigManager>().Get<ModelDefinitionsConfig>();
 		dc.SubscribeOwner<ValidatedValueChanged>(_On_ModelsConfig_ValueChanged, isHighPriority: true);
 
 		// trigger changed event
@@ -56,12 +56,12 @@ public partial class EmbeddingConfigHandler : Handler
 	{
 		var sc = ServiceRegistry.Get<ConfigManager>().Get<EmbeddingModelManagerConfig>();
 		// var pc = ServiceRegistry.Get<ConfigManager>().Get<EmbeddingModelPresetsConfig>();
-		var dc = ServiceRegistry.Get<ConfigManager>().Get<EmbeddingModelDefinitionsConfig>();
+		var dc = ServiceRegistry.Get<ConfigManager>().Get<ModelDefinitionsConfig>();
 
 		_On_ModelsConfig_Changed(sc, dc);
 	}
 
-	public void _On_ModelsConfig_Changed(EmbeddingModelManagerConfig managerConfig, EmbeddingModelDefinitionsConfig definitionsConfig)
+	public void _On_ModelsConfig_Changed(EmbeddingModelManagerConfig managerConfig, ModelDefinitionsConfig definitionsConfig)
 	{
 		_embeddingManager.SetConfig(managerConfig, definitionsConfig);
 

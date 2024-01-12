@@ -51,8 +51,8 @@ public partial class LlamaModelInstance : BackgroundJob
 	public bool Running { get; set; }
 
 	// holds the definition of the model we are currently working with
-	private LlamaModelDefinition _modelDefinition;
-	public LlamaModelDefinition ModelDefinition
+	private TextGenerationModelDefinition _modelDefinition;
+	public TextGenerationModelDefinition ModelDefinition
 	{
 		get { return _modelDefinition; }
 		set { _modelDefinition = value; }
@@ -108,7 +108,7 @@ public partial class LlamaModelInstance : BackgroundJob
 	private const int INFERENCE_RUNNING_STATE = 3;
 	private const int INFERENCE_FINISHED_STATE = 4;
 
-	public LlamaModelInstance(LlamaModelDefinition modelDefinition, bool isStateful = false)
+	public LlamaModelInstance(TextGenerationModelDefinition modelDefinition, bool isStateful = false)
 	{
 		_modelDefinition = modelDefinition;
 

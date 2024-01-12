@@ -28,11 +28,11 @@ public partial class TextGenerationModelManager : Service
 {
 	private TextGenerationModelManagerConfig _config = new TextGenerationModelManagerConfig();
 	private LlamaModelPresetsConfig _presetsConfig = new LlamaModelPresetsConfig();
-	private TextGenerationModelDefinitionsConfig _definitionsConfig = new TextGenerationModelDefinitionsConfig();
+	private ModelDefinitionsConfig _definitionsConfig = new ModelDefinitionsConfig();
 
-	public Dictionary<string, LlamaModelDefinition> ModelDefinitions { 
+	public Dictionary<string, TextGenerationModelDefinition> ModelDefinitions { 
 		get {
-			return _definitionsConfig.LlamaModelDefinitions;
+			return _definitionsConfig.TextGeneration;
 		}
 	}
 
@@ -50,7 +50,7 @@ public partial class TextGenerationModelManager : Service
 		
 	}
 
-	public void SetConfig(TextGenerationModelManagerConfig config, LlamaModelPresetsConfig presetsConfig, TextGenerationModelDefinitionsConfig definitionsConfig)
+	public void SetConfig(TextGenerationModelManagerConfig config, LlamaModelPresetsConfig presetsConfig, ModelDefinitionsConfig definitionsConfig)
 	{
 		LoggerManager.LogDebug("Setting config", "", "config", config);
 		LoggerManager.LogDebug("Setting model presets config", "", "modelPresets", presetsConfig);
@@ -71,12 +71,12 @@ public partial class TextGenerationModelManager : Service
 	public void PrepareDefinitionConfigs()
 	{
 		// check there's resources and model definitions before processing
-		if (_definitionsConfig.LlamaModelDefinitions.Count == 0 || _modelResources == null || _modelResources.Count == 0)
+		if (_definitionsConfig.TextGeneration.Count == 0 || _modelResources == null || _modelResources.Count == 0)
 		{
 			return;
 		}
 
-		foreach (var def in _definitionsConfig.LlamaModelDefinitions)
+		foreach (var def in _definitionsConfig.TextGeneration)
 		{
 			if (def.Value.ModelResourceId.Length > 0)
 			{
@@ -161,12 +161,12 @@ public partial class TextGenerationModelManager : Service
 	
 	public bool ModelDefinitionIsValid(string id)
 	{
-		return _definitionsConfig.LlamaModelDefinitions.ContainsKey(id);
+		return _definitionsConfig.TextGeneration.ContainsKey(id);
 	}
 
-	public LlamaModelDefinition GetModelDefinition(string id)
+	public TextGenerationModelDefinition GetModelDefinition(string id)
 	{
-		return _definitionsConfig.LlamaModelDefinitions[id];
+		return _definitionsConfig.TextGeneration[id];
 	}
 }
 

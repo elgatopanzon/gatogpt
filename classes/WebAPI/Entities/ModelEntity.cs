@@ -18,7 +18,7 @@ using GodotEGP.Config;
 
 public partial class ModelEntity
 {
-	public LlamaModelDefinition Model;
+	public TextGenerationModelDefinition Model;
 
 	public string Id
 	{
