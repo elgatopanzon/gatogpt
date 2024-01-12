@@ -6,7 +6,7 @@
 
 namespace GatoGPT.Config;
 
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 
 using Godot;
 using GodotEGP.Objects.Extensions;

@@ -4,7 +4,7 @@
  * @created     : Friday Jan 05, 2024 14:27:34 CST
  */
 
-namespace GatoGPT.LLM;
+namespace GatoGPT.AI.TextGeneration;
 
 using GatoGPT.WebAPI.Dtos; // TODO: make this into an entity to be more clean
 
@@ -27,24 +27,24 @@ public partial class StatefulChat
 	public bool _stateful { get; set; }
 	public LlamaModelInstance _modelInstance  { get; set; }
 
-	public LLM.LoadParams _loadParams { get; set; }
-	public LLM.InferenceParams _inferenceParams { get; set; }
+	public AI.TextGeneration.LoadParams _loadParams { get; set; }
+	public AI.TextGeneration.InferenceParams _inferenceParams { get; set; }
 
 	public List<StatefulChatMessage> _chatHistory { get; set; }
 	public List<StatefulChatMessage> _chatHistoryNew { get; set; }
 
-	public LlamaInferenceService _inferenceService { get; set; }
+	public TextGenerationService _inferenceService { get; set; }
 	public string _instanceStateId { get; set; }
 
 	public List<string> _knownUserNames { get; set; }
 
-	public StatefulChat(bool stateful,  LLM.LoadParams loadParams, LLM.InferenceParams inferenceParams)
+	public StatefulChat(bool stateful,  AI.TextGeneration.LoadParams loadParams, AI.TextGeneration.InferenceParams inferenceParams)
 	{
 		_stateful = stateful;
 		_loadParams = loadParams;
 		_inferenceParams = inferenceParams;
 
-		_inferenceService = ServiceRegistry.Get<LlamaInferenceService>();
+		_inferenceService = ServiceRegistry.Get<TextGenerationService>();
 		_instanceStateId = "";
 	}
 

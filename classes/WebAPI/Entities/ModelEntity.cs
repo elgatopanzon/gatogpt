@@ -6,7 +6,8 @@
 
 namespace GatoGPT.WebAPI.Entities;
 
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
+using GatoGPT.AI;
 
 using Godot;
 using GodotEGP.Objects.Extensions;

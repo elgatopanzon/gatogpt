@@ -6,7 +6,7 @@
 
 namespace GatoGPT.Event;
 
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 
 using Godot;
 using GodotEGP.Objects.Extensions;
@@ -33,20 +33,20 @@ public partial class LlamaModelLoadFinished : LlamaModelInstanceEvent {};
 public partial class LlamaModelUnloadStart : LlamaModelInstanceEvent {};
 public partial class LlamaModelUnloadFinished : LlamaModelInstanceEvent {};
 
-public partial class LlamaInferenceStart : LlamaModelInstanceEvent {};
-public partial class LlamaInferenceToken : LlamaModelInstanceEvent {
+public partial class TextGenerationInferenceStart : LlamaModelInstanceEvent {};
+public partial class TextGenerationInferenceToken : LlamaModelInstanceEvent {
 	public string Token;
 };
-public partial class LlamaInferenceLine : LlamaModelInstanceEvent {
+public partial class TextGenerationInferenceLine : LlamaModelInstanceEvent {
 	public string Line;
 };
-public partial class LlamaInferenceFinished : LlamaModelInstanceEvent {
+public partial class TextGenerationInferenceFinished : LlamaModelInstanceEvent {
 	public InferenceResult Result;
 };
 
 static public partial class LlamaModelInstanceEventExtensions
 {
-	static public T SetToken<T>(this T o, string token) where T : LlamaInferenceToken
+	static public T SetToken<T>(this T o, string token) where T : TextGenerationInferenceToken
 	{
 		o.Token = token;
 		return o;
@@ -54,7 +54,7 @@ static public partial class LlamaModelInstanceEventExtensions
 }
 static public partial class LlamaModelInstanceEventExtensions
 {
-	static public T SetLine<T>(this T o, string line) where T : LlamaInferenceLine
+	static public T SetLine<T>(this T o, string line) where T : TextGenerationInferenceLine
 	{
 		o.Line = line;
 		return o;
@@ -62,7 +62,7 @@ static public partial class LlamaModelInstanceEventExtensions
 }
 static public partial class LlamaModelInstanceEventExtensions
 {
-	static public T SetResult<T>(this T o, InferenceResult result) where T : LlamaInferenceFinished
+	static public T SetResult<T>(this T o, InferenceResult result) where T : TextGenerationInferenceFinished
 	{
 		o.Result = result;
 		return o;

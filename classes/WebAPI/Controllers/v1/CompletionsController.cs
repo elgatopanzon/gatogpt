@@ -8,7 +8,7 @@ namespace GatoGPT.WebAPI.v1.Controllers;
 
 using GatoGPT.Service;
 using GatoGPT.Config;
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 using GatoGPT.WebAPI.Dtos;
 using GatoGPT.WebAPI.Entities;
 
@@ -33,14 +33,14 @@ using System.Text.Json;
 public partial class CompletionsController : ControllerBase
 {
 	private readonly IMapper _mapper;
-	private readonly LlamaModelManager _modelManager;
-	private readonly LlamaInferenceService _inferenceService;
+	private readonly TextGenerationModelManager _modelManager;
+	private readonly TextGenerationService _inferenceService;
 
 	public CompletionsController(IMapper mapper)
 	{
 		_mapper = mapper;
-		 _modelManager = ServiceRegistry.Get<LlamaModelManager>();
-		 _inferenceService = ServiceRegistry.Get<LlamaInferenceService>();
+		 _modelManager = ServiceRegistry.Get<TextGenerationModelManager>();
+		 _inferenceService = ServiceRegistry.Get<TextGenerationService>();
 	}
 
     [HttpPost(Name = nameof(CreateCompletion))]
@@ -93,8 +93,8 @@ public partial class CompletionsController : ControllerBase
 		List<LlamaModelInstance> inferenceInstances = new();
 
 		// create LoadParams and InferenceParams objects from dto
-		LLM.LoadParams loadParams = _modelManager.GetModelDefinition(completionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
-		LLM.InferenceParams inferenceParams = _modelManager.GetModelDefinition(completionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
+		AI.TextGeneration.LoadParams loadParams = _modelManager.GetModelDefinition(completionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
+		AI.TextGeneration.InferenceParams inferenceParams = _modelManager.GetModelDefinition(completionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
 
 		var completionCreateDtoDefault = new CompletionCreateDto();
 

@@ -4,7 +4,7 @@
  * @created     : Tuesday Jan 02, 2024 12:31:11 CST
  */
 
-namespace GatoGPT.LLM;
+namespace GatoGPT.AI.TextGeneration;
 
 using GatoGPT.Event;
 
@@ -58,8 +58,8 @@ public partial class LlamaModelInstance : BackgroundJob
 		set { _modelDefinition = value; }
 	}
 
-	public LLM.LoadParams LoadParams { get; set; }
-	public LLM.InferenceParams InferenceParams { get; set; }
+	public AI.TextGeneration.LoadParams LoadParams { get; set; }
+	public AI.TextGeneration.InferenceParams InferenceParams { get; set; }
 
 	// LLamaSharp specific properties
 	// holds the model params object in LLamaSharp format
@@ -161,10 +161,10 @@ public partial class LlamaModelInstance : BackgroundJob
 		this.SubscribeOwner<LlamaModelLoadStart>(_On_ModelLoadStart, true);
 		this.SubscribeOwner<LlamaModelLoadFinished>(_On_ModelLoadFinished, true);
 
-		this.SubscribeOwner<LlamaInferenceStart>(_On_InferenceStart, true);
-		this.SubscribeOwner<LlamaInferenceFinished>(_On_InferenceFinished, true);
-		this.SubscribeOwner<LlamaInferenceToken>(_On_InferenceToken, true);
-		this.SubscribeOwner<LlamaInferenceLine>(_On_InferenceLine, true);
+		this.SubscribeOwner<TextGenerationInferenceStart>(_On_InferenceStart, true);
+		this.SubscribeOwner<TextGenerationInferenceFinished>(_On_InferenceFinished, true);
+		this.SubscribeOwner<TextGenerationInferenceToken>(_On_InferenceToken, true);
+		this.SubscribeOwner<TextGenerationInferenceLine>(_On_InferenceLine, true);
 
 		// enter the state machine
 		_state.Enter();
@@ -354,7 +354,7 @@ public partial class LlamaModelInstance : BackgroundJob
 	/*****************************
 	*  Model inference methods  *
 	*****************************/
-	public void StartInference(string promptText, LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
+	public void StartInference(string promptText, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		Prompt = promptText;
 		_currentInferenceLine = "";
@@ -435,7 +435,7 @@ public partial class LlamaModelInstance : BackgroundJob
     	// calculate token per sec
     	InferenceResult.PrevTokenTime = DateTime.Now;
 
-		this.Emit<LlamaInferenceToken>((o) => {
+		this.Emit<TextGenerationInferenceToken>((o) => {
 			o.SetInstanceId(_instanceId);
 			o.SetToken(text);
 			});
@@ -446,7 +446,7 @@ public partial class LlamaModelInstance : BackgroundJob
 		// event
 		if (text == "\n")
 		{
-			this.Emit<LlamaInferenceLine>((o) => {
+			this.Emit<TextGenerationInferenceLine>((o) => {
 				o.SetInstanceId(_instanceId);
 				o.SetLine(_currentInferenceLine);
 				});
@@ -462,7 +462,7 @@ public partial class LlamaModelInstance : BackgroundJob
 		// if an empty token is recieved, break out of the inferent loop
     	if (text.Length == 0)
     	{
-			this.Emit<LlamaInferenceLine>((o) => {
+			this.Emit<TextGenerationInferenceLine>((o) => {
 				o.SetInstanceId(_instanceId);
 				o.SetLine(_currentInferenceLine);
 				});
@@ -620,7 +620,7 @@ public partial class LlamaModelInstance : BackgroundJob
 	{
 		LoggerManager.LogDebug("Entered InferenceRunning state");
 
-		this.Emit<LlamaInferenceStart>((o) => {
+		this.Emit<TextGenerationInferenceStart>((o) => {
 			o.SetInstanceId(_instanceId);
 			});
 
@@ -665,7 +665,7 @@ public partial class LlamaModelInstance : BackgroundJob
 		Running = false;
 		_isFirstRun = false;
 		
-		this.Emit<LlamaInferenceFinished>((o) => {
+		this.Emit<TextGenerationInferenceFinished>((o) => {
 			o.SetInstanceId(_instanceId);
 			o.SetResult(InferenceResult);
 			});
@@ -686,21 +686,21 @@ public partial class LlamaModelInstance : BackgroundJob
 		LoggerManager.LogDebug("", "", "modelLoadTime", DateTime.Now - _modelLoadStartTime);
 	}
 
-	public void _On_InferenceStart(LlamaInferenceStart e)
+	public void _On_InferenceStart(TextGenerationInferenceStart e)
 	{
 		LoggerManager.LogDebug("Inference started");
 	}
-	public void _On_InferenceFinished(LlamaInferenceFinished e)
+	public void _On_InferenceFinished(TextGenerationInferenceFinished e)
 	{
 		LoggerManager.LogDebug("Inference finished", "", "result", e.Result);
 	}
 
-	public void _On_InferenceToken(LlamaInferenceToken e)
+	public void _On_InferenceToken(TextGenerationInferenceToken e)
 	{
 		// LoggerManager.LogDebug("Inference token recieved", "", "token", e.Token);
 	}
 
-	public void _On_InferenceLine(LlamaInferenceLine e)
+	public void _On_InferenceLine(TextGenerationInferenceLine e)
 	{
 		LoggerManager.LogDebug("Inference line generated", "", "line", e.Line);
 	}

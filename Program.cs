@@ -8,7 +8,7 @@ using GatoGPT.Service;
 using GatoGPT.Handler;
 using GatoGPT.Config;
 using GatoGPT.Resource;
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 using GatoGPT.Event;
 
 using GodotEGP;
@@ -39,7 +39,7 @@ class Program
 					typeof(ConfigManager), 
 					typeof(ResourceManager), 
 					typeof(ScriptService),
-					typeof(LlamaModelManager),
+					typeof(TextGenerationModelManager),
 					typeof(EmbeddingModelManager)
 					))
 			{

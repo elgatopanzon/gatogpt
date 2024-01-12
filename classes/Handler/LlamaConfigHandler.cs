@@ -7,7 +7,7 @@
 namespace GatoGPT.Handler;
 
 using GatoGPT.Config;
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 using GatoGPT.Service;
 using GatoGPT.Resource;
 
@@ -23,7 +23,7 @@ using GodotEGP.Handler;
 
 public partial class LlamaConfigHandler : Handler
 {
-	private LlamaModelManager _LLMModelManager;
+	private TextGenerationModelManager _LLMModelManager;
 	private LlamaCacheService _LlamaCacheService;
 
 	public LlamaConfigHandler()
@@ -34,14 +34,14 @@ public partial class LlamaConfigHandler : Handler
 		// resources
 		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectType(typeof(ResourceManager)));
 		
-		_LLMModelManager = ServiceRegistry.Get<LlamaModelManager>();
+		_LLMModelManager = ServiceRegistry.Get<TextGenerationModelManager>();
 		_LlamaCacheService = ServiceRegistry.Get<LlamaCacheService>();
 	}
 
 	public void _On_ConfigManager_Ready(IEvent e)
 	{
 		// subscribe to changes on model preset and definitions config
-		var sc = ServiceRegistry.Get<ConfigManager>().Get<LlamaModelManagerConfig>();
+		var sc = ServiceRegistry.Get<ConfigManager>().Get<TextGenerationModelManagerConfig>();
 		sc.SubscribeOwner<ValidatedValueChanged>(_On_ModelsConfig_ValueChanged, isHighPriority: true);
 
 		var pc = ServiceRegistry.Get<ConfigManager>().Get<LlamaModelPresetsConfig>();
@@ -62,14 +62,14 @@ public partial class LlamaConfigHandler : Handler
 
 	public void _On_ModelsConfig_ValueChanged(IEvent e)
 	{
-		var sc = ServiceRegistry.Get<ConfigManager>().Get<LlamaModelManagerConfig>();
+		var sc = ServiceRegistry.Get<ConfigManager>().Get<TextGenerationModelManagerConfig>();
 		var pc = ServiceRegistry.Get<ConfigManager>().Get<LlamaModelPresetsConfig>();
 		var dc = ServiceRegistry.Get<ConfigManager>().Get<LlamaModelDefinitionsConfig>();
 
 		_On_ModelsConfig_Changed(sc, pc, dc);
 	}
 
-	public void _On_ModelsConfig_Changed(LlamaModelManagerConfig managerConfig, LlamaModelPresetsConfig presetsConfig, LlamaModelDefinitionsConfig definitionsConfig)
+	public void _On_ModelsConfig_Changed(TextGenerationModelManagerConfig managerConfig, LlamaModelPresetsConfig presetsConfig, LlamaModelDefinitionsConfig definitionsConfig)
 	{
 		_LLMModelManager.SetConfig(managerConfig, presetsConfig, definitionsConfig);
 

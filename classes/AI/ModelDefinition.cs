@@ -4,9 +4,10 @@
  * @created     : Monday Jan 01, 2024 23:58:19 CST
  */
 
-namespace GatoGPT.LLM;
+namespace GatoGPT.AI;
 
 using GatoGPT.Resource;
+using GatoGPT.AI.TextGeneration;
 
 using Godot;
 using GodotEGP.Objects.Extensions;

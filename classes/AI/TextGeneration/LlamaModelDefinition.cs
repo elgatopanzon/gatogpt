@@ -4,7 +4,7 @@
  * @created     : Friday Jan 05, 2024 23:05:17 CST
  */
 
-namespace GatoGPT.LLM;
+namespace GatoGPT.AI.TextGeneration;
 
 using GatoGPT.Resource;
 

@@ -6,7 +6,7 @@
 
 namespace GatoGPT.WebAPI.v1.Controllers;
 
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 
 using GatoGPT.Service;
 using GatoGPT.Config;

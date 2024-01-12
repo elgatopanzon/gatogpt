@@ -4,9 +4,9 @@
  * @created     : Friday Jan 05, 2024 23:22:38 CST
  */
 
-namespace GatoGPT.LLM;
+namespace GatoGPT.AI.Embedding;
 
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 using GatoGPT.Resource;
 
 using Godot;

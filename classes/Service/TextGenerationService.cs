@@ -1,12 +1,12 @@
 /**
  * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
- * @file        : LlamaInferenceService
+ * @file        : TextGenerationService
  * @created     : Tuesday Jan 02, 2024 12:28:50 CST
  */
 
 namespace GatoGPT.Service;
 
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 using GatoGPT.Config;
 using GatoGPT.Event;
 
@@ -20,32 +20,32 @@ using GodotEGP.Config;
 
 using System.Collections.Generic;
 
-public partial class LlamaInferenceService : Service
+public partial class TextGenerationService : Service
 {
-	private LlamaModelManager _modelManager;
+	private TextGenerationModelManager _modelManager;
 
 	private Dictionary<string, LlamaModelInstance> _modelInstances = new();
 
 	private Queue<InferenceRequest> _inferenceQueue = new();
 
-	public LlamaInferenceService()
+	public TextGenerationService()
 	{
 		// assign the model manager instance
-		_modelManager = ServiceRegistry.Get<LlamaModelManager>();
+		_modelManager = ServiceRegistry.Get<TextGenerationModelManager>();
 	}
 
 	/***********************
 	*  Inference methods  *
 	***********************/
 	
-	public LlamaModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
+	public LlamaModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		var modelInstance = QueueInferenceRequest(modelDefinitionId, prompt, stateful, existingInstanceId, loadParams, inferenceParams);	
 
 		return modelInstance;
 	}
 
-	public InferenceResult InferWait(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
+	public InferenceResult InferWait(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		// skip the queue and create the instance
 		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
@@ -62,7 +62,7 @@ public partial class LlamaInferenceService : Service
 		return modelInstance.InferenceResult;
 	}
 
-	public async Task<InferenceResult> InferAsync(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
+	public async Task<InferenceResult> InferAsync(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		// call the normal infer which queues request
 		var modelInstance = Infer(modelDefinitionId, prompt, stateful, existingInstanceId, loadParams, inferenceParams);	
@@ -81,7 +81,7 @@ public partial class LlamaInferenceService : Service
 	*  Inference queue methods  *
 	*****************************/
 
-	public LlamaModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null)
+	public LlamaModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
 
@@ -210,10 +210,10 @@ public partial class InferenceRequest
 {
 	public LlamaModelInstance ModelInstance { get; set; }
 	public string Prompt { get; set; }
-	public LLM.LoadParams LoadParams { get; set; }
-	public LLM.InferenceParams InferenceParams { get; set; }
+	public AI.TextGeneration.LoadParams LoadParams { get; set; }
+	public AI.TextGeneration.InferenceParams InferenceParams { get; set; }
 
-	public InferenceRequest(LlamaModelInstance modelInstance, string prompt, LLM.LoadParams loadParams = null, LLM.InferenceParams inferenceParams = null) 
+	public InferenceRequest(LlamaModelInstance modelInstance, string prompt, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null) 
 	{
 		ModelInstance = modelInstance;
 		Prompt = prompt;

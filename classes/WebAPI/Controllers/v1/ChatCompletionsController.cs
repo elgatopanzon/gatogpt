@@ -9,7 +9,7 @@ namespace GatoGPT.WebAPI.v1.Controllers;
 using GatoGPT.Service;
 using GatoGPT.Config;
 using GatoGPT.Event;
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 using GatoGPT.WebAPI.Dtos;
 using GatoGPT.WebAPI.Entities;
 
@@ -36,14 +36,14 @@ using Newtonsoft.Json;
 public partial class ChatController : ControllerBase
 {
 	private readonly IMapper _mapper;
-	private readonly LlamaModelManager _modelManager;
-	private readonly LlamaInferenceService _inferenceService;
+	private readonly TextGenerationModelManager _modelManager;
+	private readonly TextGenerationService _inferenceService;
 
 	public ChatController(IMapper mapper)
 	{
 		_mapper = mapper;
-		 _modelManager = ServiceRegistry.Get<LlamaModelManager>();
-		 _inferenceService = ServiceRegistry.Get<LlamaInferenceService>();
+		 _modelManager = ServiceRegistry.Get<TextGenerationModelManager>();
+		 _inferenceService = ServiceRegistry.Get<TextGenerationService>();
 	}
 
     [HttpPost("completions", Name = nameof(CreateChatCompletion))]
@@ -90,8 +90,8 @@ public partial class ChatController : ControllerBase
 		LoggerManager.LogDebug("Completion dto extracted stops", "", "stops", stops);
 
 		// create LoadParams and InferenceParams objects from dto
-		LLM.LoadParams loadParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
-		LLM.InferenceParams inferenceParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
+		AI.TextGeneration.LoadParams loadParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
+		AI.TextGeneration.InferenceParams inferenceParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
 
 		var completionCreateDtoDefault = new CompletionCreateDto();
 
@@ -310,7 +310,7 @@ public partial class ChatController : ControllerBase
 				// stream responses when there's no tool calls
 				if (chatCompletionCreateDto.Stream && chatCompletionCreateDto.Tools.Count == 0)
 				{
-    				modelInstance.SubscribeOwner<LlamaInferenceToken>(async (e) => {
+    				modelInstance.SubscribeOwner<TextGenerationInferenceToken>(async (e) => {
 						LoggerManager.LogDebug("Stream mode dispatching token SSE", "", "token", e.Token);
 
 						await sse.SendEvent(new ChatCompletionChunkDto() {
@@ -329,7 +329,7 @@ public partial class ChatController : ControllerBase
     				}, isHighPriority: true);
 				}
 
-    			modelInstance.SubscribeOwner<LlamaInferenceFinished>(async (e) => {
+    			modelInstance.SubscribeOwner<TextGenerationInferenceFinished>(async (e) => {
     				if (chatCompletionDto.Choices.Count >= (chatCompletionCreateDto.N - 1))
     				{
 						LoggerManager.LogDebug("Stream mode finished");

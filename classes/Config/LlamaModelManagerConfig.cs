@@ -1,6 +1,6 @@
 /**
  * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
- * @file        : LlamaModelManagerConfig
+ * @file        : TextGenerationModelManagerConfig
  * @created     : Tuesday Jan 02, 2024 00:48:03 CST
  */
 
@@ -15,7 +15,7 @@ using GodotEGP.Config;
 
 using GodotEGP.Objects.Validated;
 
-public partial class LlamaModelManagerConfig : VConfig
+public partial class TextGenerationModelManagerConfig : VConfig
 {
 	internal readonly VValue<int> _maxThreads;
 
@@ -41,7 +41,7 @@ public partial class LlamaModelManagerConfig : VConfig
 		set { _modelIdleUnloadTimeout.Value = value; }
 	}
 
-	public LlamaModelManagerConfig()
+	public TextGenerationModelManagerConfig()
 	{
 		_maxThreads = AddValidatedValue<int>(this)
 		    .Default(-1)

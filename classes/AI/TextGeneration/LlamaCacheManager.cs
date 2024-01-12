@@ -4,7 +4,7 @@
  * @created     : Tuesday Jan 09, 2024 22:55:11 CST
  */
 
-namespace GatoGPT.LLM;
+namespace GatoGPT.AI.TextGeneration;
 
 using Godot;
 using GodotEGP.Objects.Extensions;
@@ -95,7 +95,7 @@ public partial class LlamaCacheManager
         return hash;
 	}
 
-	public async Task<string> GetCachedPrompt(string prompt, LLM.InferenceParams inferenceParams, LLamaContext context, InstructExecutor executor)
+	public async Task<string> GetCachedPrompt(string prompt, AI.TextGeneration.InferenceParams inferenceParams, LLamaContext context, InstructExecutor executor)
 	{
 		// search the cache directory for existing states, then search for
 		// prompt files matching the given prompt

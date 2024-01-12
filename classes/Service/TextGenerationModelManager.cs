@@ -6,7 +6,8 @@
 
 namespace GatoGPT.Service;
 
-using GatoGPT.LLM;
+using GatoGPT.AI;
+using GatoGPT.AI.TextGeneration;
 using GatoGPT.Config;
 using GatoGPT.Resource;
 using GatoGPT.Event;
@@ -23,9 +24,9 @@ using GodotEGP.Resource;
 using LLama;
 using LLama.Common;
 
-public partial class LlamaModelManager : Service
+public partial class TextGenerationModelManager : Service
 {
-	private LlamaModelManagerConfig _config = new LlamaModelManagerConfig();
+	private TextGenerationModelManagerConfig _config = new TextGenerationModelManagerConfig();
 	private LlamaModelPresetsConfig _presetsConfig = new LlamaModelPresetsConfig();
 	private LlamaModelDefinitionsConfig _definitionsConfig = new LlamaModelDefinitionsConfig();
 
@@ -44,12 +45,12 @@ public partial class LlamaModelManager : Service
 		}
 	}
 
-	public LlamaModelManager()
+	public TextGenerationModelManager()
 	{
 		
 	}
 
-	public void SetConfig(LlamaModelManagerConfig config, LlamaModelPresetsConfig presetsConfig, LlamaModelDefinitionsConfig definitionsConfig)
+	public void SetConfig(TextGenerationModelManagerConfig config, LlamaModelPresetsConfig presetsConfig, LlamaModelDefinitionsConfig definitionsConfig)
 	{
 		LoggerManager.LogDebug("Setting config", "", "config", config);
 		LoggerManager.LogDebug("Setting model presets config", "", "modelPresets", presetsConfig);

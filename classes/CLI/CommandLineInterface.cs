@@ -7,7 +7,7 @@
 namespace GatoGPT.CLI;
 
 using GatoGPT.Service;
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 using GatoGPT.Config;
 using GatoGPT.Event;
 using GatoGPT.Resource;
@@ -36,8 +36,8 @@ public partial class CommandLineInterface
 	private Dictionary<string, List<(string Arg, string Example, string Description, bool Required)>> _commandArgs = new();
 
 	// services
-	private LlamaInferenceService _inferenceService = ServiceRegistry.Get<LlamaInferenceService>();
-	private LlamaModelManager _modelManager = ServiceRegistry.Get<LlamaModelManager>();
+	private TextGenerationService _inferenceService = ServiceRegistry.Get<TextGenerationService>();
+	private TextGenerationModelManager _modelManager = ServiceRegistry.Get<TextGenerationModelManager>();
 
 	public CommandLineInterface(string[] args)
 	{
@@ -296,25 +296,25 @@ public partial class CommandLineInterface
 		}
 
 		// subscribe to token events as they are generated and print them
-		instance.SubscribeOwner<LlamaInferenceToken>((e) => {
+		instance.SubscribeOwner<TextGenerationInferenceToken>((e) => {
 			Console.Write(e.Token);
 			});
 
 		// print the full prompt when inference starts
-		instance.SubscribeOwner<LlamaInferenceStart>(async (e) => {
+		instance.SubscribeOwner<TextGenerationInferenceStart>(async (e) => {
 			await Task.Delay(1000); // HACK: wait for the stateless context to log
 
 			if (instance.IsFirstRun())
 			{
-				string promptFull = instance.GetCurrentPrompt();
+				// string prompt = instance.GetCurrentPrompt();
 				Console.WriteLine("");
-				Console.WriteLine(promptFull);
+				// Console.WriteLine(prompt);
 				Console.WriteLine("");
 			}
 			});
 
 		// print empty line after inference finished
-		instance.SubscribeOwner<LlamaInferenceFinished>((e) => {
+		instance.SubscribeOwner<TextGenerationInferenceFinished>((e) => {
 			Console.Write("");
 			});
 

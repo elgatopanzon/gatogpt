@@ -6,7 +6,7 @@
 
 namespace GatoGPT.Service;
 
-using GatoGPT.LLM;
+using GatoGPT.AI.TextGeneration;
 using GatoGPT.Config;
 using GatoGPT.Resource;
 using GatoGPT.Event;

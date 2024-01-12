@@ -32,12 +32,12 @@ using System.Text.Json;
 public partial class ModelsController : ControllerBase
 {
 	private readonly IMapper _mapper;
-	private readonly LlamaModelManager _modelManager;
+	private readonly TextGenerationModelManager _modelManager;
 
 	public ModelsController(IMapper mapper)
 	{
 		_mapper = mapper;
-		 _modelManager = ServiceRegistry.Get<LlamaModelManager>();
+		 _modelManager = ServiceRegistry.Get<TextGenerationModelManager>();
 	}
 
     [HttpGet(Name = nameof(ListModels))]
