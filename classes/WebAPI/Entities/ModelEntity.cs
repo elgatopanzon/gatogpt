@@ -23,5 +23,9 @@ public partial class ModelEntity
 	{
 		get { return Model.Id; }
 	}
+	public string OwnedBy
+	{
+		get { return Model.OwnedBy; }
+	}
 }
 

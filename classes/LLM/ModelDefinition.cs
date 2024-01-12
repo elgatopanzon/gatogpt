@@ -71,6 +71,22 @@ public partial class ModelDefinition : VObject
 		set { _modelResourceId.Value = value; }
 	}
 
+	internal readonly VValue<string> _ownedBy;
+
+	public string OwnedBy
+	{
+		get { return _ownedBy.Value; }
+		set { _ownedBy.Value = value; }
+	}
+
+	internal readonly VValue<string> _backend;
+
+	public string Backend
+	{
+		get { return _backend.Value; }
+		set { _backend.Value = value; }
+	}
+
 	public ModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null)
 	{
 		_modelProfile = AddValidatedNative<ModelProfile>(this)
@@ -88,6 +104,14 @@ public partial class ModelDefinition : VObject
 
 		_modelResourceId = AddValidatedValue<string>(this)
 		    .Default("")
+		    .ChangeEventsEnabled();
+
+		_ownedBy = AddValidatedValue<string>(this)
+		    .Default("local")
+		    .ChangeEventsEnabled();
+
+		_backend = AddValidatedValue<string>(this)
+		    .Default("builtin")
 		    .ChangeEventsEnabled();
 
 		ModelResourceId = modelResourceId;
