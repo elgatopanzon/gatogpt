@@ -95,7 +95,7 @@ public partial class LlamaCacheManager
         return hash;
 	}
 
-	public async Task<string> GetCachedPrompt(string prompt, AI.TextGeneration.LlamaInferenceParams inferenceParams, LLamaContext context, InstructExecutor executor)
+	public async Task<string> GetCachedPrompt(string prompt, AI.TextGeneration.InferenceParams inferenceParams, LLamaContext context, InstructExecutor executor)
 	{
 		// search the cache directory for existing states, then search for
 		// prompt files matching the given prompt

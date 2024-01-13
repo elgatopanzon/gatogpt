@@ -20,9 +20,9 @@ using GodotEGP.Config;
 public partial class ModelDefinitionsConfig : VConfig
 {
 	// holds llama model definitions
-	internal readonly VValue<Dictionary<string, TextGenerationModelDefinition>> _textGenerationModelDefinitions;
+	internal readonly VValue<Dictionary<string, ModelDefinition>> _textGenerationModelDefinitions;
 
-	public Dictionary<string, TextGenerationModelDefinition> TextGeneration
+	public Dictionary<string, ModelDefinition> TextGeneration
 	{
 		get { return _textGenerationModelDefinitions.Value; }
 		set { _textGenerationModelDefinitions.Value = value; }
@@ -39,8 +39,8 @@ public partial class ModelDefinitionsConfig : VConfig
 
 	public ModelDefinitionsConfig()
 	{
-		_textGenerationModelDefinitions = AddValidatedValue<Dictionary<string, TextGenerationModelDefinition>>(this)
-		    .Default(new Dictionary<string, TextGenerationModelDefinition>())
+		_textGenerationModelDefinitions = AddValidatedValue<Dictionary<string, ModelDefinition>>(this)
+		    .Default(new Dictionary<string, ModelDefinition>())
 		    .ChangeEventsEnabled();
 
 		_embeddingModelDefinitions = AddValidatedValue<Dictionary<string, EmbeddingModelDefinition>>(this)

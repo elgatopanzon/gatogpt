@@ -51,15 +51,15 @@ public partial class LlamaModelInstance : BackgroundJob
 	public bool Running { get; set; }
 
 	// holds the definition of the model we are currently working with
-	private TextGenerationModelDefinition _modelDefinition;
-	public TextGenerationModelDefinition ModelDefinition
+	private ModelDefinition _modelDefinition;
+	public ModelDefinition ModelDefinition
 	{
 		get { return _modelDefinition; }
 		set { _modelDefinition = value; }
 	}
 
-	public AI.TextGeneration.LlamaLoadParams LoadParams { get; set; }
-	public AI.TextGeneration.LlamaInferenceParams InferenceParams { get; set; }
+	public AI.TextGeneration.LoadParams LoadParams { get; set; }
+	public AI.TextGeneration.InferenceParams InferenceParams { get; set; }
 
 	// LLamaSharp specific properties
 	// holds the model params object in LLamaSharp format
@@ -108,7 +108,7 @@ public partial class LlamaModelInstance : BackgroundJob
 	private const int INFERENCE_RUNNING_STATE = 3;
 	private const int INFERENCE_FINISHED_STATE = 4;
 
-	public LlamaModelInstance(TextGenerationModelDefinition modelDefinition, bool isStateful = false)
+	public LlamaModelInstance(ModelDefinition modelDefinition, bool isStateful = false)
 	{
 		_modelDefinition = modelDefinition;
 
@@ -354,7 +354,7 @@ public partial class LlamaModelInstance : BackgroundJob
 	/*****************************
 	*  Model inference methods  *
 	*****************************/
-	public void StartInference(string promptText, AI.TextGeneration.LlamaLoadParams loadParams = null, AI.TextGeneration.LlamaInferenceParams inferenceParams = null)
+	public void StartInference(string promptText, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		Prompt = promptText;
 		_currentInferenceLine = "";

@@ -20,28 +20,28 @@ using GodotEGP.Config;
 public partial class LlamaModelDefinition : ModelDefinition<LlamaModel>
 {
 	// the profile instance used for the model definition
-	internal readonly VNative<LlamaModelProfile> _modelProfile;
+	internal readonly VNative<ModelProfile> _modelProfile;
 
-	public LlamaModelProfile ModelProfile
+	public ModelProfile ModelProfile
 	{
 		get { return _modelProfile.Value; }
 		set { _modelProfile.Value = value; }
 	}
 
-	internal readonly VNative<LlamaModelProfile> _modelProfileOverride;
+	internal readonly VNative<ModelProfile> _modelProfileOverride;
 
-	public LlamaModelProfile ModelProfileOverride
+	public ModelProfile ModelProfileOverride
 	{
 		get { return _modelProfileOverride.Value; }
 		set { _modelProfileOverride.Value = value; }
 	}
 
-	public LlamaModelDefinition(string modelResourceId, string profilePreset = "", LlamaModelProfile modelProfile = null) : base(modelResourceId, profilePreset)
+	public LlamaModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null) : base(modelResourceId, profilePreset)
 	{
-		_modelProfile = AddValidatedNative<LlamaModelProfile>(this)
+		_modelProfile = AddValidatedNative<ModelProfile>(this)
 		    .ChangeEventsEnabled();
 
-		_modelProfileOverride = AddValidatedNative<LlamaModelProfile>(this)
+		_modelProfileOverride = AddValidatedNative<ModelProfile>(this)
 		    .ChangeEventsEnabled();
 
 		if (modelProfile != null)

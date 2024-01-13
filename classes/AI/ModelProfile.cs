@@ -14,7 +14,7 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class ModelProfile : VObject
+public partial class ModelProfileBase : VObject
 {
 	internal readonly VValue<string> _name;
 
@@ -24,7 +24,7 @@ public partial class ModelProfile : VObject
 		set { _name.Value = value; }
 	}
 
-	public ModelProfile()
+	public ModelProfileBase()
 	{
 		_name = AddValidatedValue<string>(this)
 	    	.Default("Default Profile");

@@ -14,32 +14,32 @@ using GodotEGP.Event.Events;
 using GodotEGP.Config;
 using GodotEGP.Objects.Validated;
 
-public partial class LlamaModelProfile : ModelProfile
+public partial class ModelProfile : AI.ModelProfileBase
 {
-	internal readonly VNative<LlamaLoadParams> _loadParams;
+	internal readonly VNative<LoadParams> _loadParams;
 
-	public LlamaLoadParams LoadParams
+	public LoadParams LoadParams
 	{
 		get { return _loadParams.Value; }
 		set { _loadParams.Value = value; }
 	}
 
-	internal readonly VNative<LlamaInferenceParams> _inferenceParams;
+	internal readonly VNative<InferenceParams> _inferenceParams;
 
-	public LlamaInferenceParams InferenceParams
+	public InferenceParams InferenceParams
 	{
 		get { return _inferenceParams.Value; }
 		set { _inferenceParams.Value = value; }
 	}
 
-	public LlamaModelProfile()
+	public ModelProfile()
 	{
-		_loadParams = AddValidatedNative<LlamaLoadParams>(this)
-		    .Default(new LlamaLoadParams())
+		_loadParams = AddValidatedNative<LoadParams>(this)
+		    .Default(new LoadParams())
 		    .ChangeEventsEnabled();
 
-		_inferenceParams = AddValidatedNative<LlamaInferenceParams>(this)
-		    .Default(new LlamaInferenceParams())
+		_inferenceParams = AddValidatedNative<InferenceParams>(this)
+		    .Default(new InferenceParams())
 		    .ChangeEventsEnabled();
 	}
 }

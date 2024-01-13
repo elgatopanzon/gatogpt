@@ -13,9 +13,10 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class TextGenerationModelDefinition : LlamaModelDefinition
+// TODO: stop depending on LlamaModelDefintion class
+public partial class ModelDefinition : LlamaModelDefinition
 {
-	public TextGenerationModelDefinition(string modelResourceId, string profilePreset = "", LlamaModelProfile modelProfile = null) : base(modelResourceId, profilePreset, modelProfile)
+	public ModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null) : base(modelResourceId, profilePreset, modelProfile)
 	{
 		
 	}

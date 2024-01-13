@@ -14,7 +14,7 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class LlamaLoadParams : VObject
+public partial class LoadParams : VObject
 {
 	// token context length
 	internal readonly VValue<int> _nCtx;
@@ -115,7 +115,7 @@ public partial class LlamaLoadParams : VObject
 	}
 
 
-	public LlamaLoadParams()
+	public LoadParams()
 	{
 		_nCtx = AddValidatedValue<int>(this)
 	    	.Default(2048)

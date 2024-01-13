@@ -30,7 +30,7 @@ public partial class TextGenerationModelManager : Service
 	private TextGenerationPresetsConfig _presetsConfig = new TextGenerationPresetsConfig();
 	private ModelDefinitionsConfig _definitionsConfig = new ModelDefinitionsConfig();
 
-	public Dictionary<string, TextGenerationModelDefinition> ModelDefinitions { 
+	public Dictionary<string, ModelDefinition> ModelDefinitions { 
 		get {
 			return _definitionsConfig.TextGeneration;
 		}
@@ -164,7 +164,7 @@ public partial class TextGenerationModelManager : Service
 		return _definitionsConfig.TextGeneration.ContainsKey(id);
 	}
 
-	public TextGenerationModelDefinition GetModelDefinition(string id)
+	public ModelDefinition GetModelDefinition(string id)
 	{
 		return _definitionsConfig.TextGeneration[id];
 	}

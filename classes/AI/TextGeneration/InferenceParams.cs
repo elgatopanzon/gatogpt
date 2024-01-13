@@ -14,7 +14,7 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class LlamaInferenceParams : VObject
+public partial class InferenceParams : VObject
 {
 	// number of threads to use for inference
 	internal readonly VValue<int> _n_threads;
@@ -156,7 +156,7 @@ public partial class LlamaInferenceParams : VObject
 	}
 
 
-	public LlamaInferenceParams()
+	public InferenceParams()
 	{
 		_n_threads = AddValidatedValue<int>(this)
 	    	.Default(0)
