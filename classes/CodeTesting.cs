@@ -26,6 +26,7 @@ using Newtonsoft.Json;
 using System.Net.Http;
 
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 public partial class CodeTesting
 {
@@ -44,8 +45,15 @@ public partial class CodeTesting
 		{
 			LoggerManager.LogDebug("Testing running llama.cpp process!");
 
-			var processRunner = new ProcessRunner("llama.cpp-llava-cli", new string[] { "-m", "/home/laz/Downloads/ggml-model-q5_k.gguf", "--mmproj", "/home/laz/Downloads/mmproj-model-f16.gguf", "--image", "/home/laz/Pictures/DCIM/Camera/20231229_135520.jpg", "-p", "\"User: Describe this image\nAssistant: \"" } );
+			var processRunner = new ProcessRunner("llama.cpp-llava-cli", new string[] { "--threads", "4", "-m", "/home/laz/Downloads/ggml-model-q5_k.gguf", "--mmproj", "/home/laz/Downloads/mmproj-model-f16.gguf", "--image", "/home/laz/Pictures/DCIM/Camera/20231229_135520.jpg", "-p", "\"User: What do you think of this image?\nAssistant: \"" } );
+
+			processRunner.AddOutputFilter((o) => {
+				return Regex.IsMatch(o, @"^(llm_|llama_|clip_|encode_|[.]+)");
+				});
+
 			await processRunner.Execute();
+
+			LoggerManager.LogDebug("Final output", "", "output", processRunner.Output);
 		}
 
 		if (_args.Contains("--rag-test"))
