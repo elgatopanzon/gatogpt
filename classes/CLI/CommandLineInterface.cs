@@ -7,6 +7,7 @@
 namespace GatoGPT.CLI;
 
 using GatoGPT.Service;
+using GatoGPT.AI;
 using GatoGPT.AI.TextGeneration;
 using GatoGPT.Config;
 using GatoGPT.Event;
@@ -279,10 +280,10 @@ public partial class CommandLineInterface
 
 		LoggerManager.LogDebug("Starting generation", "", "modelId", modelId);
 
-		LoadParams loadParams = GetGenerationLoadParams();
-		InferenceParams inferenceParams = GetGenerationInferenceParams();
+		AI.TextGeneration.LoadParams loadParams = GetGenerationLoadParams();
+		AI.TextGeneration.InferenceParams inferenceParams = GetGenerationInferenceParams();
 
-		LlamaModelInstance instance;
+		AI.TextGeneration.IModelInstance instance;
 		bool isStateful = false;
 
 		if (!isChat)
@@ -304,7 +305,7 @@ public partial class CommandLineInterface
 		instance.SubscribeOwner<TextGenerationInferenceStart>(async (e) => {
 			await Task.Delay(1000); // HACK: wait for the stateless context to log
 
-			if (instance.IsFirstRun())
+			if (instance.IsFirstRun)
 			{
 				// string prompt = instance.GetCurrentPrompt();
 				Console.WriteLine("");
@@ -365,7 +366,7 @@ public partial class CommandLineInterface
 
 	public LoadParams GetGenerationLoadParams()
 	{
-		var loadParams = new LoadParams();
+		var loadParams = new AI.TextGeneration.LoadParams();
 
 		if (ArgExists("--n-ctx"))
 			loadParams.NCtx = Convert.ToInt32(GetArgumentValue("--n-ctx", loadParams.NCtx.ToString()));
@@ -420,7 +421,7 @@ public partial class CommandLineInterface
 
 	public InferenceParams GetGenerationInferenceParams()
 	{
-		var inferenceParams = new InferenceParams();
+		var inferenceParams = new AI.TextGeneration.InferenceParams();
 
 		if (ArgExists("--n-threads"))
 			inferenceParams.NThreads = Convert.ToInt32(GetArgumentValue("--n-threads", inferenceParams.NThreads.ToString()));

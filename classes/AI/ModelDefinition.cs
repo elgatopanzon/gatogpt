@@ -19,8 +19,7 @@ using GodotEGP.Resource;
 
 using GodotEGP.Objects.Validated;
 
-// WIP: generic class for model definition
-public partial class ModelDefinition<TModelResource> : VObject where TModelResource : Resource
+public partial class ModelDefinition : VObject
 {
 	// friendly ID of the model definition
 	private string _id;
@@ -39,15 +38,6 @@ public partial class ModelDefinition<TModelResource> : VObject where TModelResou
 		set { _profilePreset.Value = value; }
 	}
 
-	// instance of the model resource to load for this model definition
-	internal readonly VValue<Resource<TModelResource>> _modelResource;
-
-	public Resource<TModelResource> ModelResource
-	{
-		get { return _modelResource.Value; }
-		set { _modelResource.Value = value; }
-	}
-
 	internal readonly VValue<string> _modelResourceId;
 
 	public string ModelResourceId
@@ -56,6 +46,12 @@ public partial class ModelDefinition<TModelResource> : VObject where TModelResou
 		set { _modelResourceId.Value = value; }
 	}
 
+	internal readonly VValue<Resource<Resource>> _modelResource;
+	public Resource<Resource> ModelResource
+	{
+		get { return _modelResource.Value; }
+		set { _modelResource.Value = value; }
+	}
 
 	internal readonly VValue<string> _ownedBy;
 
@@ -79,9 +75,6 @@ public partial class ModelDefinition<TModelResource> : VObject where TModelResou
 		    .Default("")
 		    .ChangeEventsEnabled();
 
-		_modelResource = AddValidatedValue<Resource<TModelResource>>(this)
-		    .ChangeEventsEnabled();
-
 		_modelResourceId = AddValidatedValue<string>(this)
 		    .Default("")
 		    .ChangeEventsEnabled();
@@ -96,5 +89,24 @@ public partial class ModelDefinition<TModelResource> : VObject where TModelResou
 
 		ModelResourceId = modelResourceId;
 		ProfilePreset = profilePreset;
+	}
+}
+
+// WIP: generic class for model definition
+public partial class ModelDefinition<TModelResource> : ModelDefinition where TModelResource : Resource
+{
+	// instance of the model resource to load for this model definition
+	internal readonly new VValue<Resource<TModelResource>> _modelResource;
+
+	public new Resource<TModelResource> ModelResource
+	{
+		get { return _modelResource.Value; }
+		set { _modelResource.Value = value; }
+	}
+
+	public ModelDefinition(string modelResourceId, string profilePreset = "") : base(modelResourceId, profilePreset)
+	{
+		_modelResource = AddValidatedValue<Resource<TModelResource>>(this)
+		    .ChangeEventsEnabled();
 	}
 }

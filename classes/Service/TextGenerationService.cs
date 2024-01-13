@@ -24,7 +24,7 @@ public partial class TextGenerationService : Service
 {
 	private TextGenerationModelManager _modelManager;
 
-	private Dictionary<string, LlamaModelInstance> _modelInstances = new();
+	private Dictionary<string, AI.TextGeneration.IModelInstance> _modelInstances = new();
 
 	private Queue<InferenceRequest> _inferenceQueue = new();
 
@@ -38,7 +38,7 @@ public partial class TextGenerationService : Service
 	*  Inference methods  *
 	***********************/
 	
-	public LlamaModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
+	public AI.TextGeneration.IModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		var modelInstance = QueueInferenceRequest(modelDefinitionId, prompt, stateful, existingInstanceId, loadParams, inferenceParams);	
 
@@ -81,7 +81,7 @@ public partial class TextGenerationService : Service
 	*  Inference queue methods  *
 	*****************************/
 
-	public LlamaModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
+	public AI.TextGeneration.IModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
 
@@ -110,7 +110,7 @@ public partial class TextGenerationService : Service
 	*  Model instance methods  *
 	****************************/
 	
-	public LlamaModelInstance CreateModelInstance(string modelDefinitionId, bool stateful = false, string existingInstanceId = "")
+	public AI.TextGeneration.IModelInstance CreateModelInstance(string modelDefinitionId, bool stateful = false, string existingInstanceId = "")
 	{
 		// check if the requested definition is valid
 		if (!_modelManager.ModelDefinitionIsValid(modelDefinitionId))
@@ -131,7 +131,7 @@ public partial class TextGenerationService : Service
 		else {
 			LoggerManager.LogDebug("Using existing instance", "", "instanceId", existingInstanceId);
 
-			modelInstance = _modelInstances[existingInstanceId];
+			modelInstance = (LlamaModelInstance) _modelInstances[existingInstanceId];
 			modelInstance.InferenceResult = null;
 		}
 
@@ -140,7 +140,7 @@ public partial class TextGenerationService : Service
 	}
 
 
-	public void AddModelInstance(LlamaModelInstance instance)
+	public void AddModelInstance(AI.TextGeneration.IModelInstance instance)
 	{
 		_modelInstances.Add(instance.InstanceId, instance);
 	}
@@ -208,12 +208,12 @@ public partial class TextGenerationService : Service
 
 public partial class InferenceRequest
 {
-	public LlamaModelInstance ModelInstance { get; set; }
+	public AI.TextGeneration.IModelInstance ModelInstance { get; set; }
 	public string Prompt { get; set; }
 	public AI.TextGeneration.LoadParams LoadParams { get; set; }
 	public AI.TextGeneration.InferenceParams InferenceParams { get; set; }
 
-	public InferenceRequest(LlamaModelInstance modelInstance, string prompt, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null) 
+	public InferenceRequest(AI.TextGeneration.IModelInstance modelInstance, string prompt, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null) 
 	{
 		ModelInstance = modelInstance;
 		Prompt = prompt;
