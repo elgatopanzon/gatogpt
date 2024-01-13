@@ -95,6 +95,23 @@ public partial class ModelBackend : BackgroundJob, AI.IModelBackend
 		LoggerManager.LogDebug("Created instance", "", "modelDefinition", modelDefinition);
 	}
 
+	public static T CreateBackend<T>(AI.ModelDefinition modelDefinition, bool isStateful = false) where T : IModelBackend
+	{
+		string fqClassName = typeof(T).FullName;
+		fqClassName = fqClassName.Replace("."+typeof(T).Name, "");
+		fqClassName = fqClassName+"."+modelDefinition.Backend+"Backend";
+
+		LoggerManager.LogDebug("Creating model backend instance", "", "backend", fqClassName);
+
+		Type t = Type.GetType(fqClassName);
+
+		if (t == null)
+		{
+			throw new Exception($"Invalid model backend: '{modelDefinition.Backend}'");
+		}
+     	return (T) Activator.CreateInstance(t, modelDefinition, isStateful);
+	}
+
 	/********************************
 	*  Model instance manageement  *
 	********************************/

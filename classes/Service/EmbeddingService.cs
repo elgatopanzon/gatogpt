@@ -34,7 +34,7 @@ public partial class EmbeddingService : Service
 	{
         var modelDefinition = _modelManager.GetModelDefinition(modelDefinitionId);
 
-		IEmbeddingBackend backend = EmbeddingBackend.CreateBackend(modelDefinition);
+		IEmbeddingBackend backend = AI.ModelBackend.CreateBackend<IEmbeddingBackend>(modelDefinition);
 
 		return backend.GenerateEmbedding(input).ToArray();
 	}

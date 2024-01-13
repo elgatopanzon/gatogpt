@@ -23,7 +23,7 @@ using GodotEGP.State;
 using LLama;
 using LLama.Common;
 
-public partial class BuiltinLlama : AI.TextGeneration.Backends.TextGenerationBackend
+public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenerationBackend
 {
 	private LlamaCacheManager _cacheManager { get; set; }
 
@@ -42,7 +42,7 @@ public partial class BuiltinLlama : AI.TextGeneration.Backends.TextGenerationBac
 	private InstructExecutor _executorStateful;
 	private StatelessExecutor _executor;
 
-	public BuiltinLlama(ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
+	public BuiltinLlamaBackend(ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		ModelDefinition = modelDefinition;
 

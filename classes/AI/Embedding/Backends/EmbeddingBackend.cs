@@ -29,7 +29,7 @@ public partial class EmbeddingBackend : AI.ModelBackend, IEmbeddingBackend
 	{
 		string fqClassName = typeof(IEmbeddingBackend).FullName;
 		fqClassName = fqClassName.Replace("."+nameof(IEmbeddingBackend), "");
-		fqClassName = fqClassName+"."+modelDefinition.Backend;
+		fqClassName = fqClassName+"."+modelDefinition.Backend+"Backend";
 
 		LoggerManager.LogDebug("Creating model backend instance", "", "backend", fqClassName);
 

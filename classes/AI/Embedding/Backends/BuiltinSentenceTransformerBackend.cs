@@ -16,13 +16,13 @@ using GodotEGP.Config;
 using AllMiniLmL6V2Sharp;
 using AllMiniLmL6V2Sharp.Tokenizer;
 
-public partial class BuiltinSentenceTransformer : ModelBackend, IEmbeddingBackend
+public partial class BuiltinSentenceTransformerBackend : ModelBackend, IEmbeddingBackend
 {
 	public new EmbeddingModelDefinition ModelDefinition { get; set; }
 	private BertTokenizer _tokenizer;
 	private AllMiniLmL6V2Embedder _onnxEmbedder;
 
-	public BuiltinSentenceTransformer(EmbeddingModelDefinition modelDefinition) : base(modelDefinition, false)
+	public BuiltinSentenceTransformerBackend(EmbeddingModelDefinition modelDefinition) : base(modelDefinition, false)
 	{
 		ModelDefinition = modelDefinition;
 		_state.Enter();

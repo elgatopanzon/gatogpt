@@ -122,7 +122,7 @@ public partial class TextGenerationService : Service
 		// obtain the definition and create an instance
 		var modelDefinition = _modelManager.GetModelDefinition(modelDefinitionId);
 
-		var modelInstance = AI.TextGeneration.Backends.TextGenerationBackend.CreateBackend(modelDefinition, stateful);
+		var modelInstance = AI.ModelBackend.CreateBackend<ITextGenerationBackend>(modelDefinition, stateful);
 
 		if (existingInstanceId.Length == 0)
 		{

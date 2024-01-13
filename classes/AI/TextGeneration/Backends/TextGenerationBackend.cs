@@ -40,7 +40,7 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 	{
 		string fqClassName = typeof(ITextGenerationBackend).FullName;
 		fqClassName = fqClassName.Replace("."+nameof(ITextGenerationBackend), "");
-		fqClassName = fqClassName+"."+modelDefinition.Backend;
+		fqClassName = fqClassName+"."+modelDefinition.Backend+"Backend";
 
 		LoggerManager.LogDebug("Creating model backend instance", "", "backend", fqClassName);
 
