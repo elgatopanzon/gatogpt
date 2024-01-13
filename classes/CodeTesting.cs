@@ -9,6 +9,7 @@ namespace GatoGPT;
 using GatoGPT.Service;
 using GatoGPT.AI.TextGeneration;
 using GatoGPT.Config;
+using GatoGPT.CLI;
 
 using Godot;
 using GodotEGP;
@@ -23,6 +24,8 @@ using ChromaDBSharp.Embeddings;
 using ChromaDBSharp.Models;
 using Newtonsoft.Json;
 using System.Net.Http;
+
+using System.Diagnostics;
 
 public partial class CodeTesting
 {
@@ -41,9 +44,8 @@ public partial class CodeTesting
 		{
 			LoggerManager.LogDebug("Testing running llama.cpp process!");
 
-			System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo() {
-				FileName = "llama.cpp"
-				});
+			var processRunner = new ProcessRunner("llama.cpp-llava-cli", new string[] { "-m", "/home/laz/Downloads/ggml-model-q5_k.gguf", "--mmproj", "/home/laz/Downloads/mmproj-model-f16.gguf", "--image", "/home/laz/Pictures/DCIM/Camera/20231229_135520.jpg", "-p", "\"User: Describe this image\nAssistant: \"" } );
+			await processRunner.Execute();
 		}
 
 		if (_args.Contains("--rag-test"))
