@@ -25,7 +25,7 @@ public partial class TextGenerationService : Service
 {
 	private TextGenerationModelManager _modelManager;
 
-	private Dictionary<string, AI.TextGeneration.Backends.IModelBackend> _modelInstances = new();
+	private Dictionary<string, AI.TextGeneration.Backends.ITextGenerationBackend> _modelInstances = new();
 
 	private Queue<InferenceRequest> _inferenceQueue = new();
 
@@ -39,7 +39,7 @@ public partial class TextGenerationService : Service
 	*  Inference methods  *
 	***********************/
 	
-	public AI.TextGeneration.Backends.IModelBackend Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
+	public AI.TextGeneration.Backends.ITextGenerationBackend Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		var modelInstance = QueueInferenceRequest(modelDefinitionId, prompt, stateful, existingInstanceId, loadParams, inferenceParams);	
 
@@ -82,7 +82,7 @@ public partial class TextGenerationService : Service
 	*  Inference queue methods  *
 	*****************************/
 
-	public AI.TextGeneration.Backends.IModelBackend QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
+	public AI.TextGeneration.Backends.ITextGenerationBackend QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
 
@@ -111,7 +111,7 @@ public partial class TextGenerationService : Service
 	*  Model instance methods  *
 	****************************/
 	
-	public AI.TextGeneration.Backends.IModelBackend CreateModelInstance(string modelDefinitionId, bool stateful = false, string existingInstanceId = "")
+	public AI.TextGeneration.Backends.ITextGenerationBackend CreateModelInstance(string modelDefinitionId, bool stateful = false, string existingInstanceId = "")
 	{
 		// check if the requested definition is valid
 		if (!_modelManager.ModelDefinitionIsValid(modelDefinitionId))
@@ -141,7 +141,7 @@ public partial class TextGenerationService : Service
 	}
 
 
-	public void AddModelInstance(AI.TextGeneration.Backends.IModelBackend instance)
+	public void AddModelInstance(AI.TextGeneration.Backends.ITextGenerationBackend instance)
 	{
 		_modelInstances.Add(instance.InstanceId, instance);
 	}
@@ -209,12 +209,12 @@ public partial class TextGenerationService : Service
 
 public partial class InferenceRequest
 {
-	public AI.TextGeneration.Backends.IModelBackend ModelInstance { get; set; }
+	public AI.TextGeneration.Backends.ITextGenerationBackend ModelInstance { get; set; }
 	public string Prompt { get; set; }
 	public AI.TextGeneration.LoadParams LoadParams { get; set; }
 	public AI.TextGeneration.InferenceParams InferenceParams { get; set; }
 
-	public InferenceRequest(AI.TextGeneration.Backends.IModelBackend modelInstance, string prompt, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null) 
+	public InferenceRequest(AI.TextGeneration.Backends.ITextGenerationBackend modelInstance, string prompt, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null) 
 	{
 		ModelInstance = modelInstance;
 		Prompt = prompt;

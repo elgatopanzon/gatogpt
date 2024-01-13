@@ -90,7 +90,7 @@ public partial class CompletionsController : ControllerBase
 		LoggerManager.LogDebug("Completion dto extracted stops", "", "stops", stops);
 
 		// queue and generate responses
-		List<AI.TextGeneration.Backends.IModelBackend> inferenceInstances = new();
+		List<AI.TextGeneration.Backends.ITextGenerationBackend> inferenceInstances = new();
 
 		// create LoadParams and InferenceParams objects from dto
 		AI.TextGeneration.LoadParams loadParams = _modelManager.GetModelDefinition(completionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();

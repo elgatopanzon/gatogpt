@@ -15,7 +15,7 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class ModelBackend : AI.ModelBackend, IModelBackend
+public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBackend
 {
 	public AI.TextGeneration.ModelDefinition ModelDefinition { get; set; }
 	public AI.TextGeneration.LoadParams LoadParams { get; set; }
@@ -24,7 +24,7 @@ public partial class ModelBackend : AI.ModelBackend, IModelBackend
 	public string CurrentInferenceLine { get; set; } = "";
 	public InferenceResult InferenceResult { get; set; }
 
-	public ModelBackend(AI.TextGeneration.ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
+	public TextGenerationBackend(AI.TextGeneration.ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		this.SubscribeOwner<TextGenerationInferenceStart>(_On_InferenceStart, true);
 		this.SubscribeOwner<TextGenerationInferenceFinished>(_On_InferenceFinished, true);

@@ -13,7 +13,7 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial interface IModelBackend : AI.IModelBackend
+public partial interface ITextGenerationBackend : AI.IModelBackend
 {
 	public void StartInference(string promptText, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null);
 
