@@ -36,6 +36,22 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		LoggerManager.LogDebug("Dummy method!");
 	}
 	
+	public static ITextGenerationBackend CreateBackend(AI.TextGeneration.ModelDefinition modelDefinition, bool isStateful = false)
+	{
+		string fqClassName = typeof(ITextGenerationBackend).FullName;
+		fqClassName = fqClassName.Replace("."+nameof(ITextGenerationBackend), "");
+		fqClassName = fqClassName+"."+modelDefinition.Backend;
+
+		LoggerManager.LogDebug("Creating model backend instance", "", "backend", fqClassName);
+
+		Type t = Type.GetType(fqClassName);
+
+		if (t == null)
+		{
+			throw new Exception($"Invalid model backend: '{modelDefinition.Backend}'");
+		}
+     	return (ITextGenerationBackend) Activator.CreateInstance(t, modelDefinition, isStateful);
+	}
 
 	/**********************
 	*  Callback methods  *

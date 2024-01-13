@@ -122,7 +122,7 @@ public partial class TextGenerationService : Service
 		// obtain the definition and create an instance
 		var modelDefinition = _modelManager.GetModelDefinition(modelDefinitionId);
 
-		var modelInstance = new AI.TextGeneration.Backends.Builtin(modelDefinition, stateful);
+		var modelInstance = AI.TextGeneration.Backends.TextGenerationBackend.CreateBackend(modelDefinition, stateful);
 
 		if (existingInstanceId.Length == 0)
 		{
@@ -132,14 +132,13 @@ public partial class TextGenerationService : Service
 		else {
 			LoggerManager.LogDebug("Using existing instance", "", "instanceId", existingInstanceId);
 
-			modelInstance = (AI.TextGeneration.Backends.Builtin) _modelInstances[existingInstanceId];
+			modelInstance = (AI.TextGeneration.Backends.BuiltinLlama) _modelInstances[existingInstanceId];
 			modelInstance.InferenceResult = null;
 		}
 
 		// return the instance for external management
 		return modelInstance;
 	}
-
 
 	public void AddModelInstance(AI.TextGeneration.Backends.ITextGenerationBackend instance)
 	{
