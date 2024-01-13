@@ -132,7 +132,7 @@ public partial class TextGenerationService : Service
 		else {
 			LoggerManager.LogDebug("Using existing instance", "", "instanceId", existingInstanceId);
 
-			modelInstance = (AI.TextGeneration.Backends.BuiltinLlama) _modelInstances[existingInstanceId];
+			modelInstance = (ITextGenerationBackend) _modelInstances[existingInstanceId];
 			modelInstance.InferenceResult = null;
 		}
 
