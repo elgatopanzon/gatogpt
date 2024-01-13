@@ -7,6 +7,7 @@
 namespace GatoGPT.Service;
 
 using GatoGPT.AI.Embedding;
+using GatoGPT.AI.Embedding.Backends;
 using GatoGPT.Config;
 using GatoGPT.Event;
 
@@ -19,9 +20,6 @@ using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
 using System.Collections.Generic;
-
-using AllMiniLmL6V2Sharp;
-using AllMiniLmL6V2Sharp.Tokenizer;
 
 public partial class EmbeddingService : Service
 {
@@ -36,25 +34,9 @@ public partial class EmbeddingService : Service
 	{
         var modelDefinition = _modelManager.GetModelDefinition(modelDefinitionId);
 
-		// extract the paths and expected vocab.txt in same model path
-        string modelPath = modelDefinition.ModelResource.Definition.Path;
-        string modelVocabPath = modelPath.Replace("/"+modelPath.GetFile(), "")+"/vocab.txt";
+		IEmbeddingBackend backend = EmbeddingBackend.CreateBackend(modelDefinition);
 
-        LoggerManager.LogDebug("Embeddings model path", "", "modelPath", modelPath);
-        LoggerManager.LogDebug("Embeddings model vocab", "", "modelVocabPath", modelVocabPath);
-
-		// create custom tokenizer
-		BertTokenizer tokenizer = new BertTokenizer(modelVocabPath);
-		var onnxEmbedder = new AllMiniLmL6V2Embedder(modelPath: modelPath, tokenizer: tokenizer);
-
-		float[] embedding = onnxEmbedder.GenerateEmbedding(input).ToArray();
-
-		tokenizer = null;
-		onnxEmbedder = null;
-
-		GC.Collect();
-
-		return embedding;
+		return backend.GenerateEmbedding(input).ToArray();
 	}
 
 	public List<float[]> GenerateEmbeddings(string modelDefinitionId, IEnumerable<string> inputs)

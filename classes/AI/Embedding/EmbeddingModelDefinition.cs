@@ -20,7 +20,7 @@ public partial class EmbeddingModelDefinition : ModelDefinition<EmbeddingModel>
 {
 	public EmbeddingModelDefinition(string modelResourceId, string profilePreset = "") : base(modelResourceId, profilePreset)
 	{
-		
+		Backend = "BuiltinSentenceTransformer";		
 	}
 }
 

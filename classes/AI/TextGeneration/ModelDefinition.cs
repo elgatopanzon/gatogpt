@@ -18,7 +18,7 @@ public partial class ModelDefinition : LlamaModelDefinition
 {
 	public ModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null) : base(modelResourceId, profilePreset, modelProfile)
 	{
-		
+		Backend = "BuiltinLlama";
 	}
 }
 
