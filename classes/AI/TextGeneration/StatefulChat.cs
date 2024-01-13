@@ -25,7 +25,7 @@ using System.Security.Cryptography;
 public partial class StatefulChat
 {
 	public bool _stateful { get; set; }
-	public AI.TextGeneration.IModelInstance _modelInstance  { get; set; }
+	public AI.TextGeneration.Backends.IModelBackend _modelInstance  { get; set; }
 
 	public AI.TextGeneration.LoadParams _loadParams { get; set; }
 	public AI.TextGeneration.InferenceParams _inferenceParams { get; set; }
@@ -243,7 +243,7 @@ public partial class StatefulChat
 		return formattedPrompt;
 	}
 
-	public async Task<StatefulChatMessage> ChatAsync(AI.TextGeneration.IModelInstance modelInstance)
+	public async Task<StatefulChatMessage> ChatAsync(AI.TextGeneration.Backends.IModelBackend modelInstance)
 	{
 		_modelInstance = modelInstance;
 

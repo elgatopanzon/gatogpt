@@ -13,7 +13,7 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial interface IModelInstance
+public partial interface IModelBackend
 {
 	public string InstanceId { get; set; }
 	public bool Stateful { get; set; }

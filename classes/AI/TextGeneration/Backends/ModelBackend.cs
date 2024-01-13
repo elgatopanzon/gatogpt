@@ -4,7 +4,7 @@
  * @created     : Friday Jan 12, 2024 19:19:46 CST
  */
 
-namespace GatoGPT.AI.TextGeneration;
+namespace GatoGPT.AI.TextGeneration.Backends;
 
 using GatoGPT.Event;
 
@@ -15,7 +15,7 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial class ModelInstance : AI.ModelInstance, AI.TextGeneration.IModelInstance
+public partial class ModelBackend : AI.ModelBackend, IModelBackend
 {
 	public AI.TextGeneration.ModelDefinition ModelDefinition { get; set; }
 	public AI.TextGeneration.LoadParams LoadParams { get; set; }
@@ -24,7 +24,7 @@ public partial class ModelInstance : AI.ModelInstance, AI.TextGeneration.IModelI
 	public string CurrentInferenceLine { get; set; } = "";
 	public InferenceResult InferenceResult { get; set; }
 
-	public ModelInstance(AI.TextGeneration.ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
+	public ModelBackend(AI.TextGeneration.ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		this.SubscribeOwner<TextGenerationInferenceStart>(_On_InferenceStart, true);
 		this.SubscribeOwner<TextGenerationInferenceFinished>(_On_InferenceFinished, true);

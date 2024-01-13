@@ -15,7 +15,7 @@ using GodotEGP.Config;
 using GodotEGP.Threading;
 using GodotEGP.State;
 
-public partial class ModelInstance : BackgroundJob, AI.IModelInstance
+public partial class ModelBackend : BackgroundJob, AI.IModelBackend
 {
 	public string InstanceId { get; set; }
 	public bool Stateful { get; set; } = false;
@@ -43,7 +43,7 @@ public partial class ModelInstance : BackgroundJob, AI.IModelInstance
 	protected InferenceRunningState _inferenceRunningState { get; set; }
 	protected InferenceFinishedState _inferenceFinishedState { get; set; }
 
-	public ModelInstance(AI.ModelDefinition modelDefinition, bool isStateful = false)
+	public ModelBackend(AI.ModelDefinition modelDefinition, bool isStateful = false)
 	{
 		ModelDefinition = modelDefinition;
 

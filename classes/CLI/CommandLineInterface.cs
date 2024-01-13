@@ -283,7 +283,7 @@ public partial class CommandLineInterface
 		AI.TextGeneration.LoadParams loadParams = GetGenerationLoadParams();
 		AI.TextGeneration.InferenceParams inferenceParams = GetGenerationInferenceParams();
 
-		AI.TextGeneration.IModelInstance instance;
+		AI.TextGeneration.Backends.IModelBackend instance;
 		bool isStateful = false;
 
 		if (!isChat)

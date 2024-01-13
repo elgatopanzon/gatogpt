@@ -4,7 +4,7 @@
  * @created     : Friday Jan 12, 2024 18:40:09 CST
  */
 
-namespace GatoGPT.AI.TextGeneration;
+namespace GatoGPT.AI.TextGeneration.Backends;
 
 using Godot;
 using GodotEGP.Objects.Extensions;
@@ -13,7 +13,7 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
-public partial interface IModelInstance : AI.IModelInstance
+public partial interface IModelBackend : AI.IModelBackend
 {
 	public void StartInference(string promptText, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null);
 

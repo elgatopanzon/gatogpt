@@ -1,10 +1,10 @@
 /**
  * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
- * @file        : LlamaModelInstance
+ * @file        : TextGeneration.Backends.Builtin
  * @created     : Tuesday Jan 02, 2024 12:31:11 CST
  */
 
-namespace GatoGPT.AI.TextGeneration;
+namespace GatoGPT.AI.TextGeneration.Backends;
 
 using GatoGPT.Event;
 
@@ -23,7 +23,7 @@ using GodotEGP.State;
 using LLama;
 using LLama.Common;
 
-public partial class LlamaModelInstance : AI.TextGeneration.ModelInstance
+public partial class Builtin : AI.TextGeneration.Backends.ModelBackend
 {
 	private LlamaCacheManager _cacheManager { get; set; }
 
@@ -42,7 +42,7 @@ public partial class LlamaModelInstance : AI.TextGeneration.ModelInstance
 	private InstructExecutor _executorStateful;
 	private StatelessExecutor _executor;
 
-	public LlamaModelInstance(ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
+	public Builtin(ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		ModelDefinition = modelDefinition;
 

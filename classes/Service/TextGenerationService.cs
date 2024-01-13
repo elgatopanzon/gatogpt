@@ -7,6 +7,7 @@
 namespace GatoGPT.Service;
 
 using GatoGPT.AI.TextGeneration;
+using GatoGPT.AI.TextGeneration.Backends;
 using GatoGPT.Config;
 using GatoGPT.Event;
 
@@ -24,7 +25,7 @@ public partial class TextGenerationService : Service
 {
 	private TextGenerationModelManager _modelManager;
 
-	private Dictionary<string, AI.TextGeneration.IModelInstance> _modelInstances = new();
+	private Dictionary<string, AI.TextGeneration.Backends.IModelBackend> _modelInstances = new();
 
 	private Queue<InferenceRequest> _inferenceQueue = new();
 
@@ -38,7 +39,7 @@ public partial class TextGenerationService : Service
 	*  Inference methods  *
 	***********************/
 	
-	public AI.TextGeneration.IModelInstance Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
+	public AI.TextGeneration.Backends.IModelBackend Infer(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		var modelInstance = QueueInferenceRequest(modelDefinitionId, prompt, stateful, existingInstanceId, loadParams, inferenceParams);	
 
@@ -81,7 +82,7 @@ public partial class TextGenerationService : Service
 	*  Inference queue methods  *
 	*****************************/
 
-	public AI.TextGeneration.IModelInstance QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
+	public AI.TextGeneration.Backends.IModelBackend QueueInferenceRequest(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
 
@@ -110,7 +111,7 @@ public partial class TextGenerationService : Service
 	*  Model instance methods  *
 	****************************/
 	
-	public AI.TextGeneration.IModelInstance CreateModelInstance(string modelDefinitionId, bool stateful = false, string existingInstanceId = "")
+	public AI.TextGeneration.Backends.IModelBackend CreateModelInstance(string modelDefinitionId, bool stateful = false, string existingInstanceId = "")
 	{
 		// check if the requested definition is valid
 		if (!_modelManager.ModelDefinitionIsValid(modelDefinitionId))
@@ -121,7 +122,7 @@ public partial class TextGenerationService : Service
 		// obtain the definition and create an instance
 		var modelDefinition = _modelManager.GetModelDefinition(modelDefinitionId);
 
-		var modelInstance = new LlamaModelInstance(modelDefinition, stateful);
+		var modelInstance = new AI.TextGeneration.Backends.Builtin(modelDefinition, stateful);
 
 		if (existingInstanceId.Length == 0)
 		{
@@ -131,7 +132,7 @@ public partial class TextGenerationService : Service
 		else {
 			LoggerManager.LogDebug("Using existing instance", "", "instanceId", existingInstanceId);
 
-			modelInstance = (LlamaModelInstance) _modelInstances[existingInstanceId];
+			modelInstance = (AI.TextGeneration.Backends.Builtin) _modelInstances[existingInstanceId];
 			modelInstance.InferenceResult = null;
 		}
 
@@ -140,7 +141,7 @@ public partial class TextGenerationService : Service
 	}
 
 
-	public void AddModelInstance(AI.TextGeneration.IModelInstance instance)
+	public void AddModelInstance(AI.TextGeneration.Backends.IModelBackend instance)
 	{
 		_modelInstances.Add(instance.InstanceId, instance);
 	}
@@ -208,12 +209,12 @@ public partial class TextGenerationService : Service
 
 public partial class InferenceRequest
 {
-	public AI.TextGeneration.IModelInstance ModelInstance { get; set; }
+	public AI.TextGeneration.Backends.IModelBackend ModelInstance { get; set; }
 	public string Prompt { get; set; }
 	public AI.TextGeneration.LoadParams LoadParams { get; set; }
 	public AI.TextGeneration.InferenceParams InferenceParams { get; set; }
 
-	public InferenceRequest(AI.TextGeneration.IModelInstance modelInstance, string prompt, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null) 
+	public InferenceRequest(AI.TextGeneration.Backends.IModelBackend modelInstance, string prompt, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null) 
 	{
 		ModelInstance = modelInstance;
 		Prompt = prompt;
