@@ -14,14 +14,16 @@ using GodotEGP.Logging;
 using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
+using GodotEGP.Threading;
+using System.ComponentModel;
 
 using System.Diagnostics;
 
-public partial class ProcessRunner
+public partial class ProcessRunner : BackgroundJob
 {
-	public string _command { get; set; }
-	public string[] _args { get; set; }
-	public int _returnCode { get; set; }
+	public string Command { get; set; }
+	public string[] Args { get; set; }
+	public int ReturnCode { get; set; } = -1;
 	private ProcessStartInfo _processStartInfo;
 	private Process _process;
 	private TaskCompletionSource<int> _task;
@@ -51,17 +53,26 @@ public partial class ProcessRunner
 
 	public List<ProcessOutputFilter> OutputFilters { get; set; } = new();
 
+	public DateTime StartTime { get; set; } = DateTime.Now;
+	public DateTime EndTime { get; set; } = DateTime.Now;
+	public TimeSpan ExecutionTime {
+		get {
+			return EndTime - StartTime;
+		}
+	}
+
 	public ProcessRunner(string command, string[] args)
 	{
-		_command = command;
-		_args = args;
+		Command = command;
+		Args = args;
 		_task = new();
 
 		OutputLines = new();
 		ErrorLines = new();
 
 		_processStartInfo = new ProcessStartInfo() {
-			FileName = command, Arguments = String.Join(" ", _args), 
+			FileName = command,
+			Arguments = String.Join(" ", Args), 
 			RedirectStandardError = true,
 			RedirectStandardInput = true,
 			RedirectStandardOutput = true,
@@ -76,9 +87,9 @@ public partial class ProcessRunner
 		_process.ErrorDataReceived += _On_Process_ErrorData;
 	}
 
-	public void AddArgument(params string[] args)
+	public void AddArguments(params string[] args)
 	{
-		_args = _args.Concat(args).ToArray();
+		Args = Args.Concat(args).ToArray();
 	}
 
 	public void AddOutputFilter(Func<string, bool> func)
@@ -99,6 +110,48 @@ public partial class ProcessRunner
 		}
 
 		return match;
+	}
+
+	public async Task<int> Execute()
+	{
+		Run();
+
+		return await _task.Task;
+	}
+
+	public void ProcessExitSuccess()
+	{
+		this.Emit<ProcessFinishedSuccess>((e) => e.SetData(ReturnCode));
+	}
+	public void ProcessExitError()
+	{
+		this.Emit<ProcessFinishedError>((e) => e.SetData(ReturnCode));
+	}
+
+	public override void DoWork(object sender, DoWorkEventArgs e)
+	{
+		LoggerManager.LogDebug("Executing process", "", "process", $"{Command} {String.Join(" ", Args)}");
+
+		this.Emit<ProcessStarted>();
+
+		_process.Start();
+		_process.BeginErrorReadLine();
+		_process.BeginOutputReadLine();
+
+		_process.WaitForExit();
+
+		ReturnCode = _process.ExitCode;
+
+		LoggerManager.LogDebug($"Process exited with code {ReturnCode}", "", "process", $"{Command} {String.Join(" ", Args)}");
+		_process.Dispose();
+
+		EndTime = DateTime.Now;
+
+		e.Result = ReturnCode;
+	}
+
+	public override void ProgressChanged(object sender, ProgressChangedEventArgs e)
+	{
 	}
 
 	public void _On_Process_OutputData(object sender, DataReceivedEventArgs args)
@@ -132,25 +185,10 @@ public partial class ProcessRunner
 		}
 	}
 
-	public Task<int> Execute()
+
+	public override void RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
 	{
-		LoggerManager.LogDebug("Executing process", "", "process", $"{_command} {String.Join(" ", _args)}");
-
-		this.Emit<ProcessStarted>();
-
-		_process.Start();
-		_process.BeginErrorReadLine();
-		_process.BeginOutputReadLine();
-
-		_process.WaitForExit();
-
-		_returnCode = _process.ExitCode;
-
-		LoggerManager.LogDebug($"Process exited with code {_returnCode}", "", "process", $"{_command} {String.Join(" ", _args)}");
-		_task.SetResult(_returnCode);
-		_process.Dispose();
-
-		if (_returnCode == 0)
+		if (ReturnCode == 0)
 		{
 			ProcessExitSuccess();
 		}
@@ -158,16 +196,14 @@ public partial class ProcessRunner
 			ProcessExitError();
 		}
 
-		return _task.Task;
+		_task.SetResult(ReturnCode);
 	}
 
-	public void ProcessExitSuccess()
+	public override void RunWorkerError(object sender, RunWorkerCompletedEventArgs e)
 	{
-		this.Emit<ProcessFinishedSuccess>((e) => e.SetData(_returnCode));
-	}
-	public void ProcessExitError()
-	{
-		this.Emit<ProcessFinishedError>((e) => e.SetData(_returnCode));
+		ProcessExitError();
+
+		_task.SetResult(ReturnCode);
 	}
 }
 
