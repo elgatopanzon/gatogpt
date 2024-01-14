@@ -145,6 +145,7 @@ public partial class ChatController : ControllerBase
     	StatefulChat chatInstance = new(false, loadParams, inferenceParams);
     	List<StatefulChatMessage> messageEntities = new();
 
+		List<string> imageUrls = new();
     	foreach (var messageCreateDto in chatCompletionCreateDto.Messages)
     	{
     		messageEntities.Add(new StatefulChatMessage() {
@@ -153,8 +154,45 @@ public partial class ChatController : ControllerBase
 				Name = messageCreateDto.Name,
 				ToolCalls = messageCreateDto.ToolCalls,
     			});
+
+			var dtoContents = messageCreateDto.GetContents();
+    		if (dtoContents.Count > 0)
+    		{
+    			foreach (var content in dtoContents)
+    			{
+    				if (content.Type == "image_url" && content.ImageUrl.Length > 0)
+    				{
+    					imageUrls.Add(content.ImageUrl);
+    				}
+    			}
+    		}
     	}
 
+    	LoggerManager.LogDebug("Request parsed image urls", "", "imageUrls", imageUrls);
+
+		// take the first image only 
+		if (imageUrls.Count > 0)
+		{
+        	using (var httpClient = new HttpClient())
+        	{
+            	// Issue the GET request to a URL and read the response into a 
+            	// stream that can be used to load the image
+            	var imageContent = await httpClient.GetByteArrayAsync(imageUrls[0]);
+
+            	string filename = Path.GetFileName(imageUrls[0]);
+            	string filepath = Path.Combine(OS.GetUserDataDir(), "Downloads", filename);
+
+            	Directory.CreateDirectory(filepath.Replace(filepath.GetFile(), ""));
+
+            	using (var fileStream = new FileStream(filepath, FileMode.Create))
+            	{
+                	await fileStream.WriteAsync(imageContent, 0, imageContent.Length);
+            	}
+
+				inferenceParams.ImagePath = filepath;
+        	}
+
+		}
 
 		// inject a list of tools into the system prompt
 		List<string> validFunctionNames = new();

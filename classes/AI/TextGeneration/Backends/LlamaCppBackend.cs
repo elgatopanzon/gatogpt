@@ -317,6 +317,12 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		IsFirstRun = false;
 
 		LoggerManager.LogDebug("Llama.cpp output", "", "output", InferenceResult.Output);
+
+		// clear tokens on non-successful exit
+		if (!_processRunner.Success)
+		{
+			InferenceResult.Tokens = new();
+		}
 		
 		this.Emit<TextGenerationInferenceFinished>((o) => {
 			o.SetInstanceId(InstanceId);

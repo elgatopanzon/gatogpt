@@ -13,6 +13,8 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
+using Newtonsoft.Json.Linq;
+
 public partial class ChatCompletionMessageDto
 {
 	public object Content { get; set; }
@@ -39,14 +41,42 @@ public partial class ChatCompletionMessageDto
 	}
 	public List<ChatCompletionMessageContentDto> GetContents()
 	{
-		List<ChatCompletionMessageContentDto> Contents = new();
+		List<ChatCompletionMessageContentDto> contentDtos = new();
 
 		if (Content is Newtonsoft.Json.Linq.JArray c)
 		{
-			LoggerManager.LogDebug("TODO: map into proper dto");
+
+			foreach (Newtonsoft.Json.Linq.JToken content in c)
+			{
+				IDictionary<string,object> dict = content.ToObject<Dictionary<string, object>>();
+
+				ChatCompletionMessageContentDto contentDto = new();
+
+				if (dict.TryGetValue("type", out var type))
+				{
+					contentDto.Type = (string) type;
+				}
+				if (dict.TryGetValue("text", out var text))
+				{
+					contentDto.Text = (string) text;
+				}
+				if (dict.TryGetValue("image_url", out var imageUrl))
+				{
+					var values = JObject.FromObject(imageUrl).ToObject<Dictionary<string, object>>();
+
+					if (values.TryGetValue("url", out var url))
+					{
+						contentDto.ImageUrl = (string) url;
+					}
+				}
+
+				contentDtos.Add(contentDto);
+			}
 		}
 
-		return Contents;
+		LoggerManager.LogDebug("Content dtos", "", "contentDtos", contentDtos);
+
+		return contentDtos;
 	}
 }
 
