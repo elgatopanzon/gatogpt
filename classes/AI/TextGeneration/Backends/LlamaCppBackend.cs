@@ -139,12 +139,13 @@ public partial class LlamaCppBackend : TextGenerationBackend
 
 		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
 
-		if ((IsFirstRun && Stateful) || !Stateful)
-		{
+		// TODO: implement state support
+		// if ((IsFirstRun && Stateful) || !Stateful)
+		// {
 			currentPrompt = FormatPrompt(Prompt);
 
 			Console.WriteLine(currentPrompt);
-		}
+		// }
 
 		return currentPrompt;
 	}
