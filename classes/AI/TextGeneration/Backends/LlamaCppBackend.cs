@@ -105,6 +105,11 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.AddArguments("--temp", InferenceParams.Temp.ToString());
 		_processRunner.AddArguments("--keep", InferenceParams.KeepTokens.ToString());
 
+		foreach (string antiprompt in InferenceParams.Antiprompts)
+		{
+			_processRunner.AddArguments("--reverse-prompt", $"\"{antiprompt}\"");
+		}
+
 		// TODO: handle prompt cache using LlamaCacheManager
 		// _processRunner.AddArguments("--prompt-cache-all");
 		// _processRunner.AddArguments("--prompt-cache", "TODO");
