@@ -73,8 +73,11 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.AddArguments("--rope-freq-scale", LoadParams.RopeFreqScale.ToString());
 
 		// vision models / multimodal models
-		// _processRunner.AddArguments("--mmproj", $"\"{LoadParams.Mmproj.ToString()}\"");
-		// _processRunner.AddArguments("--image", $"\"{LoadParams.ImagePath.ToString()\"");
+		if (LoadParams.MMProjPath.Length > 0)
+		{
+			_processRunner.AddArguments("--mmproj", $"\"{LoadParams.MMProjPath.ToString()}\"");
+			_processRunner.AddArguments("--image", $"\"{InferenceParams.ImagePath.ToString()}\"");
+		}
 
 		if (LoadParams.UseMlock)
 		{

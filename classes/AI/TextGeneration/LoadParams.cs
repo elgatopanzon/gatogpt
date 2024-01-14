@@ -114,6 +114,14 @@ public partial class LoadParams : VObject
 		set { _kvOffload.Value = value; }
 	}
 
+	// multimodal --mmproj
+	internal readonly VValue<string> _mmProjPath;
+
+	public string MMProjPath
+	{
+		get { return _mmProjPath.Value; }
+		set { _mmProjPath.Value = value; }
+	}
 
 	public LoadParams()
 	{
@@ -159,6 +167,10 @@ public partial class LoadParams : VObject
 
 		_kvOffload = AddValidatedValue<bool>(this)
 		    .Default(true)
+		    .ChangeEventsEnabled();
+
+		_mmProjPath = AddValidatedValue<string>(this)
+		    .Default("")
 		    .ChangeEventsEnabled();
 	}
 }

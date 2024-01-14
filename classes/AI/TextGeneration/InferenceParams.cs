@@ -179,6 +179,15 @@ public partial class InferenceParams : VObject
 		set { _prePromptSuffix.Value = value; }
 	}
 
+	// multimodal --image param
+	internal readonly VValue<string> _imagePath;
+
+	public string ImagePath
+	{
+		get { return _imagePath.Value; }
+		set { _imagePath.Value = value; }
+	}
+
 
 	public InferenceParams()
 	{
@@ -256,6 +265,10 @@ public partial class InferenceParams : VObject
 
 		_prePromptSuffix = AddValidatedValue<string>(this)
 		    .Default("\n")
+		    .ChangeEventsEnabled();
+
+		_imagePath = AddValidatedValue<string>(this)
+		    .Default("")
 		    .ChangeEventsEnabled();
 	}
 }
