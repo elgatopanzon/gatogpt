@@ -95,9 +95,9 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.AddArguments("--threads", InferenceParams.NThreads.ToString());
 		_processRunner.AddArguments("--n-predict", InferenceParams.NPredict.ToString());
 
-		// _processRunner.AddArguments("--tfs", InferenceParams.Tfs.ToString());
-		// _processRunner.AddArguments("--typical", InferenceParams.TypicalP.ToString());
-		// _processRunner.AddArguments("--repeat-last-n", InferenceParams.RepeatLastN.ToString());
+		_processRunner.AddArguments("--tfs", InferenceParams.Tfs.ToString());
+		_processRunner.AddArguments("--typical", InferenceParams.Typical.ToString());
+		_processRunner.AddArguments("--repeat-last-n", InferenceParams.RepeatLastN.ToString());
 		_processRunner.AddArguments("--repeat-penalty", InferenceParams.RepeatPenalty.ToString());
 		_processRunner.AddArguments("--presence-penalty", InferenceParams.PresencePenalty.ToString());
 		_processRunner.AddArguments("--frequency-penalty", InferenceParams.FrequencyPenalty.ToString());

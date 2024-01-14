@@ -104,6 +104,30 @@ public partial class InferenceParams : VObject
 		set { _presencePenalty.Value = value; }
 	}
 
+	internal readonly VValue<double> _tfs;
+
+	public double Tfs
+	{
+		get { return _tfs.Value; }
+		set { _tfs.Value = value; }
+	}
+
+	internal readonly VValue<double> _typical;
+
+	public double Typical
+	{
+		get { return _typical.Value; }
+		set { _typical.Value = value; }
+	}
+
+	internal readonly VValue<int> _repeatLastN;
+
+	public int RepeatLastN
+	{
+		get { return _repeatLastN.Value; }
+		set { _repeatLastN.Value = value; }
+	}
+
 	// prompt and input related config
 	internal readonly VValue<List<string>> _antiprompts;
 
@@ -196,6 +220,18 @@ public partial class InferenceParams : VObject
 
 		_presencePenalty = AddValidatedValue<double>(this)
 		    .Default(0)
+		    .ChangeEventsEnabled();
+
+		_tfs = AddValidatedValue<double>(this)
+		    .Default(1.0)
+		    .ChangeEventsEnabled();
+
+		_typical = AddValidatedValue<double>(this)
+		    .Default(1.0)
+		    .ChangeEventsEnabled();
+
+		_repeatLastN = AddValidatedValue<int>(this)
+		    .Default(64)
 		    .ChangeEventsEnabled();
 
 		_antiprompts = AddValidatedValue<List<string>>(this)
