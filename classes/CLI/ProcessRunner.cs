@@ -127,6 +127,11 @@ public partial class ProcessRunner : BackgroundJob
 		return await _task.Task;
 	}
 
+	public void Kill()
+	{
+		_process.Kill(true);
+	}
+
 	public void ProcessExitSuccess()
 	{
 		this.Emit<ProcessFinishedSuccess>((e) => e.SetData(ReturnCode));
