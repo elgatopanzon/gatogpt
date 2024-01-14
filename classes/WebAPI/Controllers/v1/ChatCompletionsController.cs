@@ -148,7 +148,7 @@ public partial class ChatController : ControllerBase
     	foreach (var messageCreateDto in chatCompletionCreateDto.Messages)
     	{
     		messageEntities.Add(new StatefulChatMessage() {
-				Content = messageCreateDto.Content,
+				Content = messageCreateDto.GetContent(),
 				Role = messageCreateDto.Role,
 				Name = messageCreateDto.Name,
 				ToolCalls = messageCreateDto.ToolCalls,
@@ -187,7 +187,7 @@ public partial class ChatController : ControllerBase
 				Role = "system",
 			};
 
-			string messageOriginalContent = lastMessage.Content;
+			string messageOriginalContent = lastMessage.GetContent();
 			toolsSystemMessage.Content += $"As an AI assistant you have access to a range of tools. Please select the most suitable function and parameters from the list of available functions below. Provide your response in JSON format when calling a function, otherwise respond as a human would.";
 			toolsSystemMessage.Content += $"\nAvailable functions:";
 
@@ -371,7 +371,7 @@ public partial class ChatController : ControllerBase
 					bool parseResult = false;
 					try
 					{
-						var toolCallRawDto = JsonConvert.DeserializeObject<ChatCompletionToolCallRawDto>(messageDto.Content);;
+						var toolCallRawDto = JsonConvert.DeserializeObject<ChatCompletionToolCallRawDto>(messageDto.GetContent());;
 
 						var toolCallDto = new ChatCompletionToolCallDto();
 						toolCallDto.Type = "function";
