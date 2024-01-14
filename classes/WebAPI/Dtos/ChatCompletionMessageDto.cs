@@ -34,6 +34,10 @@ public partial class ChatCompletionMessageDto
 
 			return String.Join(" ", GetContents().Where(x => x.Type == "text").Select(x => x.Text).ToArray<string>());
 		}
+		else if (Content is List<ChatCompletionMessageContentDto> dto)
+		{
+			return String.Join(" ", GetContents().Where(x => x.Type == "text").Select(x => x.Text).ToArray<string>());
+		}
 		else
 		{
 			return (string) Content;
@@ -72,6 +76,10 @@ public partial class ChatCompletionMessageDto
 
 				contentDtos.Add(contentDto);
 			}
+		}
+		else if (Content is List<ChatCompletionMessageContentDto> dto)
+		{
+			contentDtos = dto;
 		}
 
 		LoggerManager.LogDebug("Content dtos", "", "contentDtos", contentDtos);

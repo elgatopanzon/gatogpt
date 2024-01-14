@@ -170,28 +170,97 @@ public partial class ChatController : ControllerBase
 
     	LoggerManager.LogDebug("Request parsed image urls", "", "imageUrls", imageUrls);
 
-		// take the first image only 
-		if (imageUrls.Count > 0)
+		// take the first image only when we have a mmproj path set
+		if (imageUrls.Count == 1 && _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.LoadParams.MMProjPath.Length > 0)
 		{
-        	using (var httpClient = new HttpClient())
-        	{
-            	// Issue the GET request to a URL and read the response into a 
-            	// stream that can be used to load the image
-            	var imageContent = await httpClient.GetByteArrayAsync(imageUrls[0]);
+			try
+			{
+        		using (var httpClient = new HttpClient())
+        		{
+            		// Issue the GET request to a URL and read the response into a 
+            		// stream that can be used to load the image
+            		var imageContent = await httpClient.GetByteArrayAsync(imageUrls[0]);
 
-            	string filename = Path.GetFileName(imageUrls[0]);
-            	string filepath = Path.Combine(OS.GetUserDataDir(), "Downloads", filename);
+            		string filename = Path.GetFileName(imageUrls[0]);
+            		string filepath = Path.Combine(OS.GetUserDataDir(), "Downloads", filename);
 
-            	Directory.CreateDirectory(filepath.Replace(filepath.GetFile(), ""));
+            		Directory.CreateDirectory(filepath.Replace(filepath.GetFile(), ""));
 
-            	using (var fileStream = new FileStream(filepath, FileMode.Create))
-            	{
-                	await fileStream.WriteAsync(imageContent, 0, imageContent.Length);
-            	}
+            		using (var fileStream = new FileStream(filepath, FileMode.Create))
+            		{
+                		await fileStream.WriteAsync(imageContent, 0, imageContent.Length);
+            		}
 
-				inferenceParams.ImagePath = filepath;
-        	}
+					inferenceParams.ImagePath = filepath;
+        		}
+			}
+			catch (System.Exception e)
+			{
+				// throw;
+				LoggerManager.LogDebug("Error downloading image content", "", "exception", e);
 
+				return Ok();
+			}
+		}
+		else if (imageUrls.Count >= 1)
+		{
+			// execute internal api requests to combine the result of the images
+			// descriptions using defined Vision model
+			List<string> imageInferenceResults = new();
+
+			foreach (string imageUrl in imageUrls)
+			{
+				ChatCompletionCreateDto imageDto = new();
+				imageDto.Model = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.InferenceParams.ImageModelId;
+				imageDto.MaxTokens = chatCompletionCreateDto.MaxTokens;
+				imageDto.Messages = new();
+				imageDto.Messages.Add(new() {
+					Role = "user",
+					Content = new List<ChatCompletionMessageContentDto>() {
+							new() {
+								Type = "text",
+								Text = String.Join(" ", chatCompletionCreateDto.Messages.Select(x => x.GetContent()))
+							},
+							new() {
+								Type = "image_url",
+								ImageUrl = imageUrl,
+							},
+						},
+					});
+
+				var res = await CreateChatCompletion(HttpContext.GetRequestedApiVersion(), imageDto);
+
+				LoggerManager.LogDebug("Internal completion request", "", "res", res);
+
+				if (res.Result is OkObjectResult okRes)
+				{
+					imageInferenceResults.Add((string) ((ChatCompletionDto) okRes.Value).Choices[0].Message.Content);
+				}
+			}
+
+			LoggerManager.LogDebug("Image inference results", "", "imageRes", imageInferenceResults);
+
+			// hack together some injected system prompts to give information
+			// about the inference results (RAG I guess?)
+    		messageEntities.Add(new StatefulChatMessage() {
+				Role = "system",
+				Content = (string) $"Here is information about {imageUrls.Count} images.",
+    			});
+
+			int counter = 1;
+			foreach (var imageResult in imageInferenceResults)
+			{
+    			messageEntities.Add(new StatefulChatMessage() {
+					Role = "system",
+					Content = (string) $"\nImage {counter}: {imageResult}.",
+    				});
+
+				counter++;
+			}
+    		messageEntities.Add(new StatefulChatMessage() {
+				Role = "system",
+				Content = (string) $"Use this information to complete the user's request.",
+    			});
 		}
 
 		// inject a list of tools into the system prompt

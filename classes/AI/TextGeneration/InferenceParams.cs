@@ -188,6 +188,14 @@ public partial class InferenceParams : VObject
 		set { _imagePath.Value = value; }
 	}
 
+	internal readonly VValue<string> _imageModelId;
+
+	public string ImageModelId
+	{
+		get { return _imageModelId.Value; }
+		set { _imageModelId.Value = value; }
+	}
+
 
 	public InferenceParams()
 	{
@@ -269,6 +277,10 @@ public partial class InferenceParams : VObject
 
 		_imagePath = AddValidatedValue<string>(this)
 		    .Default("")
+		    .ChangeEventsEnabled();
+
+		_imageModelId = AddValidatedValue<string>(this)
+		    .Default("image")
 		    .ChangeEventsEnabled();
 	}
 }
