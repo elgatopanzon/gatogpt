@@ -75,6 +75,7 @@ public partial class CommandLineInterface
 		_commandArgs["generate"].Add(("--prompt", "e.g. \"Hello there\"", "Prompt text to begin generation", true));
 		_commandArgs["generate"].Add(("--chat", "", "Chat interactively with the model", false));
 		_commandArgs["generate"].Add(("--n-ctx", "N", "Context size in tokens", false));
+		_commandArgs["generate"].Add(("--image", "FILE", "Path to an image file (vision models)", false));
 		_commandArgs["generate"].Add(("--n-batch", "N", "Batch size for token processing", false));
 		_commandArgs["generate"].Add(("--n-gpu-layers", "N", "Number of layers to offload to GPU", false));
 		_commandArgs["generate"].Add(("--main-gpu", "N", "GPU device ID to use for offloading", false));
@@ -208,7 +209,7 @@ public partial class CommandLineInterface
 
 	public bool IsCommandSwitch(string cmd)
 	{
-		return Regex.IsMatch(cmd, "-[a-zA-Z0-9]+");
+		return Regex.IsMatch(cmd, "^-[-a-zA-Z0-9]+");
 	}
 
 	public bool ArgExists(string arg)
@@ -456,6 +457,9 @@ public partial class CommandLineInterface
 			inferenceParams.PrePromptPrefix = GetArgumentValue("--pre-prompt-prefix", inferenceParams.PrePromptPrefix);
 		if (ArgExists("--pre-prompt-suffix"))
 			inferenceParams.PrePromptSuffix = GetArgumentValue("--pre-prompt-suffix", inferenceParams.PrePromptSuffix);
+
+		if (ArgExists("--image"))
+			inferenceParams.ImagePath = GetArgumentValue("--image", "");
 
 		return inferenceParams;
 	}

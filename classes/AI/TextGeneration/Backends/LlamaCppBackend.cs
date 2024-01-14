@@ -24,6 +24,7 @@ using System.ComponentModel;
 public partial class LlamaCppBackend : TextGenerationBackend
 {
 	private ProcessRunner _processRunner { get; set; }
+	private string _command = "llama.cpp";
 	private Queue<string> _tokenPrintQueue { get; set; } = new();
 	private bool _printQueuePrinting = false;
 
@@ -77,6 +78,9 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		{
 			_processRunner.AddArguments("--mmproj", $"\"{LoadParams.MMProjPath.ToString()}\"");
 			_processRunner.AddArguments("--image", $"\"{InferenceParams.ImagePath.ToString()}\"");
+
+			// switch command to llava
+			_processRunner.Command = "llama.cpp-llava-cli";
 		}
 
 		if (LoadParams.UseMlock)
@@ -247,7 +251,7 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	public override void _State_Setup_OnEnter()
 	{
 		// create process runner instance
-		_processRunner = new ProcessRunner("llama.cpp");
+		_processRunner = new ProcessRunner(_command);
 
 		// add process filter to exclude certain output
 		_processRunner.AddOutputFilter((o) => {
