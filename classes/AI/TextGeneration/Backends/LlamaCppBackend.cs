@@ -312,6 +312,9 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	{
 		LoggerManager.LogDebug("Inference finished");
 
+		// remove trailing \n token
+		InferenceResult.Tokens = InferenceResult.Tokens.Take(InferenceResult.Tokens.Count() - 1).ToList();
+
 		InferenceResult.Finished = true;
 		Running = false;
 		IsFirstRun = false;
