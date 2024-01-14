@@ -24,6 +24,14 @@ public partial class ProcessRunner : BackgroundJob
 	public string Command { get; set; }
 	public string[] Args { get; set; }
 	public int ReturnCode { get; set; } = -1;
+
+	public bool Success {
+		get {
+			return ReturnCode == 0;
+		}
+	}
+
+
 	private ProcessStartInfo _processStartInfo;
 	private Process _process;
 	private TaskCompletionSource<int> _task;
@@ -169,7 +177,7 @@ public partial class ProcessRunner : BackgroundJob
 
 			OutputLines.Add(output);
 
-			this.Emit<ProcessOutputLine>((e) => e.SetData(output));
+			this.Emit<ProcessOutputLine>((e) => e.Line = output);
 		}
 	}
 	public void _On_Process_ErrorData(object sender, DataReceivedEventArgs args)
@@ -181,7 +189,7 @@ public partial class ProcessRunner : BackgroundJob
 
 			ErrorLines.Add(output);
 
-			this.Emit<ProcessOutputErrorLine>((e) => e.SetData(output));
+			this.Emit<ProcessOutputErrorLine>((e) => e.Line = output);
 		}
 	}
 

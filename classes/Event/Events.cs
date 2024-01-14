@@ -73,7 +73,9 @@ static public partial class LlamaModelInstanceEventExtensions
 public partial class ProcessRunnerEvent : Event {}
 
 public partial class ProcessStarted : ProcessRunnerEvent {}
-public partial class ProcessOutputLine : ProcessRunnerEvent {}
-public partial class ProcessOutputErrorLine : ProcessRunnerEvent {}
+public partial class ProcessOutputLine : ProcessRunnerEvent {
+	public string Line { get; set; }
+}
+public partial class ProcessOutputErrorLine : ProcessOutputLine {}
 public partial class ProcessFinishedSuccess : ProcessRunnerEvent {}
 public partial class ProcessFinishedError : ProcessRunnerEvent {}
