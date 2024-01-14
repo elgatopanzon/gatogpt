@@ -61,7 +61,7 @@ public partial class ProcessRunner : BackgroundJob
 		}
 	}
 
-	public ProcessRunner(string command, string[] args)
+	public ProcessRunner(string command, params string[] args)
 	{
 		Command = command;
 		Args = args;
@@ -69,22 +69,6 @@ public partial class ProcessRunner : BackgroundJob
 
 		OutputLines = new();
 		ErrorLines = new();
-
-		_processStartInfo = new ProcessStartInfo() {
-			FileName = command,
-			Arguments = String.Join(" ", Args), 
-			RedirectStandardError = true,
-			RedirectStandardInput = true,
-			RedirectStandardOutput = true,
-		};
-
-		_process = new Process() { 
-			StartInfo = _processStartInfo,
-			EnableRaisingEvents = true,
-		};
-
-		_process.OutputDataReceived += _On_Process_OutputData;
-		_process.ErrorDataReceived += _On_Process_ErrorData;
 	}
 
 	public void AddArguments(params string[] args)
@@ -114,6 +98,22 @@ public partial class ProcessRunner : BackgroundJob
 
 	public async Task<int> Execute()
 	{
+		_processStartInfo = new ProcessStartInfo() {
+			FileName = Command,
+			Arguments = String.Join(" ", Args), 
+			RedirectStandardError = true,
+			RedirectStandardInput = true,
+			RedirectStandardOutput = true,
+		};
+
+		_process = new Process() { 
+			StartInfo = _processStartInfo,
+			EnableRaisingEvents = true,
+		};
+
+		_process.OutputDataReceived += _On_Process_OutputData;
+		_process.ErrorDataReceived += _On_Process_ErrorData;
+
 		Run();
 
 		return await _task.Task;
