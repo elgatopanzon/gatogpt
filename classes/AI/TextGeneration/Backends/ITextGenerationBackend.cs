@@ -24,6 +24,8 @@ public partial interface ITextGenerationBackend : AI.IModelBackend
 	public string CurrentInferenceLine { get; set; }
 	public InferenceResult InferenceResult { get; set; }
 
+	public bool Persistent { get; set; }
+
 	public bool Finished
 	{
 		get { 

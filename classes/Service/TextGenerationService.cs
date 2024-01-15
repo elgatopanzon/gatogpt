@@ -177,6 +177,22 @@ public partial class TextGenerationService : Service
 		return false;
 	}
 
+	public ITextGenerationBackend GetPersistentInstance(string modelDefinitionId, bool stateful = false)
+	{
+		foreach (var instance in _modelInstances)
+		{
+			if (instance.Value.Persistent && instance.Value.ModelDefinition.Id == modelDefinitionId)
+			{
+				LoggerManager.LogDebug("Found persistent instance", "", "modelId", modelDefinitionId);
+				LoggerManager.LogDebug("", "", "instance", instance.Value);
+
+				return instance.Value;
+			}
+		}
+
+		return null;
+	}
+
 	public void DestroyExistingInstances(bool keepStateFiles = true)
 	{
 		LoggerManager.LogDebug("Destroying all instances", "", "keepStateFiles", keepStateFiles);

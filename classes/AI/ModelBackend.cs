@@ -21,6 +21,7 @@ public partial class ModelBackend : BackgroundJob, AI.IModelBackend
 	public bool Stateful { get; set; } = false;
 	public bool IsFirstRun { get; set; } = true;
 	public bool Running { get; set; }
+	public bool Persistent { get; set; }
 	public AI.ModelDefinition ModelDefinition { get; set; }
 
 	protected const int SETUP_STATE = 0;

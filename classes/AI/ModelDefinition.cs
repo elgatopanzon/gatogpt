@@ -29,6 +29,14 @@ public partial class ModelDefinition : VObject
 		set { _id = value; }
 	}
 
+	internal readonly VValue<int> _persistent;
+
+	public int Persistent
+	{
+		get { return _persistent.Value; }
+		set { _persistent.Value = value; }
+	}
+
 	// model profile preset code (used to override the filename one)
 	internal readonly VValue<string> _profilePreset;
 
@@ -71,6 +79,10 @@ public partial class ModelDefinition : VObject
 
 	public ModelDefinition(string modelResourceId, string profilePreset = "")
 	{
+		_persistent = AddValidatedValue<int>(this)
+		    .Default(0)
+		    .ChangeEventsEnabled();
+
 		_profilePreset = AddValidatedValue<string>(this)
 		    .Default("")
 		    .ChangeEventsEnabled();

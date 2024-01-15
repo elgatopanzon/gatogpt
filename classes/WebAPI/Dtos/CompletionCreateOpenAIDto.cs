@@ -78,7 +78,7 @@ public partial class CompletionCreateOpenAIBaseDto
 	}
 	public object Stop {
 		get {
-			return BaseDto.Stop;
+			return (Stop is string) ? new List<string>() { (string) Stop } : Stop;
 		}
 	}
 	public bool Stream {

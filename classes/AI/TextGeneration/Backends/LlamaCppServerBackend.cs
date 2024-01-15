@@ -32,6 +32,8 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 	{
 		ModelDefinition = modelDefinition;
 
+		Persistent = (ModelDefinition.Persistent != null && ModelDefinition.Persistent > 0);
+
 		LoggerManager.LogDebug("Created llamacpp server backend", "", "instanceId", InstanceId);
 		LoggerManager.LogDebug("", "", "modelDefinition", ModelDefinition);
 
@@ -65,6 +67,8 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		// commands
 		
 		// load params
+		_processRunner.Args = new string[] {};
+
 		_processRunner.AddArguments("--model", ModelDefinition.ModelResource.Definition.Path);
 		_processRunner.AddArguments("--ctx-size", LoadParams.NCtx.ToString());
 		_processRunner.AddArguments("--batch-size", LoadParams.NBatch.ToString());
@@ -152,6 +156,11 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		// }
 
 		return currentPrompt;
+	}
+
+	public override bool SafeToUnloadModel()
+	{
+		return Persistent == false;
 	}
 
 	// public async void ProcessInferenceLine(string line)
@@ -286,12 +295,19 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		// TODO: handle stateful stuff here
 		//
 		// setup process events
-		_processRunner.SubscribeOwner<ProcessOutputLine>(_On_ProcessOutputLine);
-		_processRunner.SubscribeOwner<ProcessFinishedSuccess>(_On_ProcessFinishedSuccess);
-		_processRunner.SubscribeOwner<ProcessFinishedError>(_On_ProcessFinishedError);
+		if (IsFirstRun || (Persistent == false))
+		{
+			_processRunner.SubscribeOwner<ProcessOutputLine>(_On_ProcessOutputLine);
+			_processRunner.SubscribeOwner<ProcessFinishedSuccess>(_On_ProcessFinishedSuccess);
+			_processRunner.SubscribeOwner<ProcessFinishedError>(_On_ProcessFinishedError);
 
-		// run and wait for process to exit
-		_processRunner.Execute();
+			// run and wait for process to exit
+			_processRunner.Execute();
+		}
+		else
+		{
+			_state.Transition(INFERENCE_RUNNING_STATE);
+		}
 	}
 
 	public override void _State_UnloadModel_OnEnter()
@@ -300,7 +316,13 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 	}
 	public override void _State_UnloadModel_OnUpdate()
 	{
-		_processRunner.Kill();
+		// skip unloading
+		if (Persistent == false)
+		{
+			LoggerManager.LogDebug("Killing process");
+
+			_processRunner.Kill();
+		}
 
 		_state.Transition(INFERENCE_FINISHED_STATE);
 	}
