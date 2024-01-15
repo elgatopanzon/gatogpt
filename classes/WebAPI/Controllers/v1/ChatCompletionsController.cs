@@ -30,6 +30,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 
+using GatoGPT.AI.OpenAI;
+
 [ApiController]
 [ApiVersion("1.0")]
 [Route("v{version:apiVersion}/[controller]")]
@@ -74,6 +76,36 @@ public partial class ChatController : ControllerBase
 						code: null,
 						param:null
 						));
+		}
+
+		// openai backend passthrough
+		if (_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).Backend == "openai")
+		{
+			var openAi = new OpenAI(ServiceRegistry.Get<ConfigManager>().Get<GlobalConfig>().OpenAIConfig);
+
+    		var openaiSse = new ServerSentEventManager(HttpContext);
+
+    		openaiSse.Start();
+
+			// stream responses when there's no tool calls
+    			openAi.SubscribeOwner<OpenAIServerSentEvent>(async (e) => {
+					await openaiSse.SendEvent(e.Event);
+    			}, isHighPriority: true);
+
+			var openaiResult = await openAi
+					.ChatCompletions(new ChatCompletionCreateOpenAIDto(chatCompletionCreateDto));
+
+			if (chatCompletionCreateDto.Stream)
+			{
+				return new EmptyResult();
+			}
+
+			if (openaiResult == null)
+			{
+				return BadRequest(openAi.Error);
+			}
+
+			return Ok(openaiResult);
 		}
 
 		// extract stops

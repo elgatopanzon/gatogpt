@@ -19,7 +19,7 @@ public partial class ChatCompletionMessageCreateDto : ChatCompletionMessageDto
 
 	public ChatCompletionMessageCreateDto()
 	{
-		Name = "";
+		Name = Role;
 	}
 }
 

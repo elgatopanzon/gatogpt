@@ -40,7 +40,7 @@ public partial class CompletionCreateBaseDto
 		PresencePenalty = 0;
 		RepeatPenalty = 1.1;
 		Seed = -1;
-		Stop = new();
+		Stop = "";
 		Stream = false;
 		Temperature = 1;
 		MinP = 0.05;

@@ -24,7 +24,7 @@ public partial class ChatCompletionCreateDto : CompletionCreateBaseDto
 	{
 		ResponseFormat = new();
 		Tools = new();
-		ToolChoice = new();
+		ToolChoice = (string) "auto";
 
 		// the Completion API has 16 as default, while the Chat Completion API
 		// has it set to null (presumably unlimited/max context length)

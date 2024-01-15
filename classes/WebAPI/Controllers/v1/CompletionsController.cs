@@ -27,6 +27,8 @@ using Microsoft.AspNetCore.Mvc;
 // using GatoGPT.WebAPI.Entities;
 using System.Text.Json;
 
+using GatoGPT.AI.OpenAI;
+
 [ApiController]
 [ApiVersion("1.0")]
 [Route("v{version:apiVersion}/[controller]")]
@@ -62,6 +64,36 @@ public partial class CompletionsController : ControllerBase
 		if (!_modelManager.ModelDefinitions.ContainsKey(completionCreateDto.Model))
 		{
     		return NotFound(new InvalidRequestErrorDto(message:$"The model '{completionCreateDto.Model}' does not exist", code:"model_not_found", param:"model"));
+		}
+
+		// openai backend passthrough
+		if (_modelManager.GetModelDefinition(completionCreateDto.Model).Backend == "openai")
+		{
+			var openAi = new OpenAI(ServiceRegistry.Get<ConfigManager>().Get<GlobalConfig>().OpenAIConfig);
+
+    		var openaiSse = new ServerSentEventManager(HttpContext);
+
+    		openaiSse.Start();
+
+			// stream responses when there's no tool calls
+    			openAi.SubscribeOwner<OpenAIServerSentEvent>(async (e) => {
+					await openaiSse.SendEvent(e.Event);
+    			}, isHighPriority: true);
+
+			var openaiResult = await openAi
+					.Completions(new CompletionCreateOpenAIDto(completionCreateDto));
+
+			if (completionCreateDto.Stream)
+			{
+				return new EmptyResult();
+			}
+
+			if (openaiResult == null)
+			{
+				return BadRequest(openAi.Error);
+			}
+
+			return Ok(openaiResult);
 		}
 
 		// extract prompts

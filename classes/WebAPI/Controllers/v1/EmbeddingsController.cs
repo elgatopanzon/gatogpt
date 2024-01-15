@@ -32,6 +32,8 @@ using Microsoft.AspNetCore.Mvc;
 // using GatoGPT.WebAPI.Entities;
 using System.Text.Json;
 
+using GatoGPT.AI.OpenAI;
+
 [ApiController]
 [ApiVersion("1.0")]
 [Route("v{version:apiVersion}/[controller]")]
@@ -69,6 +71,21 @@ public partial class EmbeddingsController : ControllerBase
 		if (!_modelManager.ModelDefinitions.ContainsKey(embeddingCreateDto.Model))
 		{
     		return NotFound(new InvalidRequestErrorDto(message:$"The model '{embeddingCreateDto.Model}' does not exist", code:"model_not_found", param:"model"));
+		}
+
+		// openai backend passthrough
+		if (_modelManager.GetModelDefinition(embeddingCreateDto.Model).Backend == "openai")
+		{
+			var openAi = new OpenAI(ServiceRegistry.Get<ConfigManager>().Get<GlobalConfig>().OpenAIConfig);
+			var openaiResult = await openAi
+					.Embeddings(embeddingCreateDto);
+
+			if (openaiResult == null)
+			{
+				return BadRequest(openAi.Error);
+			}
+
+			return Ok(openaiResult);
 		}
 
 		// create the EmbeddingsDto object
