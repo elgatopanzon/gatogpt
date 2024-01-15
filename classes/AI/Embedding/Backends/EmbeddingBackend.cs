@@ -15,7 +15,7 @@ using GodotEGP.Config;
 
 public partial class EmbeddingBackend : AI.ModelBackend, IEmbeddingBackend
 {
-	public EmbeddingBackend(EmbeddingModelDefinition modelDefinition) : base(modelDefinition, false)
+	public EmbeddingBackend(EmbeddingModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		
 	}

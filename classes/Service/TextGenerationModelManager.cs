@@ -78,7 +78,7 @@ public partial class TextGenerationModelManager : Service
 
 		foreach (var def in _definitionsConfig.TextGeneration)
 		{
-			if (def.Value.ModelResourceId.Length > 0)
+			if (def.Value.ModelResourceId != null && def.Value.ModelResourceId.Length > 0)
 			{
 				def.Value.Id = def.Key;
 

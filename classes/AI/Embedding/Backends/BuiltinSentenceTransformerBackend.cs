@@ -22,7 +22,7 @@ public partial class BuiltinSentenceTransformerBackend : ModelBackend, IEmbeddin
 	private BertTokenizer _tokenizer;
 	private AllMiniLmL6V2Embedder _onnxEmbedder;
 
-	public BuiltinSentenceTransformerBackend(EmbeddingModelDefinition modelDefinition) : base(modelDefinition, false)
+	public BuiltinSentenceTransformerBackend(EmbeddingModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		ModelDefinition = modelDefinition;
 		_state.Enter();
