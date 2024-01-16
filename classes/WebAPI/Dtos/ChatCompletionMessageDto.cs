@@ -18,7 +18,7 @@ using Newtonsoft.Json.Linq;
 public partial class ChatCompletionMessageDto
 {
 	public object Content { get; set; }
-	public string Role { get; set; } = "system";
+	public string Role { get; set; }
 	public List<ChatCompletionToolCallDto> ToolCalls { get; set; }
 	
 	public ChatCompletionMessageDto()

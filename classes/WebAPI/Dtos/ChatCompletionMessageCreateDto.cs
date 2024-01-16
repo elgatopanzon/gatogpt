@@ -13,13 +13,16 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
+using Newtonsoft.Json;
+
 public partial class ChatCompletionMessageCreateDto : ChatCompletionMessageDto
 {
+	[JsonProperty(NullValueHandling=NullValueHandling.Ignore)]
 	public string Name { get; set; }
 
 	public ChatCompletionMessageCreateDto()
 	{
-		Name = Role;
+		Name = "";
 	}
 }
 
