@@ -53,6 +53,43 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
      	return (ITextGenerationBackend) Activator.CreateInstance(t, modelDefinition, isStateful);
 	}
 
+	public string FormatPrompt(string userPrompt)
+	{
+		var prePromptP = InferenceParams.PrePromptPrefix;
+		var prePromptS = InferenceParams.PrePromptSuffix;
+		var prePrompt = InferenceParams.PrePrompt;
+
+		var InputP = InferenceParams.InputPrefix;
+		var InputS = InferenceParams.InputSuffix;
+
+		Dictionary<string, object> templateVars = new();
+		templateVars.Add("PrePromptPrefix", InferenceParams.PrePromptPrefix);
+		templateVars.Add("PrePromptSuffix", InferenceParams.PrePromptSuffix);
+		templateVars.Add("PrePrompt", InferenceParams.PrePrompt);
+		templateVars.Add("InputPrefix", InferenceParams.InputPrefix);
+		templateVars.Add("InputSuffix", InferenceParams.InputSuffix);
+		templateVars.Add("Input", userPrompt);
+
+		string formattedPrompt = "";
+		
+		if (InferenceParams.TemplateType == "instruct")
+		{
+			formattedPrompt = InferenceParams.InstructTemplate;
+		}
+		else if (InferenceParams.TemplateType == "chat-instruct")
+		{
+			formattedPrompt = InferenceParams.ChatTemplate;
+		}
+
+		foreach (var var in templateVars)
+		{
+			formattedPrompt = formattedPrompt.Replace("{{ "+var.Key+" }}", (string) var.Value);
+		}
+
+		return formattedPrompt;
+	}
+
+
 	/**********************
 	*  Callback methods  *
 	**********************/

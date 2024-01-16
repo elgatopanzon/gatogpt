@@ -265,18 +265,6 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 		_state.Transition(INFERENCE_RUNNING_STATE);
 	}
 	
-	public string FormatPrompt(string userPrompt)
-	{
-		var prePromptP = InferenceParams.PrePromptPrefix;
-		var prePromptS = InferenceParams.PrePromptSuffix;
-		var prePrompt = InferenceParams.PrePrompt;
-
-		var InputP = InferenceParams.InputPrefix;
-		var InputS = InferenceParams.InputSuffix;
-
-		return $"{prePromptP}{prePrompt}{prePromptS}{InputP}{userPrompt}{InputS}";
-	}
-
 	public string GetCurrentPrompt()
 	{
 		string currentPrompt = Prompt;

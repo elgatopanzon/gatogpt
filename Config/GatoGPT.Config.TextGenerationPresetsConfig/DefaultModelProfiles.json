@@ -16,14 +16,17 @@
     "chatml": {
       "Name": "ChatML",
       "InferenceParams": {
-        "InputPrefix": "<|im_end|>\n<|im_start|>user\n",
-        "InputSuffix": "<|im_end|>\n<|im_start|>assistant\n",
+        "InputPrefix": "<|im_start|>user\n",
+        "InputSuffix": "\n<|im_end|>\n<|im_start|>assistant\n",
         "Antiprompts": [
           "<|im_start|>",
           "<|im_end|>"
         ],
         "PrePromptPrefix": "<|im_start|>system\n",
-        "PrePromptSuffix": "",
+        "PrePromptSuffix": "<|im_end|>\n",
+        "ChatMessageTemplate": "<|im_start|>{{ Role }}\n{{ Message }}<|im_end|>",
+        "ChatTemplate": "{{ PrePromptPrefix }}{{ PrePrompt }}{{ PrePromptSuffix }}{{ Input }}",
+        "ChatMessageGenerationTemplate": "<|im_start|>assistant\n",
         "PrePrompt": "Perform the task to the best of your ability."
       }
     },

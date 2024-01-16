@@ -196,6 +196,45 @@ public partial class InferenceParams : VObject
 		set { _imageModelId.Value = value; }
 	}
 
+	internal readonly VValue<string> _instructTemplate;
+
+	public string InstructTemplate
+	{
+		get { return _instructTemplate.Value; }
+		set { _instructTemplate.Value = value; }
+	}
+
+	internal readonly VValue<string> _chatTemplate;
+
+	public string ChatTemplate
+	{
+		get { return _chatTemplate.Value; }
+		set { _chatTemplate.Value = value; }
+	}
+
+	internal readonly VValue<string> _chatMessageTemplate;
+
+	public string ChatMessageTemplate
+	{
+		get { return _chatMessageTemplate.Value; }
+		set { _chatMessageTemplate.Value = value; }
+	}
+
+	internal readonly VValue<string> _chatMessageGenerationTemplate;
+
+	public string ChatMessageGenerationTemplate
+	{
+		get { return _chatMessageGenerationTemplate.Value; }
+		set { _chatMessageGenerationTemplate.Value = value; }
+	}
+
+	internal readonly VValue<string> _templateType;
+
+	public string TemplateType
+	{
+		get { return _templateType.Value; }
+		set { _templateType.Value = value; }
+	}
 
 	public InferenceParams()
 	{
@@ -281,6 +320,26 @@ public partial class InferenceParams : VObject
 
 		_imageModelId = AddValidatedValue<string>(this)
 		    .Default("image")
+		    .ChangeEventsEnabled();
+
+		_instructTemplate = AddValidatedValue<string>(this)
+		    .Default("{{ PrePromptPrefix }}{{ PrePrompt }}{{ PrePromptSuffix }}{{ InputPrefix }}{{ Input }}{{ InputSuffix }}")
+		    .ChangeEventsEnabled();
+
+		_chatTemplate = AddValidatedValue<string>(this)
+		    .Default("{{ PrePromptPrefix }}{{ PrePrompt }}{{ PrePromptSuffix }}{{ InputPrefix }}{{ Input }}{{ InputSuffix }}")
+		    .ChangeEventsEnabled();
+
+		_chatMessageTemplate = AddValidatedValue<string>(this)
+		    .Default("{{ Name }}: {{ Message }}")
+		    .ChangeEventsEnabled();
+
+		_chatMessageGenerationTemplate = AddValidatedValue<string>(this)
+		    .Default("{{ AssistantName }}: ")
+		    .ChangeEventsEnabled();
+
+		_templateType = AddValidatedValue<string>(this)
+		    .Default("instruct")
 		    .ChangeEventsEnabled();
 	}
 }

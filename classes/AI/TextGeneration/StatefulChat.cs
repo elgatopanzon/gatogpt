@@ -36,7 +36,8 @@ public partial class StatefulChat
 	public TextGenerationService _inferenceService { get; set; }
 	public string _instanceStateId { get; set; }
 
-	public List<string> _knownUserNames { get; set; }
+	public List<string> _userNames { get; set; } = new();
+	public string _assistantName { get; set; } = "Assistant";
 
 	public StatefulChat(bool stateful,  AI.TextGeneration.LoadParams loadParams, AI.TextGeneration.InferenceParams inferenceParams)
 	{
@@ -142,6 +143,10 @@ public partial class StatefulChat
 
 	public string GetPrompt(bool newMessagesOnly = true)
 	{
+		_inferenceParams.TemplateType = "chat-instruct";
+
+		string formattedPrompt = "";
+
 		List<StatefulChatMessage> history;
 
 		if (newMessagesOnly)
@@ -156,84 +161,76 @@ public partial class StatefulChat
 		List<string> formattedMessages = new();
 		List<string> systemPrompts = new();
 
-		// formattedMessages.Add("Below is a conversation:");
 
-		string formattedPrompt = "";
-
-		StatefulChatMessage lastMessage = null;
-
-		string userName = "User";
-		string assistantName = "Assistant";
-
-		_knownUserNames = new();
-
+		// prepare messages before formatting them
 		foreach (var message in history)
 		{
+			// skip formatting the message if it's a system message
 			if (message.Role == "system")
 			{
 				systemPrompts.Add(message.Content);
 				continue;
 			}
 
+			// set the assistant name
 			if (message.Role == "assistant")
 			{
-				assistantName = message.GetUserName();
+				_assistantName = message.GetUserName();
 			}
+			// add user name to known users
 			if (message.Role == "user")
 			{
-				userName = message.GetUserName();
+				_userNames.Add(message.GetUserName());
+
+				// add the stop to the message
+				if (!_inferenceParams.Antiprompts.Contains(message.GetUserName()))
+				{
+					_inferenceParams.Antiprompts.Add($"{message.GetUserName()}: ");
+				}
 			}
 
-			formattedMessages.Add(message.Format());
+			// format the message using the ChatMessageTemplate
+			string formattedMessage = _inferenceParams.ChatMessageTemplate;
 
-			// add stops to message
-			if (!_inferenceParams.Antiprompts.Contains(message.GetUserName()))
+			Dictionary<string, object> templateVars = new();
+			templateVars.Add("Role", message.Role);
+			templateVars.Add("Name", message.GetUserName());
+			templateVars.Add("Message", message.Content);
+
+			foreach (var var in templateVars)
 			{
+				formattedMessage = formattedMessage.Replace("{{ "+var.Key+" }}", (string) var.Value);
 			}
 
-			lastMessage = message;
+			formattedMessages.Add(formattedMessage);
 
-			if (!_knownUserNames.Contains(message.GetUserName()))
-			{
-				_knownUserNames.Add(message.GetUserName());
-			}
 		}
-		
-		// set system prompt from array of system prompts overriding the default
+
+		systemPrompts.Add($"Contiue the chat and provide a single answer for {_assistantName}.");
+
+		// append a chat message generation string if the template is set
+		if (_inferenceParams.ChatMessageGenerationTemplate.Length > 0)
+		{
+			string formattedMessage = _inferenceParams.ChatMessageGenerationTemplate;
+
+			Dictionary<string, object> templateVars = new();
+			templateVars.Add("AssistantName", _assistantName);
+
+			foreach (var var in templateVars)
+			{
+				formattedMessage = formattedMessage.Replace("{{ "+var.Key+" }}", (string) var.Value);
+			}
+
+			formattedMessages.Add(formattedMessage);
+		}
+
+
 		if (systemPrompts.Count > 0)
 		{
 			_inferenceParams.PrePrompt = String.Join(". ", systemPrompts);
 		}
 
-		// ignore system messages if it's a stateful chat and there's some
-		// skipped messages
-		if ((_stateful && ChatStateExistsForHash(GetStateInstanceId(0))))
-		{
-			LoggerManager.LogDebug("Removing system prompt when state exists");
-			_inferenceParams.PrePrompt = "";
-			_inferenceParams.PrePromptPrefix = "";
-			_inferenceParams.PrePromptSuffix = "";
-			// _inferenceParams.InputPrefix = "";
-			// _inferenceParams.InputSuffix = "";
-		}
-
-		// add the next expected reply to the end of the conversation based on
-		// the previous role
-		if (lastMessage != null)
-		{
-			if (lastMessage.Role == "user")
-			{
-				// formattedMessages.Add($"{assistantName}: ");
-				_inferenceParams.Antiprompts.Add(lastMessage.GetUserName()+":");
-			}
-			else
-			{
-				// formattedMessages.Add($"{userName}: ");
-				_inferenceParams.Antiprompts.Add(lastMessage.GetUserName()+":");
-			}
-		}
-
-		// format the conversation when there's messages
+		// join messages to form prompt when message count > 0
 		if (formattedMessages.Count > 0)
 		{
 
@@ -265,13 +262,13 @@ public partial class StatefulChat
 		});
 		_inferenceService.SetModelInstanceId(_modelInstance.InstanceId, GetInstanceId(GetStateInstanceId(0)));
 
-		// // strip out chat names from the response
-		// foreach (string name in _knownUserNames)
-		// {
-		// 	content = content.Replace($"{name}: ", "");
-		// 	content = content.Replace($"{name}:", "");
-		// 	content = content.Trim();
-		// }
+		// strip out chat names from the response
+		foreach (string name in _userNames.Concat(new List<string>() { _assistantName }))
+		{
+			content = content.Replace($"{name}: ", "");
+			content = content.Replace($"{name}:", "");
+			content = content.Trim();
+		}
 
 		LoggerManager.LogDebug("Instance state id", "", "instanceStateId", _instanceStateId);
 
@@ -297,7 +294,7 @@ public partial class StatefulChatMessage
 	public string GetUserName()
 	{
 		string userName = Role;
-		if (Name != "" && Name != null)
+		if (Name != null && Name != "")
 		{
 			userName = Name;
 		}
