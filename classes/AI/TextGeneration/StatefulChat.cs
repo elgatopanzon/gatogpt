@@ -223,12 +223,12 @@ public partial class StatefulChat
 		{
 			if (lastMessage.Role == "user")
 			{
-				formattedMessages.Add($"{assistantName}: ");
+				// formattedMessages.Add($"{assistantName}: ");
 				_inferenceParams.Antiprompts.Add(lastMessage.GetUserName()+":");
 			}
 			else
 			{
-				formattedMessages.Add($"{userName}: ");
+				// formattedMessages.Add($"{userName}: ");
 				_inferenceParams.Antiprompts.Add(lastMessage.GetUserName()+":");
 			}
 		}
