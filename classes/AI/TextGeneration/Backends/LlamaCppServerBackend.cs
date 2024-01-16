@@ -528,7 +528,7 @@ public partial class CompletionCreateDto
 	public string Grammar { get; set; } = null;
 	public int Seed { get; set; } = -1;
 	public List<ImageDataDto> ImageData { get; set; } = new();
-	// public bool CachePrompt { get; set; } = true; // TODO: evaluate
+	public bool CachePrompt { get; set; } = true; // TODO: evaluate
 }
 
 public partial class ImageDataDto
