@@ -41,6 +41,49 @@ public partial class CodeTesting
 	{
 		LoggerManager.LogDebug("Testing class!");
 
+		if (_args.Contains("--script"))
+		{
+			var scriptService = ServiceRegistry.Get<ScriptService>();
+
+			List<Dictionary<string, object>> messages = new();
+
+			messages.Add(new() {
+				{ "Content", "You are an AI assistant." },
+				{ "Role", "system" },
+				{ "Name", "System" },
+				});
+			messages.Add(new() {
+				{ "Content", "Hello, can you tell me the time?" },
+				{ "Role", "user" },
+				{ "Name", "User" },
+				});
+			messages.Add(new() {
+				{ "Content", "No" },
+				{ "Role", "assistant" },
+				{ "Name", "Assistant" },
+				});
+			messages.Add(new() {
+				{ "Content", "Why not?" },
+				{ "Role", "user" },
+				{ "Name", "User" },
+				});
+
+			var scriptSession = scriptService.CreateSession();
+			scriptSession.SubscribeOwner<ScriptInterpretterOutput>((e) => LoggerManager.LogDebug("script output", "", "o", e.Result.Output), isHighPriority:true);
+
+			string scriptName = scriptService.AddScriptContent(String.Join("\n", File.ReadAllLines("/tmp/script")));
+			scriptSession.RunScript(scriptName, new() {
+					{ "testvariable", (object) "test content" },
+					{ "sys", (object) "You are an AI assistant." },
+					{ "messages", (object) messages.Select((s, index) => new { s, index })
+    .ToDictionary(x => x.index.ToString(), x => (object) x.s) },
+				});
+
+			scriptSession.SubscribeOwner<ScriptInterpretterFinished>((e) => Console.WriteLine(scriptSession.Stdout), isHighPriority:true);
+
+			await Task.Delay(-1);
+		}
+
 		if (_args.Contains("--llama.cpp-test"))
 		{
 			LoggerManager.LogDebug("Testing running llama.cpp process!");
