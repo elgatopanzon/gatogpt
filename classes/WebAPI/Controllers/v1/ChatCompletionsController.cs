@@ -564,7 +564,7 @@ public partial class ChatController : ControllerBase
 				}
 			}
 
-			if (chatCompletionCreateDto.Tools.Count > 0)
+			if (chatCompletionCreateDto.Tools.Count > 0 && chatCompletionCreateDto.Stream)
 			{
 				
 				await sse.SendEvent(new ChatCompletionChunkDto() {
