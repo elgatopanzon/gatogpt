@@ -478,7 +478,7 @@ public partial class CommandLineInterface
 				var r = m.Value;
 
 				// skip the duplicate resource definitions
-				if (printedIds.Contains(m.Key))
+				if (printedIds.Contains(r.Id))
 				{
 					continue;
 				}
@@ -486,6 +486,8 @@ public partial class CommandLineInterface
 				Console.WriteLine($"");
 				Console.WriteLine($"# {r.Id} #");
 				Console.WriteLine($"Path: {r.Definition.Path}");
+
+				printedIds.Add(r.Id);
 			}
 			
 			// print model definitions
@@ -496,10 +498,25 @@ public partial class CommandLineInterface
 				var d = m.Value;
 
 				Console.WriteLine($"");
-				Console.WriteLine($"# {d.Id} #");
-				Console.WriteLine($"Model Resource: {d.ModelResourceId}");
-				Console.WriteLine($"Automatic Preset: {d.ModelProfile.Name}");
+				Console.WriteLine($"# {m.Key} #");
+				if (d.ModelResourceId != null)
+				{
+					Console.WriteLine($"Model Resource: {d.ModelResourceId}");
+				}
+				else
+				{
+					Console.WriteLine($"Model Resource: none");
+				}
+				if (d.ModelProfile != null)
+				{
+					Console.WriteLine($"Automatic Preset: {d.ModelProfile.Name}");
+				}
+				else
+				{
+					Console.WriteLine($"Automatic Preset: none");
+				}
 				Console.WriteLine($"Profile Preset Override: {d.ProfilePreset}");
+				Console.WriteLine($"Backend: {d.Backend}");
 
 				var jsonString = JsonConvert.SerializeObject(
         		d.ModelProfile, Formatting.Indented,
