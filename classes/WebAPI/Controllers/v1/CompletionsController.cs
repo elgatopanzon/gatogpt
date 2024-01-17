@@ -196,7 +196,7 @@ public partial class CompletionsController : ControllerBase
 			completionDto.Choices.Add(new CompletionChoiceDto() {
 				FinishReason = ((instance.InferenceResult.Tokens.Count >= completionCreateDto.MaxTokens && completionCreateDto.MaxTokens > -1) ? "length" : "stop"),
 				Index = currentIndex,
-				Text = instance.InferenceResult.Output,
+				Text = instance.InferenceResult.OutputStripped,
 				InferenceResult = instance.InferenceResult,
 				});
 

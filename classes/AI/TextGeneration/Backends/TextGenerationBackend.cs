@@ -89,6 +89,16 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		return formattedPrompt;
 	}
 
+	public string FormatOutput(string output)
+	{
+		// strip antiprompts from the output
+		foreach (var antiprompt in ModelDefinition.ModelProfile.InferenceParams.Antiprompts)
+		{
+			output = output.Replace(antiprompt, "");
+		}
+
+		return output.Trim();
+	}
 
 	/**********************
 	*  Callback methods  *

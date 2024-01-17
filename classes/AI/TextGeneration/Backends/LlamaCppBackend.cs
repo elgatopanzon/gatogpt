@@ -307,6 +307,8 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		Running = false;
 		IsFirstRun = false;
 
+		InferenceResult.OutputStripped = FormatOutput(InferenceResult.Output);
+
 		LoggerManager.LogDebug("Llama.cpp output", "", "output", InferenceResult.Output);
 
 		// clear tokens on non-successful exit

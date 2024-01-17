@@ -253,7 +253,7 @@ public partial class StatefulChat
 
 		InferenceResult inferenceResult = await _inferenceService.InferAsync(modelInstance.ModelDefinition.Id, GetPrompt(), stateful:_stateful, (_instanceStateId.Length > 0 ? _instanceStateId : _modelInstance.InstanceId), _loadParams, _inferenceParams);
 
-		string content = inferenceResult.Output;
+		string content = inferenceResult.OutputStripped;
 
 		// append message to history and save context
 		_chatHistory.Add(new StatefulChatMessage() {

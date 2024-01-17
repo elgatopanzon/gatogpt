@@ -427,6 +427,8 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		Running = false;
 		IsFirstRun = false;
 
+		InferenceResult.OutputStripped = FormatOutput(InferenceResult.Output);
+
 		LoggerManager.LogDebug("Llama.cpp output", "", "output", InferenceResult.Output);
 		
 		this.Emit<TextGenerationInferenceFinished>((o) => {

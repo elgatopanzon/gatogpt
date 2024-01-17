@@ -518,6 +518,8 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 		InferenceResult.Finished = true;
 		Running = false;
 		IsFirstRun = false;
+
+		InferenceResult.OutputStripped = FormatOutput(InferenceResult.Output);
 		
 		this.Emit<TextGenerationInferenceFinished>((o) => {
 			o.SetInstanceId(InstanceId);

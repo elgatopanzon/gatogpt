@@ -64,11 +64,7 @@ public partial class InferenceResult
 		}
 	}
 
-	public string OutputStripped { 
-		get {
-			return Output.Trim();
-		}
-	}
+	public string OutputStripped { get; set; }
 
 	internal bool Finished { get; set; }
 
