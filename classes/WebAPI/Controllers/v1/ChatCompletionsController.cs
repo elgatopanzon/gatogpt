@@ -438,12 +438,12 @@ public partial class ChatController : ControllerBase
 		int currentIndex = 0;
 		while (chatCompletionDto.Choices.Count < chatCompletionCreateDto.N)
 		{
-			var modelInstance = _inferenceService.GetPersistentInstance(chatCompletionCreateDto.Model, stateful:true);
+			var modelInstance = _inferenceService.GetPersistentInstance(chatCompletionCreateDto.Model, stateful:false);
 
 			// create new instance if there's no persistent instances
 			if (modelInstance == null)
 			{
-    			modelInstance = _inferenceService.CreateModelInstance(chatCompletionCreateDto.Model, stateful:true);
+    			modelInstance = _inferenceService.CreateModelInstance(chatCompletionCreateDto.Model, stateful:false);
 			}
 
     		// initiate SSE if stream = true
