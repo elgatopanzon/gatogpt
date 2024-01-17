@@ -24,9 +24,9 @@
         ],
         "PrePromptPrefix": "<|im_start|>system\n",
         "PrePromptSuffix": "<|im_end|>\n",
-        "ChatMessageTemplate": "<|im_start|>{{ Role }}\n{{ Message }}<|im_end|>",
+        "ChatMessageTemplate": "<|im_start|>{{ Role }} {{ Name }}:\n{{ Message }}<|im_end|>",
         "ChatTemplate": "{{ PrePromptPrefix }}{{ PrePrompt }}{{ PrePromptSuffix }}{{ Input }}",
-        "ChatMessageGenerationTemplate": "<|im_start|>assistant\n",
+        "ChatMessageGenerationTemplate": "<|im_start|>assistant {{ AssistantName }}:\n",
         "PrePrompt": "Perform the task to the best of your ability."
       }
     },
