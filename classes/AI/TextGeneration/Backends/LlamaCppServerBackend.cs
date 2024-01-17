@@ -69,7 +69,7 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		// load params
 		_processRunner.Args = new string[] {};
 
-		_processRunner.AddArguments("--model", ModelDefinition.ModelResource.Definition.Path);
+		_processRunner.AddArguments("--model", ProjectSettings.GlobalizePath(ModelDefinition.ModelResource.Definition.Path));
 		_processRunner.AddArguments("--ctx-size", LoadParams.NCtx.ToString());
 		_processRunner.AddArguments("--batch-size", LoadParams.NBatch.ToString());
 		// _processRunner.AddArguments("--seed", LoadParams.Seed.ToString());
@@ -80,7 +80,7 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		// vision models / multimodal models
 		if (LoadParams.MMProjPath.Length > 0)
 		{
-			_processRunner.AddArguments("--mmproj", $"\"{LoadParams.MMProjPath.ToString()}\"");
+			_processRunner.AddArguments("--mmproj", $"\"{ProjectSettings.GlobalizePath(LoadParams.MMProjPath.ToString())}\"");
 			// _processRunner.AddArguments("--image", $"\"{InferenceParams.ImagePath.ToString()}\"");
 
 			// switch command to llava

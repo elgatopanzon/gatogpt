@@ -63,7 +63,7 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 	public void SetupLoadParams()
 	{
 		// create model params object using path to model file
-		_modelParams = new LLama.Common.ModelParams(ModelDefinition.ModelResource.Definition.Path)
+		_modelParams = new LLama.Common.ModelParams(ProjectSettings.GlobalizePath(ModelDefinition.ModelResource.Definition.Path))
 		{
 			ContextSize = (uint) LoadParams.NCtx,
 			MainGpu = LoadParams.MainGpu,

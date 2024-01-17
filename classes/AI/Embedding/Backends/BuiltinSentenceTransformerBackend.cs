@@ -42,8 +42,8 @@ public partial class BuiltinSentenceTransformerBackend : ModelBackend, IEmbeddin
 	public override void LoadModel()
 	{
 		// extract the paths and expected vocab.txt in same model path
-        string modelPath = ModelDefinition.ModelResource.Definition.Path;
-        string modelVocabPath = modelPath.Replace("/"+modelPath.GetFile(), "")+"/vocab.txt";
+        string modelPath = ProjectSettings.GlobalizePath(ModelDefinition.ModelResource.Definition.Path);
+        string modelVocabPath = ProjectSettings.GlobalizePath(modelPath.Replace("/"+modelPath.GetFile(), "")+"/vocab.txt");
 
         LoggerManager.LogDebug("Embeddings model path", "", "modelPath", modelPath);
         LoggerManager.LogDebug("Embeddings model vocab", "", "modelVocabPath", modelVocabPath);
