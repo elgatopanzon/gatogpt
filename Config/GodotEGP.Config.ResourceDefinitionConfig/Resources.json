@@ -1,3 +1,10 @@
 {
-  "Resources": null
+  "Resources": {
+    "Example": {
+      "example_resource": {
+        "Path": "user://some/file.type",
+        "Class": "Godot.Resource"
+      }
+    }
+  }
 }
