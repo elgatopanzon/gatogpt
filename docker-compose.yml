@@ -1,0 +1,36 @@
+---
+version: '3.1'
+name: gatogpt
+services:
+  gatogpt:
+    build: .
+    image: elgatopanzon/gatogpt:latest
+    ports:
+      - 8181:8181
+    volumes:
+      # - .:/code
+      # main config files e.g. model resources/definitions
+      - ./GatoGPT_Data/Config:/code/GatoGPT_Data/Config
+      # model files
+      - ./GatoGPT_Data/Models:/code/GatoGPT_Data/Models
+      # location to store downloaded files the API creates (e.g. images)
+      - ./GatoGPT_Data/Downloads:/code/GatoGPT_Data/Downloads
+      # holds prompt caches and states, optional
+      # - ./GatoGPT_Data/Cache:/code/GatoGPT_Data/Cache
+
+    # start the API
+    command: ["api", "--host", "0.0.0.0", "--port", "8181"]
+
+    logging:
+      driver: json-file
+      options:
+        max-file: "3"   # number of files or file count
+        max-size: '10m'
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
