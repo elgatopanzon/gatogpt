@@ -13,7 +13,7 @@ The following endpoints are available:
     - Includes support for LLaVA models acting as Vision inference.
     
     Note: requires `InferenceParams.ImageModelId` to be set on the Model Definition to a compatible LLaVA Model Definition
-- [ ] `/v1/embeddings` Embeddings API
+- [x] `/v1/embeddings` Embeddings API
 
 ## Required Libraries
 At present 2 other raw code libraries are required to be in a `libs/` directory. Entries for these already exist in `.gitignore` and can be safely cloned to the respective folders:
@@ -133,7 +133,7 @@ Below is a full example of configuring each of the LoadParams and InferenceParam
             "MainGpu": 0,
             "Seed": 1337,
             "F16KV": true,
-            "UseMMap": true.
+            "UseMMap": true,
             "KVOffload": false,
             "MMProjPath": "/path/to/mmproj.bin"
           },
