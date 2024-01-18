@@ -248,7 +248,7 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 
 		LoggerManager.LogDebug("Llama.cpp server object", "", "serverObj", serverObjDto);
 
-		if (serverObjDto.Message == "HTTP server listening")
+		if (serverObjDto.Message == "model loaded")
 		{
 			LoggerManager.LogDebug("Llama.cpp server ready");
 
