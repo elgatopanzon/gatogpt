@@ -415,6 +415,9 @@ public partial class ChatController : ControllerBase
 			// }
 
 			messageEntities.Add(toolsSystemMessage);
+
+			// use json grammar to constrict tool output to json only
+			_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfileOverride.InferenceParams.GrammarResourceId = "json";
 		}
 
 		LoggerManager.LogDebug("Available tools", "", "tools", chatCompletionCreateDto.Tools);
