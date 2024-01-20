@@ -46,23 +46,6 @@ public partial class TextGenerationService : Service
 		return modelInstance;
 	}
 
-	public InferenceResult InferWait(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
-	{
-		// skip the queue and create the instance
-		var modelInstance = CreateModelInstance(modelDefinitionId, stateful, existingInstanceId);
-
-		// start the inference
-		modelInstance.StartInference(prompt);
-
-		// wait indefinitely until finished
-		while (!modelInstance.Finished)
-		{
-			System.Threading.Thread.Sleep(100);
-		}
-
-		return modelInstance.InferenceResult;
-	}
-
 	public async Task<InferenceResult> InferAsync(string modelDefinitionId, string prompt, bool stateful = false, string existingInstanceId = "", AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
 	{
 		// call the normal infer which queues request
