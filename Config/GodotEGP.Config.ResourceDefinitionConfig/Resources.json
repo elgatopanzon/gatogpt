@@ -1,9 +1,9 @@
 {
   "Resources": {
-    "Example": {
-      "example_resource": {
-        "Path": "user://some/file.type",
-        "Class": "Godot.Resource"
+    "LlamaGrammars": {
+      "json": {
+        "Path": "res://Grammars/json.gbnf",
+        "Class": "GatoGPT.Resource.LlamaGrammar"
       }
     }
   }

@@ -355,6 +355,13 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 			Stop = InferenceParams.Antiprompts,
 		};
 
+		// load the contents of the grammar file if the grammar resource is set
+		if (InferenceParams.GrammarResource != null)
+		{
+			LoggerManager.LogDebug("Using grammar resource", "", "grammar", InferenceParams.GrammarResourceId);
+			inferenceCreateDto.Grammar = File.ReadAllText(ProjectSettings.GlobalizePath(InferenceParams.GrammarResource.Definition.Path));
+		}
+
 		LoggerManager.LogDebug("Inference create dto", "", "inferenceCreateDto", inferenceCreateDto);
 
 		if (InferenceParams.ImagePath.Length > 0)

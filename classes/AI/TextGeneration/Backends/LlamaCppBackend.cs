@@ -121,6 +121,13 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		// _processRunner.AddArguments("--prompt-cache-all");
 		// _processRunner.AddArguments("--prompt-cache", "TODO");
 
+		// handle --grammar-file when configured
+		if (InferenceParams.GrammarResource != null)
+		{
+			LoggerManager.LogDebug("Using grammar resource", "", "grammar", InferenceParams.GrammarResourceId);
+			_processRunner.AddArguments("--grammar-file", $"\"{ProjectSettings.GlobalizePath(InferenceParams.GrammarResource.Definition.Path)}\"");
+		}
+
 		LoggerManager.LogDebug("Llama.cpp args", "", "args", _processRunner.Args);
 		Console.WriteLine(String.Join(" ", _processRunner.Args));
 	}

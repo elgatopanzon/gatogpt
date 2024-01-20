@@ -6,6 +6,8 @@
 
 namespace GatoGPT.AI.TextGeneration;
 
+using GatoGPT.Resource;
+
 using Godot;
 using GodotEGP.Objects.Extensions;
 using GodotEGP.Objects.Validated;
@@ -13,6 +15,7 @@ using GodotEGP.Logging;
 using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
+using GodotEGP.Resource;
 
 public partial class InferenceParams : VObject
 {
@@ -236,6 +239,23 @@ public partial class InferenceParams : VObject
 		set { _templateType.Value = value; }
 	}
 
+	internal readonly VValue<string> _GrammaResourceId;
+
+	public string GrammarResourceId
+	{
+		get { return _GrammaResourceId.Value; }
+		set { _GrammaResourceId.Value = value; }
+	}
+
+	internal readonly VValue<Resource<LlamaGrammar>> _grammarResource;
+
+	internal Resource<LlamaGrammar> GrammarResource
+	{
+		get { return _grammarResource.Value; }
+		set { _grammarResource.Value = value; }
+	}
+
+
 	public InferenceParams()
 	{
 		_n_threads = AddValidatedValue<int>(this)
@@ -340,6 +360,14 @@ public partial class InferenceParams : VObject
 
 		_templateType = AddValidatedValue<string>(this)
 		    .Default("instruct")
+		    .ChangeEventsEnabled();
+
+		_GrammaResourceId = AddValidatedValue<string>(this)
+		    .Default("")
+		    .ChangeEventsEnabled();
+
+		_grammarResource = AddValidatedValue<Resource<LlamaGrammar>>(this)
+		    .Default(null)
 		    .ChangeEventsEnabled();
 	}
 }

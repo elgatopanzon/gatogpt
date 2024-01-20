@@ -22,6 +22,7 @@ using GodotEGP.State;
 
 using LLama;
 using LLama.Common;
+using LLama.Grammars;
 
 public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenerationBackend
 {
@@ -99,6 +100,16 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 			FrequencyPenalty = (float) InferenceParams.FrequencyPenalty,
 			PresencePenalty = (float) InferenceParams.PresencePenalty,
 		};
+
+		if (InferenceParams.GrammarResource != null)
+		{
+			LoggerManager.LogDebug("Using grammar", "", "grammar", InferenceParams.GrammarResourceId);
+
+            var gbnf = (File.ReadAllText(ProjectSettings.GlobalizePath(InferenceParams.GrammarResource.Definition.Path))).Trim();
+            var grammar = Grammar.Parse(gbnf, "root");
+
+            _inferenceParams.Grammar = grammar.CreateInstance();
+		}
 
 		LoggerManager.LogDebug("Setup inference params", "", "params", _inferenceParams);
 	}

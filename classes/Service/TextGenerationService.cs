@@ -10,6 +10,7 @@ using GatoGPT.AI.TextGeneration;
 using GatoGPT.AI.TextGeneration.Backends;
 using GatoGPT.Config;
 using GatoGPT.Event;
+using GatoGPT.Resource;
 
 using Godot;
 using GodotEGP;
@@ -24,6 +25,7 @@ using System.Collections.Generic;
 public partial class TextGenerationService : Service
 {
 	private TextGenerationModelManager _modelManager;
+	private ResourceManager _resourceManager;
 
 	private Dictionary<string, AI.TextGeneration.Backends.ITextGenerationBackend> _modelInstances = new();
 
@@ -33,6 +35,7 @@ public partial class TextGenerationService : Service
 	{
 		// assign the model manager instance
 		_modelManager = ServiceRegistry.Get<TextGenerationModelManager>();
+		_resourceManager = ServiceRegistry.Get<ResourceManager>();
 	}
 
 	/***********************
@@ -85,6 +88,19 @@ public partial class TextGenerationService : Service
 			_inferenceQueue.Dequeue();
 
 			LoggerManager.LogDebug("Running queued inference", "", "request", request);
+
+			// set GrammarResource
+			// TODO: put this in a better location?
+			if (request.ModelInstance.ModelDefinition.ModelProfileOverride.InferenceParams.GrammarResourceId.Length > 0)
+			{
+				var grammarResources = _resourceManager.GetResources<LlamaGrammar>();
+				if (grammarResources.TryGetValue(request.ModelInstance.ModelDefinition.ModelProfileOverride.InferenceParams.GrammarResourceId, out var grammarResource))
+				{
+					LoggerManager.LogDebug("Setting grammar resource", "", "grammarResource", grammarResource);
+					request.InferenceParams.GrammarResource = grammarResource;
+				}
+			}
+
 
 			request.ModelInstance.StartInference(request.Prompt, request.LoadParams, request.InferenceParams);
 		}
