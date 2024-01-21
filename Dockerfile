@@ -3,6 +3,9 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 # Copy code into /code
 COPY . ./code
 
+RUN git clone https://github.com/elgatopanzon/godotegp-framework.git /code/libs/godotegp-framework
+RUN git clone https://github.com/elgatopanzon/godotegp-framework-nongame.git /code/libs/godotegp-framework-nongame
+
 WORKDIR /code
 # Restore as distinct layers
 RUN dotnet restore
@@ -22,9 +25,6 @@ RUN wget --quiet https://developer.download.nvidia.com/compute/cuda/12.3.2/local
 
 # Copy everything and clone required project libraries
 RUN mkdir /code
-
-RUN git clone https://github.com/elgatopanzon/godotegp-framework.git /code/libs/godotegp-framework
-RUN git clone https://github.com/elgatopanzon/godotegp-framework-nongame.git /code/libs/godotegp-framework-nongame
 
 # Install nvidia cuda toolkit
 RUN dpkg -i cuda-repo-debian12-12-3-local_12.3.2-545.23.08-1_amd64.deb \
