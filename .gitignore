@@ -485,7 +485,7 @@ $RECYCLE.BIN/
 
 # Managed by git-multi (sub repo ssh://git@gitlab.elgatopanzon.io:2224/godot/addons/godotegp-framework/addon-csharp.git) (commit f820393) 
 /libs/godotegp-framework 
-# Managed by git-multi (sub repo ssh://git@gitlab.elgatopanzon.io:2224/godot/addons/godotegp-framework/godotegp-framework-nongame.git) (commit 28c4cd1fa85b6f590cc7dbbe25fd873e20622bbb) 
+# Managed by git-multi (sub repo ssh://git@gitlab.elgatopanzon.io:2224/godot/addons/godotegp-framework/godotegp-framework-nongame.git) (commit 50a943a) 
 /libs/godotegp-framework-nongame 
 
 # data directory when using docker compose
