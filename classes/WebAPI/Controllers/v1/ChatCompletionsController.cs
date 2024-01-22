@@ -93,7 +93,7 @@ public partial class ChatController : ControllerBase
     			}, isHighPriority: true);
 
 			var openaiResult = await openAi
-					.ChatCompletions(new ChatCompletionCreateOpenAIDto(chatCompletionCreateDto));
+					.ChatCompletions(_mapper.Map<ChatCompletionRequest>(new ChatCompletionCreateOpenAIDto(chatCompletionCreateDto)));
 
 			if (chatCompletionCreateDto.Stream)
 			{

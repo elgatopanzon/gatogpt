@@ -81,7 +81,7 @@ public partial class CompletionsController : ControllerBase
     			}, isHighPriority: true);
 
 			var openaiResult = await openAi
-					.Completions(new CompletionCreateOpenAIDto(completionCreateDto));
+					.Completions(_mapper.Map<CompletionRequest>(new CompletionCreateOpenAIDto(completionCreateDto)));
 
 			if (completionCreateDto.Stream)
 			{

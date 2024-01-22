@@ -78,7 +78,7 @@ public partial class EmbeddingsController : ControllerBase
 		{
 			var openAi = new OpenAI(ServiceRegistry.Get<ConfigManager>().Get<GlobalConfig>().OpenAIConfig);
 			var openaiResult = await openAi
-					.Embeddings(embeddingCreateDto);
+					.Embeddings(_mapper.Map<EmbeddingsRequest>(embeddingCreateDto));
 
 			if (openaiResult == null)
 			{
