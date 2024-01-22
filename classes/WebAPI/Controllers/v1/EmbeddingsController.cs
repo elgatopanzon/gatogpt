@@ -32,7 +32,7 @@ using Microsoft.AspNetCore.Mvc;
 // using GatoGPT.WebAPI.Entities;
 using System.Text.Json;
 
-using GatoGPT.AI.OpenAI;
+using GodotEGP.AI.OpenAI;
 
 [ApiController]
 [ApiVersion("1.0")]

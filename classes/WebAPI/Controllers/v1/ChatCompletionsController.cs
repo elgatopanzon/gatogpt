@@ -30,7 +30,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 
-using GatoGPT.AI.OpenAI;
+using GodotEGP.AI.OpenAI;
 
 [ApiController]
 [ApiVersion("1.0")]
