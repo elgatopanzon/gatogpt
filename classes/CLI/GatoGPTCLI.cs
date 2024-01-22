@@ -1,7 +1,7 @@
 /**
  * @author      : ElGatoPanzon (contact@elgatopanzon.io) Copyright (c) ElGatoPanzon
- * @file        : CommandLineInterface
- * @created     : Thursday Jan 04, 2024 00:37:45 CST
+ * @file        : GatoGPTCommandLineInterface
+ * @created     : Sunday Jan 21, 2024 22:22:05 CST
  */
 
 namespace GatoGPT.CLI;
@@ -20,6 +20,7 @@ using GodotEGP.Logging;
 using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
+using GodotEGP.CLI;
 
 using System.Text.RegularExpressions;
 using System.Linq;
@@ -27,29 +28,15 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-public partial class CommandLineInterface
+public partial class GatoGPTCLI : CommandLineInterface
 {
-	private string[] _args { get; set; }
-	private Dictionary <string, List<string>> _argsParsed { get; set; }
-	private Dictionary <string, string> _argAliases = new();
-
-	private Dictionary<string, (Func<Task<int>> Command, string Description, bool includeInHelp)> _commands = new();
-	private Dictionary<string, List<(string Arg, string Example, string Description, bool Required)>> _commandArgs = new();
-
 	// services
 	private TextGenerationService _inferenceService = ServiceRegistry.Get<TextGenerationService>();
 	private TextGenerationModelManager _modelManager = ServiceRegistry.Get<TextGenerationModelManager>();
 
-	public CommandLineInterface(string[] args)
+	public GatoGPTCLI(string[] args) : base(args)
 	{
-		_args = args;
-		_argsParsed = ParseArgs();
-
-    	LoggerManager.LogDebug("CLI arguments list", "", "args", _args);
-    	LoggerManager.LogDebug("CLI arguments parsed", "", "argsParsed", _argsParsed);
-
     	// add commands
-    	_commands.Add("help", (CommandHelp, "Show help text with command usage", true));
     	_commands.Add("generate", (CommandGenerate, "Load a model and generate text", true));
     	_commands.Add("models", (CommandModels, "List configured models", true));
     	_commands.Add("api", (CommandApi, "Start the OpenAI API service", true));
@@ -67,7 +54,6 @@ public partial class CommandLineInterface
     	_argAliases.Add("-c", "--chat");
 
     	// command args
-		_commandArgs.Add("help", new());
 		_commandArgs.Add("models", new());
 		_commandArgs.Add("generate", new());
 
@@ -113,152 +99,11 @@ public partial class CommandLineInterface
 
 		_commandArgs.Add("clean", new());
 
-		SetLogLevel();
-	}
-
-	public void SetLogLevel()
-	{
-		if (_argsParsed.ContainsKey("--log-level"))
-		{
-			string logLevelString = _argsParsed["--log-level"][0];
-
-			Message.LogLevel logLevel = (Message.LogLevel) Enum.Parse(typeof(Message.LogLevel), logLevelString);
-
-			LoggerManager.SetLogLevel(logLevel);
-
-			LoggerManager.LogInfo("Log level set", "", "logLevel", logLevel.ToString());
-		}
-	}
-
-	public async Task<int> Run()
-	{
-		if (_args.Count() >= 1)
-		{
-			// get the running command and remove from args
-			string cmd = _args[0];
-			_args = _args.Skip(1).ToArray();
-			
-			// invoke the matching command
-			if (_commands.ContainsKey(cmd))
-			{
-				return await _commands[cmd].Command();
-			}
-		}
-
-		return await CommandHelp();
-	}
-
-	public Dictionary<string, List<string>> ParseArgs()
-	{
-		Dictionary<string, List<string>> parsed = new();
-
-		// loop over args matching args with - or --
-		string currentCommand = "";
-		List<string> currentValues = new();
-
-		foreach (string argPart in _args)
-		{
-			// looking for - or --
-			if (IsCommandSwitch(argPart))
-			{
-				LoggerManager.LogDebug("Found command arg", "", "cmd", argPart);
-
-				currentCommand = argPart;
-				currentValues = new();
-
-				// set command from alias
-				if (_argAliases.ContainsKey(currentCommand))
-				{
-					currentCommand = _argAliases[argPart];
-				}
-			}
-			else
-			{
-				// if the command is empty, then consider this the main command
-				if (currentCommand == "")
-				{
-					currentCommand = argPart;
-				}
-				else
-				{
-					LoggerManager.LogDebug("Adding command value", "", "value", argPart);
-
-					currentValues.Add(argPart);
-				}
-			}
-
-			// add and reset current command state when we encounter a new
-			// command
-			if (currentCommand != "")
-			{
-				if (parsed.ContainsKey(currentCommand))
-				{
-				}
-				else
-				{
-					parsed.Add(currentCommand, currentValues);
-				}
-			}
-
-		}
-
-		LoggerManager.LogDebug("Parsed arguments", "", "argsParsed", parsed);
-
-		return parsed;
-	}
-
-	public bool IsCommandSwitch(string cmd)
-	{
-		return Regex.IsMatch(cmd, "^-[-a-zA-Z0-9]+");
-	}
-
-	public bool ArgExists(string arg)
-	{
-		return (_argsParsed.ContainsKey(arg));
-	}
-
-	public List<string> GetArgumentValues(string arg)
-	{
-		return _argsParsed.GetValueOrDefault(arg, new List<string>());
-	}
-
-	public string GetArgumentValue(string arg, string defaultVal = "")
-	{
-		return GetArgumentValues(arg).SingleOrDefault(defaultVal);
-	}
-
-	public bool GetArgumentSwitchValue(string arg)
-	{
-		return _argsParsed.ContainsKey(arg);
 	}
 
 	/**************
 	*  Commands  *
 	**************/
-
-	public async Task<int> CommandHelp()
-	{
-		Console.WriteLine($"usage: {System.Reflection.Assembly.GetEntryAssembly().GetName().Name} [command] [options]");
-		Console.WriteLine("");
-
-		Console.WriteLine("commands:");
-		foreach (var cmd in _commands)
-		{
-			if (!cmd.Value.includeInHelp)
-			{
-				continue;
-			}
-			 
-			Console.WriteLine("");
-			Console.WriteLine($"{cmd.Key}: {cmd.Value.Description}");
-			foreach (var arg in _commandArgs[cmd.Key])
-			{
-				Console.WriteLine($"\n  {((arg.Arg)+" "+(arg.Example))}\n  {arg.Description}");
-			}
-		}
-
-		return 0;
-	}
 
 	public async Task<int> CommandGenerate()
 	{

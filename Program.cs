@@ -60,7 +60,7 @@ class Program
 		ServiceRegistry.Get<LlamaCacheService>();
 
     	// CLI application
-    	var cli = new CommandLineInterface(args);
+    	var cli = new GatoGPTCLI(args);
 
 		// execute the CLI parser
 		return await cli.Run();
