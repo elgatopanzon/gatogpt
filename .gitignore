@@ -483,7 +483,7 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# Managed by git-multi (sub repo git@github.com:elgatopanzon/godotegp-framework.git) (commit ac6505b) 
+# Managed by git-multi (sub repo git@github.com:elgatopanzon/godotegp-framework.git) (commit 7d51ef5) 
 /libs/godotegp-framework 
 # Managed by git-multi (sub repo git@github.com:elgatopanzon/godotegp-framework-nongame.git) (commit 50a943a) 
 /libs/godotegp-framework-nongame 
