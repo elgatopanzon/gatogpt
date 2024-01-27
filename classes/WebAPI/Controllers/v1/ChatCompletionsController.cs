@@ -125,28 +125,28 @@ public partial class ChatController : ControllerBase
 		AI.TextGeneration.LoadParams loadParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
 		AI.TextGeneration.InferenceParams inferenceParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
 
-		var completionCreateDtoDefault = new CompletionCreateDto();
+		var inferenceParamsDefault = new InferenceParams();
 
-		if (chatCompletionCreateDto.Temperature != completionCreateDtoDefault.Temperature)
+		if (chatCompletionCreateDto.Temperature != inferenceParamsDefault.Temp)
 			inferenceParams.Temp = chatCompletionCreateDto.Temperature;
-		if (chatCompletionCreateDto.FrequencyPenalty != completionCreateDtoDefault.FrequencyPenalty)
+		if (chatCompletionCreateDto.FrequencyPenalty != inferenceParamsDefault.FrequencyPenalty)
 			inferenceParams.FrequencyPenalty = chatCompletionCreateDto.FrequencyPenalty;
-		if (chatCompletionCreateDto.PresencePenalty != completionCreateDtoDefault.PresencePenalty)
+		if (chatCompletionCreateDto.PresencePenalty != inferenceParamsDefault.PresencePenalty)
 			inferenceParams.PresencePenalty = chatCompletionCreateDto.PresencePenalty;
-		if (chatCompletionCreateDto.RepeatPenalty != completionCreateDtoDefault.RepeatPenalty)
+		if (chatCompletionCreateDto.RepeatPenalty != inferenceParamsDefault.RepeatPenalty)
 			inferenceParams.RepeatPenalty = chatCompletionCreateDto.RepeatPenalty;
-		if (chatCompletionCreateDto.MaxTokens != completionCreateDtoDefault.MaxTokens)
+		if (chatCompletionCreateDto.MaxTokens != inferenceParamsDefault.NPredict)
 			inferenceParams.NPredict = chatCompletionCreateDto.MaxTokens;
-		if (chatCompletionCreateDto.Seed != completionCreateDtoDefault.Seed)
-			loadParams.Seed = chatCompletionCreateDto.Seed;
+
+		loadParams.Seed = chatCompletionCreateDto.Seed;
 
 		inferenceParams.Antiprompts = inferenceParams.Antiprompts.Concat(stops).ToList();
 
-		if (chatCompletionCreateDto.MinP != completionCreateDtoDefault.MinP)
+		if (chatCompletionCreateDto.MinP != inferenceParamsDefault.MinP)
 			inferenceParams.MinP = chatCompletionCreateDto.MinP;
-		if (chatCompletionCreateDto.TopP != completionCreateDtoDefault.TopP)
+		if (chatCompletionCreateDto.TopP != inferenceParamsDefault.TopP)
 			inferenceParams.TopP = chatCompletionCreateDto.TopP;
-		if (chatCompletionCreateDto.TopK != completionCreateDtoDefault.TopK)
+		if (chatCompletionCreateDto.TopK != inferenceParamsDefault.TopK)
 			inferenceParams.TopK = chatCompletionCreateDto.TopK;
 
 		// setup tools
