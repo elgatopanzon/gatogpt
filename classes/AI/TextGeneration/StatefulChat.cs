@@ -205,8 +205,7 @@ public partial class StatefulChat
 			formattedMessages.Add(formattedMessage);
 
 		}
-
-		systemPrompts.Add($"Contiue the chat and provide a single answer for {_assistantName}.");
+		// systemPrompts.Add($"Continue the chat and provide a single answer for {_assistantName}.");
 
 		// append a chat message generation string if the template is set
 		if (_inferenceParams.ChatMessageGenerationTemplate.Length > 0)
