@@ -136,7 +136,7 @@
           "[INST]"
         ],
         "ChatTemplate": "{{ PrePromptPrefix }}{{ PrePrompt }}{{ PrePromptSuffix }}{{ Input }}",
-        "ChatMessageGenerationTemplate": "[/INST] {{ AssistantName }}: "
+        "ChatMessageGenerationTemplate": "[/INST]{{ AssistantName }}: "
       }
     },
     "obsidian_vision": {
