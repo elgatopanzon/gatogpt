@@ -121,6 +121,24 @@
         ]
       }
     },
+    "mistral_instruct_chat": {
+      "Name": "Mistral Instruct (for chat only)",
+      "LoadParams": {
+        "RopeFreqBase": 0,
+        "RopeFreqScale": 0
+      },
+      "InferenceParams": {
+        "InputPrefix": "[INST]",
+        "InputSuffix": "",
+        "PrePromptPrefix": "",
+        "PrePromptSuffix": "",
+        "Antiprompts": [
+          "[INST]"
+        ],
+        "ChatTemplate": "{{ PrePromptPrefix }}{{ PrePrompt }}{{ PrePromptSuffix }}{{ Input }}",
+        "ChatMessageGenerationTemplate": "[/INST] {{ AssistantName }}: "
+      }
+    },
     "obsidian_vision": {
       "Name": "Obsidian Vision",
       "LoadParams": {
