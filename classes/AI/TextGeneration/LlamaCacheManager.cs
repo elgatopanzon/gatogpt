@@ -108,13 +108,23 @@ public partial class LlamaCacheManager
     		// LoggerManager.LogDebug("Found cache dir", "", "cacheDir", cacheDir.ToString());
 
 			// strip the input prefix and suffix when comparing the prompts
-    		string promptCache = File.ReadAllText(Path.Combine(cacheDir.ToString(), "prompt")).Replace(inferenceParams.InputPrefix, "").Replace(inferenceParams.InputSuffix, "");
-    		string currentPrompt = prompt.Replace(inferenceParams.InputPrefix, "").Replace(inferenceParams.InputSuffix, "");
+    		string promptCache = File.ReadAllText(Path.Combine(cacheDir.ToString(), "prompt"));
+    		string currentPrompt = prompt;
+    		if (inferenceParams.InputPrefix.Length > 0)
+    		{
+    			promptCache = promptCache.Replace(inferenceParams.InputPrefix, "");
+    			currentPrompt = currentPrompt.Replace(inferenceParams.InputPrefix, "");
+    		}
+    		if (inferenceParams.InputSuffix.Length > 0)
+    		{
+    			promptCache = promptCache.Replace(inferenceParams.InputSuffix, "");
+    			currentPrompt = currentPrompt.Replace(inferenceParams.InputSuffix, "");
+    		}
 
     		// LoggerManager.LogDebug("", "", "cachePrompt", promptCache);
     		// LoggerManager.LogDebug("", "", "currentPrompt", currentPrompt);
 
-    		if (promptCache.StartsWith(currentPrompt))
+    		if (currentPrompt.StartsWith(promptCache))
     		{
     			LoggerManager.LogDebug("Prompt cache hit!");
 
