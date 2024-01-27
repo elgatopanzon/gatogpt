@@ -311,7 +311,7 @@ public partial class InferenceParams : VObject
 		    .ChangeEventsEnabled();
 
 		_antiprompts = AddValidatedValue<List<string>>(this)
-		    .Default(new List<string>() {"### Instruction:"})
+		    .Default(new List<string>() {})
 		    .ChangeEventsEnabled();
 
 		_inputPrefix = AddValidatedValue<string>(this)
