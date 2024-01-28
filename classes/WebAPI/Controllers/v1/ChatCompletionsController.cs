@@ -251,7 +251,7 @@ public partial class ChatController : ControllerBase
 					Content = new List<ChatCompletionMessageContentDto>() {
 							new() {
 								Type = "text",
-								Text = String.Join(" ", chatCompletionCreateDto.Messages.Select(x => x.GetContent()))
+								Text = String.Join(" ", chatCompletionCreateDto.Messages.Where(x => x.Role == "user").Select(x => x.GetContent().Replace(imageUrl, "")).Last())
 							},
 							new() {
 								Type = "image_url",
@@ -275,24 +275,20 @@ public partial class ChatController : ControllerBase
 			// hack together some injected system prompts to give information
 			// about the inference results (RAG I guess?)
     		messageEntities.Add(new StatefulChatMessage() {
-				Role = "system",
-				Content = (string) $"Here is information about {imageUrls.Count} images.",
+				Role = "assistant",
+				Content = (string) $"I've browsed the web to look at {imageUrls.Count} images provided",
     			});
 
-			int counter = 1;
+			int counter = 0;
 			foreach (var imageResult in imageInferenceResults)
 			{
     			messageEntities.Add(new StatefulChatMessage() {
-					Role = "system",
-					Content = (string) $"\nImage {counter}: {imageResult}.",
+					Role = "assistant",
+					Content = (string) $"Description of image ({imageUrls[counter]}): {imageResult}",
     				});
 
 				counter++;
 			}
-    		messageEntities.Add(new StatefulChatMessage() {
-				Role = "system",
-				Content = (string) $"Use this information to complete the user's request.",
-    			});
 		}
 
 		// inject a list of tools into the system prompt
