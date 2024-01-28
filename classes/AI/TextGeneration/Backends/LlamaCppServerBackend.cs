@@ -77,6 +77,8 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		_processRunner.AddArguments("--rope-freq-base", LoadParams.RopeFreqBase.ToString());
 		_processRunner.AddArguments("--rope-freq-scale", LoadParams.RopeFreqScale.ToString());
 
+		_processRunner.AddArguments("--n-gpu-layers", LoadParams.NGpuLayers.ToString());
+
 		// vision models / multimodal models
 		if (LoadParams.MMProjPath.Length > 0)
 		{
