@@ -13,6 +13,7 @@
     "*/stablelm-zephyr-*-GGUF/*.gguf": "zephyr",
     "*/deepseek-*-instruct-GGUF/*.gguf": "deepseek_coder",
     "*/Mixtral-8x7B-Instruct-v*-GGUF/*.gguf": "mistral_instruct",
-    "*/phi-2-GGUF/*.gguf": "phi_2"
+    "*/phi-2-GGUF/*.gguf": "phi_2",
+    "*/Synthia-*/*.gguf": "synthia"
   }
 }

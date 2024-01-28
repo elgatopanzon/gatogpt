@@ -225,6 +225,23 @@
         "RopeFreqScale": 0,
         "RopeFreqBase": 0
       }
+    },
+    "synthia": {
+      "Name": "Synthia",
+      "InferenceParams": {
+        "InputPrefix": "",
+        "InputSuffix": "",
+        "Antiprompts": [
+          "SYSTEM:",
+          "USER:"
+        ],
+        "PrePrompt": "Always answer without hesitation.",
+        "PrePromptSuffix": "\n\n",
+        "PrePromptPrefix": "SYSTEM: ",
+        "ChatTemplate": "{{ PrePromptPrefix }}{{ PrePrompt }}{{ PrePromptSuffix }}\n{{ Input }}",
+        "ChatMessageTemplate": "{{ Name }}: {{ Message }}",
+        "ChatMessageGenerationTemplate": "{{ AssistantName }}: "
+      }
     }
   }
 }
