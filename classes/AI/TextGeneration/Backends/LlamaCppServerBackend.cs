@@ -125,7 +125,7 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 
 		// TODO: handle prompt cache using LlamaCacheManager
 		// _processRunner.AddArguments("--prompt-cache-all");
-		// _processRunner.AddArguments("--prompt-cache", "TODO");
+		// _processRunner.AddArguments("--prompt-cache", ProjectSettings.GlobalizePath("user://Cache/llamacppserver-cache"));
 
 		LoggerManager.LogDebug("Llama.cpp server args", "", "args", _processRunner.Args);
 		Console.WriteLine(String.Join(" ", _processRunner.Args));
@@ -355,6 +355,7 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 			TfsZ = InferenceParams.Tfs,
 			TypicalP = InferenceParams.Typical,
 			Stop = InferenceParams.Antiprompts,
+			CachePrompt = ModelDefinition.PromptCache,
 		};
 
 		// load the contents of the grammar file if the grammar resource is set

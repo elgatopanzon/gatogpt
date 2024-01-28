@@ -36,12 +36,24 @@ public partial class LlamaModelDefinition : ModelDefinition<LlamaModel>
 		set { _modelProfileOverride.Value = value; }
 	}
 
+	internal readonly VValue<bool> _promptCache;
+
+	public bool PromptCache
+	{
+		get { return _promptCache.Value; }
+		set { _promptCache.Value = value; }
+	}
+
 	public LlamaModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null) : base(modelResourceId, profilePreset)
 	{
 		_modelProfile = AddValidatedNative<ModelProfile>(this)
 		    .ChangeEventsEnabled();
 
 		_modelProfileOverride = AddValidatedNative<ModelProfile>(this)
+		    .ChangeEventsEnabled();
+
+		_promptCache = AddValidatedValue<bool>(this)
+		    .Default(false)
 		    .ChangeEventsEnabled();
 
 		if (modelProfile != null)

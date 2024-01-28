@@ -174,7 +174,7 @@ public partial class ChatController : ControllerBase
 		}
 
 		// init new chat instance
-    	StatefulChat chatInstance = new(false, loadParams, inferenceParams);
+    	StatefulChat chatInstance = new(_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).PromptCache, loadParams, inferenceParams);
     	List<StatefulChatMessage> messageEntities = new();
 
 		List<string> imageUrls = new();
@@ -444,12 +444,12 @@ public partial class ChatController : ControllerBase
 		int currentIndex = 0;
 		while (chatCompletionDto.Choices.Count < chatCompletionCreateDto.N)
 		{
-			var modelInstance = _inferenceService.GetPersistentInstance(chatCompletionCreateDto.Model, stateful:false);
+			var modelInstance = _inferenceService.GetPersistentInstance(chatCompletionCreateDto.Model, stateful:_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).PromptCache);
 
 			// create new instance if there's no persistent instances
 			if (modelInstance == null)
 			{
-    			modelInstance = _inferenceService.CreateModelInstance(chatCompletionCreateDto.Model, stateful:false);
+    			modelInstance = _inferenceService.CreateModelInstance(chatCompletionCreateDto.Model, stateful:_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).PromptCache);
 			}
 
     		// initiate SSE if stream = true
