@@ -251,7 +251,7 @@ public partial class ChatController : ControllerBase
 					Content = new List<ChatCompletionMessageContentDto>() {
 							new() {
 								Type = "text",
-								Text = String.Join(" ", chatCompletionCreateDto.Messages.Where(x => x.Role == "user").Select(x => x.GetContent().Replace(imageUrl, "")).Last())
+								Text = messageEntities.Last().Content+". "+"Provide a description and content of the image."
 							},
 							new() {
 								Type = "image_url",
@@ -275,7 +275,8 @@ public partial class ChatController : ControllerBase
 			// hack together some injected system prompts to give information
 			// about the inference results (RAG I guess?)
     		messageEntities.Add(new StatefulChatMessage() {
-				Role = "assistant",
+				Role = "user",
+				Name = (string) chatCompletionCreateDto.Messages.Last().Name,
 				Content = (string) $"I've browsed the web to look at {imageUrls.Count} images provided",
     			});
 
@@ -289,6 +290,12 @@ public partial class ChatController : ControllerBase
 
 				counter++;
 			}
+
+    		messageEntities.Add(new StatefulChatMessage() {
+				Role = "user",
+				Name = (string) chatCompletionCreateDto.Messages.Last().Name,
+				Content = (string) messageEntities.Last().Content,
+    			});
 		}
 
 		// inject a list of tools into the system prompt

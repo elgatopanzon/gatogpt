@@ -240,7 +240,7 @@
         "PrePromptPrefix": "SYSTEM: ",
         "ChatTemplate": "{{ PrePromptPrefix }}{{ PrePrompt }}{{ PrePromptSuffix }}\n{{ Input }}",
         "ChatMessageTemplate": "{{ Name }}: {{ Message }}",
-        "ChatMessageGenerationTemplate": "{{ AssistantName }}: "
+        "ChatMessageGenerationTemplate": "ASSISTANT: "
       }
     }
   }
