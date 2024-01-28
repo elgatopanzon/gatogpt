@@ -131,7 +131,7 @@
         "InputPrefix": "[INST]",
         "InputSuffix": "",
         "PrePromptPrefix": "",
-        "PrePromptSuffix": "",
+        "PrePromptSuffix": "[INST]",
         "Antiprompts": [
           "[INST]"
         ],
