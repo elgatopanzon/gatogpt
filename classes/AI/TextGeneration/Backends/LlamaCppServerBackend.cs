@@ -56,6 +56,10 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		{
 			InferenceParams.MergeFrom(inferenceParams);
 		}
+		if (loadParams != null)
+		{
+			LoadParams.MergeFrom(loadParams);
+		}
 
 		// transition to load model state to setup args
 		_state.Transition(LOAD_MODEL_STATE);

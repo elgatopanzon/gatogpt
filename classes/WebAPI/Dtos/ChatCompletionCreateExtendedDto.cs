@@ -13,10 +13,15 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
+using Newtonsoft.Json;
+
 public partial class ChatCompletionCreateExtendedDto
 {
-	public ChatCompletionCreateExtendedModelDto Model { get; set; }
-	public ChatCompletionCreateExtendedInferenceDto Inference { get; set; }
+	[JsonProperty(NullValueHandling=NullValueHandling.Ignore)]
+	public ChatCompletionCreateExtendedModelDto? Model { get; set; }
+
+	[JsonProperty(NullValueHandling=NullValueHandling.Ignore)]
+	public ChatCompletionCreateExtendedInferenceDto? Inference { get; set; }
 }
 
 public partial class ChatCompletionCreateExtendedModelDto

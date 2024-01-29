@@ -91,10 +91,15 @@ public partial class TextGenerationService : Service
 
 			// set GrammarResource
 			// TODO: put this in a better location?
-			if (request.ModelInstance.ModelDefinition.ModelProfileOverride.InferenceParams.GrammarResourceId.Length > 0)
+			string grammarResourceId = request.ModelInstance.ModelDefinition.ModelProfileOverride.InferenceParams.GrammarResourceId;
+			if (request.InferenceParams.GrammarResourceId.Length > 0)
+			{
+				grammarResourceId = request.InferenceParams.GrammarResourceId;
+			}
+			if (grammarResourceId.Length > 0)
 			{
 				var grammarResources = _resourceManager.GetResources<LlamaGrammar>();
-				if (grammarResources.TryGetValue(request.ModelInstance.ModelDefinition.ModelProfileOverride.InferenceParams.GrammarResourceId, out var grammarResource))
+				if (grammarResources.TryGetValue(grammarResourceId, out var grammarResource))
 				{
 					LoggerManager.LogDebug("Setting grammar resource", "", "grammarResource", grammarResource);
 					request.InferenceParams.GrammarResource = grammarResource;
