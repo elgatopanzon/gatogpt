@@ -244,11 +244,7 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		// format the input prompt
 		string fullPrompt = GetCurrentPrompt();
 
-		// check for prompt exceeding token size
-		if (TokenizeString(FormatPrompt(Prompt)).Count() > LoadParams.NCtx)
-		{
-			throw new PromptExceedsContextLengthException();
-		}
+		VerifyPromptCacheLength();
 
 		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
 		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);

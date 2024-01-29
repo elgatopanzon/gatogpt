@@ -318,11 +318,7 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 		// set the inference start time
 		InferenceResult = new InferenceResult();
 
-		// check for prompt exceeding token size
-		if (TokenizeString(FormatPrompt(Prompt)).Count() > LoadParams.NCtx)
-		{
-			throw new PromptExceedsContextLengthException();
-		}
+		VerifyPromptCacheLength();
 
 		// format the input prompt
 		string fullPrompt = GetCurrentPrompt();

@@ -140,6 +140,19 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		return fakeArray;
 	}
 
+	public void VerifyPromptCacheLength()
+	{
+		// check for prompt exceeding token size
+		int promptTokenLength = TokenizeString(FormatPrompt(Prompt)).Count();
+
+		LoggerManager.LogDebug("Prompt token size", "", "tokenSize", promptTokenLength);
+
+		if (promptTokenLength > (LoadParams.NCtx - InferenceParams.NPredict))
+		{
+			throw new PromptExceedsContextLengthException($"Prompt length of {promptTokenLength} exceeds {LoadParams.NCtx - InferenceParams.NPredict} (NCtx {LoadParams.NCtx} - NPredict {InferenceParams.NPredict})");
+		}
+	}
+
 	/*******************
 	*  State methods  *
 	*******************/
