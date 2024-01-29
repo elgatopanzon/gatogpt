@@ -44,6 +44,15 @@ public partial class LlamaModelDefinition : ModelDefinition<LlamaModel>
 		set { _promptCache.Value = value; }
 	}
 
+	internal readonly VValue<bool> _vision;
+
+	public bool Vision
+	{
+		get { return _vision.Value; }
+		set { _vision.Value = value; }
+	}
+
+
 	public LlamaModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null) : base(modelResourceId, profilePreset)
 	{
 		_modelProfile = AddValidatedNative<ModelProfile>(this)
@@ -54,6 +63,10 @@ public partial class LlamaModelDefinition : ModelDefinition<LlamaModel>
 
 		_promptCache = AddValidatedValue<bool>(this)
 		    .Default(false)
+		    .ChangeEventsEnabled();
+
+		_vision = AddValidatedValue<bool>(this)
+		    .Default(true)
 		    .ChangeEventsEnabled();
 
 		if (modelProfile != null)

@@ -69,6 +69,8 @@ public partial class ChatController : ControllerBase
     		return NotFound(new InvalidRequestErrorDto(message:$"The model '{chatCompletionCreateDto.Model}' does not exist", code:"model_not_found", param:"model"));
 		}
 
+		var modelDefinition = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model);
+
 		if (chatCompletionCreateDto.Messages.Count == 0)
 		{
 			return BadRequest(new InvalidRequestErrorDto(
@@ -79,7 +81,7 @@ public partial class ChatController : ControllerBase
 		}
 
 		// openai backend passthrough
-		if (_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).Backend == "openai")
+		if (modelDefinition.Backend == "openai")
 		{
 			var openAi = new OpenAI(ServiceRegistry.Get<ConfigManager>().Get<GlobalConfig>().OpenAIConfig);
 
@@ -122,8 +124,8 @@ public partial class ChatController : ControllerBase
 		LoggerManager.LogDebug("Completion dto extracted stops", "", "stops", stops);
 
 		// create LoadParams and InferenceParams objects from dto
-		AI.TextGeneration.LoadParams loadParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.LoadParams.DeepCopy();
-		AI.TextGeneration.InferenceParams inferenceParams = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.InferenceParams.DeepCopy();
+		AI.TextGeneration.LoadParams loadParams = modelDefinition.ModelProfile.LoadParams.DeepCopy();
+		AI.TextGeneration.InferenceParams inferenceParams = modelDefinition.ModelProfile.InferenceParams.DeepCopy();
 
 		var inferenceParamsDefault = new InferenceParams();
 
@@ -148,6 +150,45 @@ public partial class ChatController : ControllerBase
 			inferenceParams.TopP = chatCompletionCreateDto.TopP;
 		if (chatCompletionCreateDto.TopK != inferenceParamsDefault.TopK)
 			inferenceParams.TopK = chatCompletionCreateDto.TopK;
+
+		// apply extended parameters if they are set
+		if (chatCompletionCreateDto.Extended != null)
+		{
+			if (chatCompletionCreateDto.Extended.Model != null)
+			{
+				if (chatCompletionCreateDto.Extended.Model.NCtx != null)
+					loadParams.NCtx = (int) chatCompletionCreateDto.Extended.Model.NCtx;
+				if (chatCompletionCreateDto.Extended.Model.NBatch != null)
+					loadParams.NBatch = (int) chatCompletionCreateDto.Extended.Model.NBatch;
+				if (chatCompletionCreateDto.Extended.Model.NGpuLayers != null)
+					loadParams.NGpuLayers = (int) chatCompletionCreateDto.Extended.Model.NGpuLayers;
+				if (chatCompletionCreateDto.Extended.Model.Backend != null)
+					modelDefinition.Backend = (string) chatCompletionCreateDto.Extended.Model.Backend;
+				if (chatCompletionCreateDto.Extended.Model.PromptCache != null)
+					modelDefinition.PromptCache = (bool) chatCompletionCreateDto.Extended.Model.PromptCache;
+			}
+			if (chatCompletionCreateDto.Extended.Inference != null)
+			{
+				if (chatCompletionCreateDto.Extended.Inference.NThreads != null)
+					inferenceParams.NThreads = (int) chatCompletionCreateDto.Extended.Inference.NThreads;
+				if (chatCompletionCreateDto.Extended.Inference.NKeep != null)
+					inferenceParams.KeepTokens = (int) chatCompletionCreateDto.Extended.Inference.NKeep;
+				if (chatCompletionCreateDto.Extended.Inference.TopK != null)
+					inferenceParams.TopK = (int) chatCompletionCreateDto.Extended.Inference.TopK;
+				if (chatCompletionCreateDto.Extended.Inference.Tfs != null)
+					inferenceParams.Tfs = (double) chatCompletionCreateDto.Extended.Inference.Tfs;
+				if (chatCompletionCreateDto.Extended.Inference.Typical != null)
+					inferenceParams.Typical = (double) chatCompletionCreateDto.Extended.Inference.Typical;
+				if (chatCompletionCreateDto.Extended.Inference.RepeatPenalty != null)
+					inferenceParams.RepeatPenalty = (double) chatCompletionCreateDto.Extended.Inference.RepeatPenalty;
+				if (chatCompletionCreateDto.Extended.Inference.RepeatLastN != null)
+					inferenceParams.RepeatLastN = (int) chatCompletionCreateDto.Extended.Inference.RepeatLastN;
+				if (chatCompletionCreateDto.Extended.Inference.Vision != null)
+					modelDefinition.Vision = (bool) chatCompletionCreateDto.Extended.Inference.Vision;
+				if (chatCompletionCreateDto.Extended.Inference.GrammarResourceId != null)
+					inferenceParams.GrammarResourceId = (string) chatCompletionCreateDto.Extended.Inference.GrammarResourceId;
+			}
+		}
 
 		// setup tools
 		string toolChoice = chatCompletionCreateDto.GetToolChoice();
@@ -174,36 +215,41 @@ public partial class ChatController : ControllerBase
 		}
 
 		// init new chat instance
-    	StatefulChat chatInstance = new(_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).PromptCache, loadParams, inferenceParams);
+    	StatefulChat chatInstance = new(modelDefinition.PromptCache, loadParams, inferenceParams);
     	List<StatefulChatMessage> messageEntities = new();
 
 		List<string> imageUrls = new();
-    	foreach (var messageCreateDto in chatCompletionCreateDto.Messages)
-    	{
-    		messageEntities.Add(new StatefulChatMessage() {
-				Content = messageCreateDto.GetContent(),
-				Role = messageCreateDto.Role,
-				Name = messageCreateDto.Name,
-				ToolCalls = messageCreateDto.ToolCalls,
-    			});
 
-			var dtoContents = messageCreateDto.GetContents();
-    		if (dtoContents.Count > 0)
+		if (modelDefinition.Vision)
+		{
+    		foreach (var messageCreateDto in chatCompletionCreateDto.Messages)
     		{
-    			foreach (var content in dtoContents)
+    			messageEntities.Add(new StatefulChatMessage() {
+					Content = messageCreateDto.GetContent(),
+					Role = messageCreateDto.Role,
+					Name = messageCreateDto.Name,
+					ToolCalls = messageCreateDto.ToolCalls,
+    				});
+
+				var dtoContents = messageCreateDto.GetContents();
+    			if (dtoContents.Count > 0)
     			{
-    				if (content.Type == "image_url" && content.ImageUrl.Length > 0)
+    				foreach (var content in dtoContents)
     				{
-    					imageUrls.Add(content.ImageUrl);
+    					if (content.Type == "image_url" && content.ImageUrl.Length > 0)
+    					{
+    						imageUrls.Add(content.ImageUrl);
+    					}
     				}
     			}
     		}
-    	}
 
-    	LoggerManager.LogDebug("Request parsed image urls", "", "imageUrls", imageUrls);
+    		LoggerManager.LogDebug("Request parsed image urls", "", "imageUrls", imageUrls);
+			
+		}
 
 		// take the first image only when we have a mmproj path set
-		if (imageUrls.Count == 1 && _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.LoadParams.MMProjPath.Length > 0)
+		if (imageUrls.Count == 1 && modelDefinition.ModelProfile.LoadParams.MMProjPath.Length > 0)
 		{
 			try
 			{
@@ -243,7 +289,7 @@ public partial class ChatController : ControllerBase
 			foreach (string imageUrl in imageUrls)
 			{
 				ChatCompletionCreateDto imageDto = new();
-				imageDto.Model = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfile.InferenceParams.ImageModelId;
+				imageDto.Model = modelDefinition.ModelProfile.InferenceParams.ImageModelId;
 				imageDto.MaxTokens = chatCompletionCreateDto.MaxTokens;
 				imageDto.Messages = new();
 				imageDto.Messages.Add(new() {
@@ -420,7 +466,7 @@ public partial class ChatController : ControllerBase
 			messageEntities.Add(toolsSystemMessage);
 
 			// use json grammar to constrict tool output to json only
-			_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).ModelProfileOverride.InferenceParams.GrammarResourceId = "json";
+			modelDefinition.ModelProfileOverride.InferenceParams.GrammarResourceId = "json";
 		}
 
 		LoggerManager.LogDebug("Available tools", "", "tools", chatCompletionCreateDto.Tools);
@@ -444,12 +490,12 @@ public partial class ChatController : ControllerBase
 		int currentIndex = 0;
 		while (chatCompletionDto.Choices.Count < chatCompletionCreateDto.N)
 		{
-			var modelInstance = _inferenceService.GetPersistentInstance(chatCompletionCreateDto.Model, stateful:_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).PromptCache);
+			var modelInstance = _inferenceService.GetPersistentInstance(chatCompletionCreateDto.Model, stateful:modelDefinition.PromptCache);
 
 			// create new instance if there's no persistent instances
 			if (modelInstance == null)
 			{
-    			modelInstance = _inferenceService.CreateModelInstance(chatCompletionCreateDto.Model, stateful:_modelManager.GetModelDefinition(chatCompletionCreateDto.Model).PromptCache);
+    			modelInstance = _inferenceService.CreateModelInstance(chatCompletionCreateDto.Model, stateful:modelDefinition.PromptCache);
 			}
 
     		// initiate SSE if stream = true

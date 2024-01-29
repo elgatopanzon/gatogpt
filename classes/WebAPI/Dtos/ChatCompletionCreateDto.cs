@@ -13,12 +13,18 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
+using Newtonsoft.Json;
+
 public partial class ChatCompletionCreateDto : CompletionCreateBaseDto
 {
 	public ChatCompletionCreateResponseFormatDto ResponseFormat { get; set; }
 	public List<ChatCompletionMessageCreateDto> Messages { get; set; }
 	public List<ChatCompletionCreateToolDto> Tools { get; set; }
 	public object ToolChoice { get; set; }
+
+	// extended property implements optional extended parameters
+	[JsonProperty(NullValueHandling=NullValueHandling.Ignore)]
+	public ChatCompletionCreateExtendedDto? Extended { get; set; }
 
 	public ChatCompletionCreateDto()
 	{
