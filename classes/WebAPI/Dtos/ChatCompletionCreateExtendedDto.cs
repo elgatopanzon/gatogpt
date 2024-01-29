@@ -43,4 +43,7 @@ public partial class ChatCompletionCreateExtendedInferenceDto
 	public int? RepeatLastN { get; set; }
 	public bool? Vision { get; set; }
 	public string? GrammarResourceId { get; set; }
+
+	public string? ChatMessageTemplate { get; set; }
+	public string? ChatMessageGenerationTemplate { get; set; }
 }

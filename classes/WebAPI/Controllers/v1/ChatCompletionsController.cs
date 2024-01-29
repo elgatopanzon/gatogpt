@@ -187,6 +187,10 @@ public partial class ChatController : ControllerBase
 					modelDefinition.Vision = (bool) chatCompletionCreateDto.Extended.Inference.Vision;
 				if (chatCompletionCreateDto.Extended.Inference.GrammarResourceId != null)
 					inferenceParams.GrammarResourceId = (string) chatCompletionCreateDto.Extended.Inference.GrammarResourceId;
+				if (chatCompletionCreateDto.Extended.Inference.ChatMessageTemplate != null)
+					inferenceParams.ChatMessageTemplate = (string) chatCompletionCreateDto.Extended.Inference.ChatMessageTemplate;
+				if (chatCompletionCreateDto.Extended.Inference.ChatMessageGenerationTemplate != null)
+					inferenceParams.ChatMessageGenerationTemplate = (string) chatCompletionCreateDto.Extended.Inference.ChatMessageGenerationTemplate;
 			}
 		}
 
