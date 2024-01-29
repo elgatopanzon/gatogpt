@@ -222,6 +222,12 @@ public partial class StatefulChat
 
 			formattedMessages.Add(formattedMessage);
 		}
+		else {
+			// add anti-prompt for assistant name when generating without a
+			// generation template because it is assumed we want to continue
+			// generating a previous message
+			_inferenceParams.Antiprompts.Add($"{_assistantName}: ");
+		}
 
 
 		if (systemPrompts.Count > 0)
