@@ -220,6 +220,36 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		}
 	}
 
+	public async override Task<bool> ExecuteInference()
+	{
+		LoggerManager.LogDebug("Starting llama.cpp inference");
+
+		// format the input prompt
+		string fullPrompt = GetCurrentPrompt();
+
+		// check for prompt exceeding token size
+		if (TokenizeString(FormatPrompt(Prompt)).Count() > LoadParams.NCtx)
+		{
+			throw new PromptExceedsContextLengthException();
+		}
+
+		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
+		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);
+
+		// set fake prompt token count using 100,000 words = 75,000 tokens
+		InferenceResult.PromptTokenCount = TokenizeString(fullPrompt).Count();
+
+		// TODO: handle stateful stuff here
+		
+		// setup process events
+		_processRunner.SubscribeOwner<ProcessOutputLine>(_On_ProcessOutputLine);
+		_processRunner.SubscribeOwner<ProcessFinishedSuccess>(_On_ProcessFinishedSuccess);
+		_processRunner.SubscribeOwner<ProcessFinishedError>(_On_ProcessFinishedError);
+
+		// run and wait for process to exit
+		return (await _processRunner.Execute() == 0);
+	}
+
 	/*******************
 	*  State methods  *
 	*******************/
@@ -260,29 +290,6 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		InferenceResult = new InferenceResult();
 
 		Run();
-	}
-	public async override void _State_InferenceRunning_OnUpdate()
-	{
-		LoggerManager.LogDebug("Starting llama.cpp inference");
-
-		// format the input prompt
-		string fullPrompt = GetCurrentPrompt();
-
-		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
-		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);
-
-		// set fake prompt token count using 100,000 words = 75,000 tokens
-		InferenceResult.PromptTokenCount = Convert.ToInt32(fullPrompt.Split(" ").Count() * 0.75);
-
-		// TODO: handle stateful stuff here
-		
-		// setup process events
-		_processRunner.SubscribeOwner<ProcessOutputLine>(_On_ProcessOutputLine);
-		_processRunner.SubscribeOwner<ProcessFinishedSuccess>(_On_ProcessFinishedSuccess);
-		_processRunner.SubscribeOwner<ProcessFinishedError>(_On_ProcessFinishedError);
-
-		// run and wait for process to exit
-		await _processRunner.Execute();
 	}
 	public override void _State_InferenceFinished_OnEnter()
 	{

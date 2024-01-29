@@ -312,11 +312,17 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
     	return false;
 	}
 
-	public async Task<bool> ExecuteInference()
+	public async override Task<bool> ExecuteInference()
 	{
 
 		// set the inference start time
 		InferenceResult = new InferenceResult();
+
+		// check for prompt exceeding token size
+		if (TokenizeString(FormatPrompt(Prompt)).Count() > LoadParams.NCtx)
+		{
+			throw new PromptExceedsContextLengthException();
+		}
 
 		// format the input prompt
 		string fullPrompt = GetCurrentPrompt();
@@ -467,15 +473,6 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 
 		// run the thread, which will call InferenceRunning_OnUpdate state
 		Run();
-	}
-
-	public async override void _State_InferenceRunning_OnUpdate()
-	{
-		LoggerManager.LogDebug("Entered InferenceRunning update state");
-
-		await ExecuteInference();
-
-		_state.Transition(UNLOAD_MODEL_STATE);
 	}
 
 	public async override void _State_UnloadModel_OnEnter()

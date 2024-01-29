@@ -57,6 +57,11 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 
 		_state.Transition(LOAD_MODEL_STATE);
 	}
+
+	public async virtual Task<bool> ExecuteInference()
+	{
+		return true;
+	}
 	
 	public static ITextGenerationBackend CreateBackend(AI.TextGeneration.ModelDefinition modelDefinition, bool isStateful = false)
 	{
@@ -133,6 +138,26 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		Array.Resize<int>(ref fakeArray, fakeTokenCount);
 
 		return fakeArray;
+	}
+
+	/*******************
+	*  State methods  *
+	*******************/
+
+	public async override void _State_InferenceRunning_OnUpdate()
+	{
+		LoggerManager.LogDebug("Entered InferenceRunning update state");
+
+		try
+		{
+			await ExecuteInference();
+		}
+		catch (System.Exception e)
+		{
+			LoggerManager.LogDebug("Inference exception", "", "e", e.Message);
+		}
+
+		_state.Transition(UNLOAD_MODEL_STATE);
 	}
 
 	/**********************

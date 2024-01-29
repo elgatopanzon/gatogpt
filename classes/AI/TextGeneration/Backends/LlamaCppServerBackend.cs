@@ -237,87 +237,24 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		}
 	}
 
-	/*******************
-	*  State methods  *
-	*******************/
-	
-	public override void _State_Setup_OnEnter()
-	{
-		// create process runner instance
-		_processRunner = new ProcessRunner(_command);
-
-		// add process filter to exclude certain output
-		_processRunner.AddOutputFilter((o) => {
-			return Regex.IsMatch(o, @"^(llm_|llama_|clip_|encode_|[.]+)");
-			});
-	}
-	public override void _State_LoadModel_OnEnter()
-	{
-		SetupProcessArgs();
-
-		Run();
-	}
-	public override void _State_LoadModel_OnUpdate()
-	{
-		// start the server process and load the model
-		//
-		// TODO: handle stateful stuff here
-		//
-		// setup process events
-		if (IsFirstRun || (Persistent == false))
-		{
-			_processRunner.SubscribeOwner<ProcessOutputLine>(_On_ProcessOutputLine);
-			_processRunner.SubscribeOwner<ProcessFinishedSuccess>(_On_ProcessFinishedSuccess);
-			_processRunner.SubscribeOwner<ProcessFinishedError>(_On_ProcessFinishedError);
-
-			// run and wait for process to exit
-			_processRunner.Execute();
-		}
-		else
-		{
-			_state.Transition(INFERENCE_RUNNING_STATE);
-		}
-	}
-
-	public override void _State_UnloadModel_OnEnter()
-	{
-		Run();
-	}
-	public override void _State_UnloadModel_OnUpdate()
-	{
-		// skip unloading
-		if (Persistent == false)
-		{
-			LoggerManager.LogDebug("Killing process");
-
-			_processRunner.Kill();
-		}
-
-		_state.Transition(INFERENCE_FINISHED_STATE);
-	}
-
-	public override void _State_InferenceRunning_OnEnter()
-	{
-		this.Emit<TextGenerationInferenceStart>((o) => {
-			o.SetInstanceId(InstanceId);
-			});
-
-		InferenceResult = new InferenceResult();
-
-		Run();
-	}
-	public async override void _State_InferenceRunning_OnUpdate()
+	public async override Task<bool> ExecuteInference()
 	{
 		LoggerManager.LogDebug("Starting llama.cpp server inference");
 
 		// format the input prompt
 		string fullPrompt = GetCurrentPrompt();
 
+		// check for prompt exceeding token size
+		if (TokenizeString(FormatPrompt(Prompt)).Count() > LoadParams.NCtx)
+		{
+			throw new PromptExceedsContextLengthException();
+		}
+
 		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
 		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);
 
 		// set fake prompt token count using 100,000 words = 75,000 tokens
-		InferenceResult.PromptTokenCount = Convert.ToInt32(fullPrompt.Split(" ").Count() * 0.75);
+		InferenceResult.PromptTokenCount = TokenizeString(fullPrompt).Count();
 
 		// issue server API call
 		var inferenceCreateDto = new CompletionCreateDto() {
@@ -405,8 +342,77 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
     		}
 		};
 
-		// once inference finishes, proceed to unload
-		_state.Transition(UNLOAD_MODEL_STATE);
+		return true;
+	}
+
+	/*******************
+	*  State methods  *
+	*******************/
+	
+	public override void _State_Setup_OnEnter()
+	{
+		// create process runner instance
+		_processRunner = new ProcessRunner(_command);
+
+		// add process filter to exclude certain output
+		_processRunner.AddOutputFilter((o) => {
+			return Regex.IsMatch(o, @"^(llm_|llama_|clip_|encode_|[.]+)");
+			});
+	}
+	public override void _State_LoadModel_OnEnter()
+	{
+		SetupProcessArgs();
+
+		Run();
+	}
+	public override void _State_LoadModel_OnUpdate()
+	{
+		// start the server process and load the model
+		//
+		// TODO: handle stateful stuff here
+		//
+		// setup process events
+		if (IsFirstRun || (Persistent == false))
+		{
+			_processRunner.SubscribeOwner<ProcessOutputLine>(_On_ProcessOutputLine);
+			_processRunner.SubscribeOwner<ProcessFinishedSuccess>(_On_ProcessFinishedSuccess);
+			_processRunner.SubscribeOwner<ProcessFinishedError>(_On_ProcessFinishedError);
+
+			// run and wait for process to exit
+			_processRunner.Execute();
+		}
+		else
+		{
+			_state.Transition(INFERENCE_RUNNING_STATE);
+		}
+	}
+
+	public override void _State_UnloadModel_OnEnter()
+	{
+		Run();
+	}
+	public override void _State_UnloadModel_OnUpdate()
+	{
+		// skip unloading
+		if (Persistent == false)
+		{
+			LoggerManager.LogDebug("Killing process");
+
+			_processRunner.Kill();
+		}
+
+		_state.Transition(INFERENCE_FINISHED_STATE);
+	}
+
+	public override void _State_InferenceRunning_OnEnter()
+	{
+		this.Emit<TextGenerationInferenceStart>((o) => {
+			o.SetInstanceId(InstanceId);
+			});
+
+		InferenceResult = new InferenceResult();
+
+		Run();
 	}
 	public override void _State_InferenceFinished_OnEnter()
 	{
