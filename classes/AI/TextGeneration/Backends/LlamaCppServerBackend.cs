@@ -559,3 +559,8 @@ public partial class CompletionEventTimingsDto
 	public int PredictedN { get; set; }
 	public int PromptN { get; set; }
 }
+
+public partial class TokenizeDto
+{
+
+}

@@ -358,7 +358,7 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 		// re-calculate tokens per second in case it was altered by cache
 		if (fullPrompt.Length > 0)
 		{
-			InferenceResult.PromptTokenCount = _llamaWeights.NativeHandle.Tokenize(fullPrompt, true, false, System.Text.Encoding.UTF8).Count();
+			InferenceResult.PromptTokenCount = TokenizeString(fullPrompt).Count();
 		}
 
 		// start the inference loop
@@ -416,6 +416,11 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 		}
 
     	return true;
+	}
+
+	public override int[] TokenizeString(string content)
+	{
+		return _llamaWeights.NativeHandle.Tokenize(content, true, false, System.Text.Encoding.UTF8);
 	}
 
 	/***************************
