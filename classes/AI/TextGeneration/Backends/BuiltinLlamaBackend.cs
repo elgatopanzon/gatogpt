@@ -149,22 +149,22 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 		_executor = new StatelessExecutor(_llamaWeights, _modelParams);
 	}
 
-	public override void LoadModel()
-	{
-		if (_llamaWeights != null)
-		{
-			_llamaWeights.Dispose();
-		}
-		_llamaWeights = null;
-		_executor = null;
-		_executorStateful = null;
-		_llamaContext = null;
-		_inferenceParams = null;
-
-		GC.Collect();
-
-		_state.Transition(LOAD_MODEL_STATE);
-	}
+	// public override void LoadModel()
+	// {
+	// 	if (_llamaWeights != null)
+	// 	{
+	// 		_llamaWeights.Dispose();
+	// 	}
+	// 	_llamaWeights = null;
+	// 	_executor = null;
+	// 	_executorStateful = null;
+	// 	_llamaContext = null;
+	// 	_inferenceParams = null;
+    //
+	// 	GC.Collect();
+    //
+	// 	_state.Transition(LOAD_MODEL_STATE);
+	// }
 
 	public override void UnloadModel()
 	{
@@ -239,35 +239,6 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
 	/*****************************
 	*  Model inference methods  *
 	*****************************/
-	public override void StartInference(string promptText, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
-	{
-		Prompt = promptText;
-		CurrentInferenceLine = "";
-
-		Running = true;
-
-		LoggerManager.LogDebug("Starting inference", "", "prompt", Prompt);
-
-
-		InferenceParams = ModelDefinition.ModelProfile.InferenceParams.DeepCopy();
-		LoadParams = ModelDefinition.ModelProfile.LoadParams.DeepCopy();
-
-		// if we parsed any inference params, merge them into the copy of the
-		// model profile's ones
-		if (loadParams != null)
-		{
-			LoggerManager.LogDebug("Load params before", "", "loadParams", LoadParams);
-			LoggerManager.LogDebug("Load params before from", "", "loadParams", loadParams);
-			LoadParams.MergeFrom(loadParams);
-			LoggerManager.LogDebug("Load params after", "", "loadParams", LoadParams);
-		}
-		if (inferenceParams != null)
-		{
-			InferenceParams.MergeFrom(inferenceParams);
-		}
-
-		LoadModel();
-	}
 
 	public void RunInference()
 	{

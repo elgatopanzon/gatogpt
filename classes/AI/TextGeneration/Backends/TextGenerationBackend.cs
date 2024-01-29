@@ -33,7 +33,29 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 	}
 
 	public virtual void StartInference(string promptText, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null) {
-		LoggerManager.LogDebug("Dummy method!");
+		Prompt = promptText;
+
+		// set inference params and clone from provided ones
+		InferenceParams = ModelDefinition.ModelProfile.InferenceParams.DeepCopy();
+		LoadParams = ModelDefinition.ModelProfile.LoadParams.DeepCopy();
+
+		// if we parsed any inference params, merge them into the copy of the
+		// model profile's ones
+		if (loadParams != null)
+		{
+			LoadParams.MergeFrom(loadParams);
+		}
+		if (inferenceParams != null)
+		{
+			InferenceParams.MergeFrom(inferenceParams);
+		}
+		
+		// set to running state
+		Running = true;
+
+		LoggerManager.LogDebug("Starting inference", "", "prompt", Prompt);
+
+		_state.Transition(LOAD_MODEL_STATE);
 	}
 	
 	public static ITextGenerationBackend CreateBackend(AI.TextGeneration.ModelDefinition modelDefinition, bool isStateful = false)
@@ -138,6 +160,22 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 
 	public virtual void _On_InferenceLine(TextGenerationInferenceLine e)
 	{
+	}
+
+
+	/****************
+	*  Exceptions  *
+	****************/
+	
+	public class PromptExceedsContextLengthException : Exception
+	{
+		public PromptExceedsContextLengthException() { }
+		public PromptExceedsContextLengthException(string message) : base(message) { }
+		public PromptExceedsContextLengthException(string message, Exception inner) : base(message, inner) { }
+		protected PromptExceedsContextLengthException(
+			System.Runtime.Serialization.SerializationInfo info,
+			System.Runtime.Serialization.StreamingContext context)
+				: base(info, context) { }
 	}
 }
 

@@ -40,31 +40,6 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 		_state.Enter();
 	}
 
-	public override void StartInference(string promptText, AI.TextGeneration.LoadParams loadParams = null, AI.TextGeneration.InferenceParams inferenceParams = null)
-	{
-		Prompt = promptText;
-		CurrentInferenceLine = "";
-
-		Running = true;
-
-		LoggerManager.LogDebug("Starting inference", "", "prompt", Prompt);
-
-		InferenceParams = ModelDefinition.ModelProfile.InferenceParams.DeepCopy();
-		LoadParams = ModelDefinition.ModelProfile.LoadParams.DeepCopy();
-
-		if (inferenceParams != null)
-		{
-			InferenceParams.MergeFrom(inferenceParams);
-		}
-		if (loadParams != null)
-		{
-			LoadParams.MergeFrom(loadParams);
-		}
-
-		// transition to load model state to setup args
-		_state.Transition(LOAD_MODEL_STATE);
-	}
-
 	public void SetupProcessArgs()
 	{
 		// convert LoadParams and InferenceParams properties into llama.cpp
