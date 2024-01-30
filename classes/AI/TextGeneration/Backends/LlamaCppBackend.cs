@@ -153,18 +153,9 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		return InferenceParams.NegativeCfgPrompt;
 	}
 
-	public async void ProcessInferenceLine(string token)
+	public void ProcessInferenceLine(string token)
 	{
 		LoggerManager.LogDebug("Inference token", "", "token", token);
-
-		// if process exited then go to unload state and end inference
-		if (_processRunner.ReturnCode != -1 && _state.CurrentSubState == _inferenceRunningState)
-		{
-			LoggerManager.LogDebug("Process finished");
-			_state.Transition(UNLOAD_MODEL_STATE);
-
-			return;
-		}
 
 		ProcessInferenceToken(token);
 	}
@@ -283,9 +274,6 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	public override void _State_InferenceFinished_OnEnter()
 	{
 		LoggerManager.LogDebug("Inference finished");
-
-		// remove trailing \n token
-		InferenceResult.Tokens = InferenceResult.Tokens.Take(InferenceResult.Tokens.Count() - 1).ToList();
 
 		// remove prompt temp file
 		if (File.Exists(_promptFilePath))
