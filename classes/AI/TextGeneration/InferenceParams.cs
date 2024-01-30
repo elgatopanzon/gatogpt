@@ -123,6 +123,15 @@ public partial class InferenceParams : VObject
 		set { _typical.Value = value; }
 	}
 
+	// samplers config for --samplers
+	internal readonly VValue<List<string>> _samplers;
+
+	public List<string> Samplers
+	{
+		get { return _samplers.Value; }
+		set { _samplers.Value = value; }
+	}
+
 	internal readonly VValue<int> _repeatLastN;
 
 	public int RepeatLastN
@@ -327,6 +336,10 @@ public partial class InferenceParams : VObject
 
 		_typical = AddValidatedValue<double>(this)
 		    .Default(1.0)
+		    .ChangeEventsEnabled();
+
+		_samplers = AddValidatedValue<List<string>>(this)
+		    .Default(new List<string>() { "top_k", "tfs", "typical", "top_p", "min_p", "temp" })
 		    .ChangeEventsEnabled();
 
 		_repeatLastN = AddValidatedValue<int>(this)

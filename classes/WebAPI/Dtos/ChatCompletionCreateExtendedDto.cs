@@ -53,4 +53,6 @@ public partial class ChatCompletionCreateExtendedInferenceDto
 	public double? CfgScale { get; set; }
 
 	public string? PromptCacheId { get; set; }
+
+	public List<string>? Samplers { get; set; }
 }

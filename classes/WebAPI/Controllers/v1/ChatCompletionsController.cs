@@ -201,6 +201,8 @@ public partial class ChatController : ControllerBase
 					inferenceParams.CfgScale = (double) chatCompletionCreateDto.Extended.Inference.CfgScale;
 				if (chatCompletionCreateDto.Extended.Inference.PromptCacheId != null)
 					inferenceParams.PromptCacheId = (string) chatCompletionCreateDto.Extended.Inference.PromptCacheId;
+				if (chatCompletionCreateDto.Extended.Inference.Samplers != null && chatCompletionCreateDto.Extended.Inference.Samplers.Count > 0)
+					inferenceParams.Samplers = (List<string>) chatCompletionCreateDto.Extended.Inference.Samplers;
 			}
 		}
 

@@ -104,6 +104,7 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.AddArguments("--temp", InferenceParams.Temp.ToString());
 		_processRunner.AddArguments("--keep", InferenceParams.KeepTokens.ToString());
 
+		_processRunner.AddArguments("--samplers", $"\"{String.Join(";", InferenceParams.Samplers)}\"");
 
 		foreach (string antiprompt in InferenceParams.Antiprompts)
 		{
