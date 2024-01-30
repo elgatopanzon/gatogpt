@@ -53,7 +53,6 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.AddArguments("--ctx-size", LoadParams.NCtx.ToString());
 		_processRunner.AddArguments("--batch-size", LoadParams.NBatch.ToString());
 		_processRunner.AddArguments("--seed", LoadParams.Seed.ToString());
-		// _processRunner.AddArguments("--rope-scaling", InferenceParams.RopeScaling.ToString());
 		_processRunner.AddArguments("--rope-freq-base", LoadParams.RopeFreqBase.ToString());
 		_processRunner.AddArguments("--rope-freq-scale", LoadParams.RopeFreqScale.ToString());
 

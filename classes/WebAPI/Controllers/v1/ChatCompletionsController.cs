@@ -166,6 +166,10 @@ public partial class ChatController : ControllerBase
 					modelDefinition.Backend = (string) chatCompletionCreateDto.Extended.Model.Backend;
 				if (chatCompletionCreateDto.Extended.Model.PromptCache != null)
 					modelDefinition.PromptCache = (bool) chatCompletionCreateDto.Extended.Model.PromptCache;
+				if (chatCompletionCreateDto.Extended.Model.RopeFreqBase != null)
+					loadParams.RopeFreqBase = (double) chatCompletionCreateDto.Extended.Model.RopeFreqBase;
+				if (chatCompletionCreateDto.Extended.Model.RopeFreqScale != null)
+					loadParams.RopeFreqScale = (double) chatCompletionCreateDto.Extended.Model.RopeFreqScale;
 			}
 			if (chatCompletionCreateDto.Extended.Inference != null)
 			{
