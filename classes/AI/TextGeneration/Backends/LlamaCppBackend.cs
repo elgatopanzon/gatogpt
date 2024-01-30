@@ -28,12 +28,14 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	private Queue<string> _tokenPrintQueue { get; set; } = new();
 	private bool _printQueuePrinting = false;
 	private string _promptFilePath { get; set; }
+	private string _cfgPromptFilePath { get; set; }
 
 	public LlamaCppBackend(ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		ModelDefinition = modelDefinition;
 
 		_promptFilePath = ProjectSettings.GlobalizePath($"user://Cache/llama.cpp-prompt-file-{GetHashCode()}");
+		_cfgPromptFilePath = ProjectSettings.GlobalizePath($"user://Cache/llama.cpp-cfg-prompt-file-{GetHashCode()}");
 
 		LoggerManager.LogDebug("Created llamacpp backend", "", "instanceId", InstanceId);
 		LoggerManager.LogDebug("", "", "modelDefinition", ModelDefinition);
@@ -82,7 +84,8 @@ public partial class LlamaCppBackend : TextGenerationBackend
 
 		// inference params
 		File.WriteAllText(_promptFilePath, GetCurrentPrompt(), System.Text.Encoding.UTF8);
-		// _processRunner.AddArguments("--prompt", $"\"{GetCurrentPrompt()}\"");
+		File.WriteAllText(_cfgPromptFilePath, GetCurrentCfgPrompt(), System.Text.Encoding.UTF8);
+
 		_processRunner.AddArguments("--file", $"\"{_promptFilePath}\"");
 		_processRunner.AddArguments("--no-display-prompt");
 		_processRunner.AddArguments("--escape");
@@ -99,10 +102,14 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.AddArguments("--temp", InferenceParams.Temp.ToString());
 		_processRunner.AddArguments("--keep", InferenceParams.KeepTokens.ToString());
 
+
 		foreach (string antiprompt in InferenceParams.Antiprompts)
 		{
 			_processRunner.AddArguments("--reverse-prompt", $"\"{antiprompt}\"");
 		}
+
+		_processRunner.AddArguments("--cfg-negative-prompt-file", $"\"{_cfgPromptFilePath}\"");
+		_processRunner.AddArguments("--cfg-scale", InferenceParams.CfgScale.ToString());
 
 		// TODO: handle prompt cache using LlamaCacheManager
 		// _processRunner.AddArguments("--prompt-cache-all");
@@ -134,6 +141,11 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		// }
 
 		return currentPrompt;
+	}
+
+	public string GetCurrentCfgPrompt()
+	{
+		return InferenceParams.NegativeCfgPrompt;
 	}
 
 	public async void ProcessInferenceLine(string token)

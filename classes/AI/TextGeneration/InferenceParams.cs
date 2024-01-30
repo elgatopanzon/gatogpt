@@ -255,6 +255,22 @@ public partial class InferenceParams : VObject
 		set { _grammarResource.Value = value; }
 	}
 
+	internal readonly VValue<string> _negativeCfgPrompt;
+
+	public string NegativeCfgPrompt
+	{
+		get { return _negativeCfgPrompt.Value; }
+		set { _negativeCfgPrompt.Value = value; }
+	}
+
+	internal readonly VValue<double> _cfgScale;
+
+	public double CfgScale
+	{
+		get { return _cfgScale.Value; }
+		set { _cfgScale.Value = value; }
+	}
+
 
 	public InferenceParams()
 	{
@@ -368,6 +384,14 @@ public partial class InferenceParams : VObject
 
 		_grammarResource = AddValidatedValue<Resource<LlamaGrammar>>(this)
 		    .Default(null)
+		    .ChangeEventsEnabled();
+
+		_negativeCfgPrompt = AddValidatedValue<string>(this)
+		    .Default("")
+		    .ChangeEventsEnabled();
+
+		_cfgScale = AddValidatedValue<double>(this)
+		    .Default(1.0)
 		    .ChangeEventsEnabled();
 	}
 }
