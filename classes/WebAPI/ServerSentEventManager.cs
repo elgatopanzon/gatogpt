@@ -31,9 +31,12 @@ public partial class ServerSentEventManager
 		_httpContext.Response.Headers.Add("Content-Type", "text/event-stream");
 	}
 
-	public async Task<bool> SendEvent(object eventObject)
+	public async Task<bool> SendEvent(object eventObject, string eventPrefix = "data: ")
 	{
-		await _httpContext.Response.WriteAsync($"data: ");
+		if (eventPrefix.Length > 0)
+		{
+			await _httpContext.Response.WriteAsync(eventPrefix);
+		}
 		if (eventObject is string stringObj)
 		{
         	await _httpContext.Response.WriteAsync(stringObj);
