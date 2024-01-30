@@ -169,6 +169,13 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		catch (System.Exception e)
 		{
 			LoggerManager.LogDebug("Inference exception", "", "e", e.Message);
+
+			InferenceResult.Error = new() {
+				Code = "inference_exception",
+				Type = e.GetType().Name,
+				Message = e.Message,
+				Exception = e
+			};
 		}
 
 		_state.Transition(UNLOAD_MODEL_STATE);
@@ -212,6 +219,17 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		public PromptExceedsContextLengthException(string message) : base(message) { }
 		public PromptExceedsContextLengthException(string message, Exception inner) : base(message, inner) { }
 		protected PromptExceedsContextLengthException(
+			System.Runtime.Serialization.SerializationInfo info,
+			System.Runtime.Serialization.StreamingContext context)
+				: base(info, context) { }
+	}
+
+	public class FailedLoadingModelException : Exception
+	{
+		public FailedLoadingModelException() { }
+		public FailedLoadingModelException(string message) : base(message) { }
+		public FailedLoadingModelException(string message, Exception inner) : base(message, inner) { }
+		protected FailedLoadingModelException(
 			System.Runtime.Serialization.SerializationInfo info,
 			System.Runtime.Serialization.StreamingContext context)
 				: base(info, context) { }

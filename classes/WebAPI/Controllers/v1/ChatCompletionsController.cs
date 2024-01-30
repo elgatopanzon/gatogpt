@@ -544,7 +544,7 @@ public partial class ChatController : ControllerBase
 				}
 
     			modelInstance.SubscribeOwner<TextGenerationInferenceFinished>(async (e) => {
-    				if (chatCompletionDto.Choices.Count >= (chatCompletionCreateDto.N - 1))
+    				if (chatCompletionDto.Choices.Count >= (chatCompletionCreateDto.N - 1) && modelInstance.InferenceResult.Error == null)
     				{
 						LoggerManager.LogDebug("Stream mode finished");
 						await sse.Done();
@@ -661,6 +661,29 @@ public partial class ChatController : ControllerBase
 			currentIndex++;
 
 			_inferenceService.DestroyExistingInstances();
+
+			// check for inference error
+			if (!modelInstance.InferenceResult.Success)
+			{
+				LoggerManager.LogError("Inference error", "", "inferenceError", modelInstance.InferenceResult.Error);
+
+				ErrorResultExtended err = new() {
+					Error = new() {
+						Code = modelInstance.InferenceResult.Error.Code,
+						Type = modelInstance.InferenceResult.Error.Type,
+						Message = modelInstance.InferenceResult.Error.Message,
+						Param = "prompt",
+						Exception = modelInstance.InferenceResult.Error.Exception,
+					}
+
+				};
+
+				if (chatCompletionCreateDto.Stream)
+				{
+					HttpContext.Response.Headers.Remove("Content-Type");
+				}
+				return BadRequest(err);
+			}
 		}
 
 		LoggerManager.LogDebug("Returning chatCompletionDto", "", "chatCompletionDto", chatCompletionDto);

@@ -68,6 +68,13 @@ public partial class InferenceResult
 
 	internal bool Finished { get; set; }
 
+	public InferenceError Error { get; set; }
+	public bool Success {
+		get {
+			return (Error == null);
+		}
+	}
+
 	public InferenceResult()
 	{
 		Tokens = new();
@@ -81,3 +88,10 @@ public partial class InferenceResult
 	}
 }
 
+public partial class InferenceError
+{
+	public string Type { get; set; }
+	public string Code { get; set; }
+	public string Message { get; set; }
+	public Exception Exception { get; set; }
+}

@@ -154,7 +154,7 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	}
 
 	public void ProcessInferenceLine(string token)
-	{
+{
 		LoggerManager.LogDebug("Inference token", "", "token", token);
 
 		ProcessInferenceToken(token);
@@ -227,7 +227,19 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.SubscribeOwner<ProcessFinishedError>(_On_ProcessFinishedError);
 
 		// run and wait for process to exit
-		return (await _processRunner.Execute() == 0);
+		bool success = (await _processRunner.Execute() == 0);
+
+		if (InferenceResult.Error != null)
+		{
+			LoggerManager.LogDebug("Inference execution error", "", "error", InferenceResult.Error);
+
+			if (InferenceResult.Error.Type == "ErrorLoadingModel")
+			{
+				throw new FailedLoadingModelException(InferenceResult.Error.Message);
+			}
+		}
+
+		return success;
 	}
 
 	/*******************
@@ -242,6 +254,25 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		// add process filter to exclude certain output
 		_processRunner.AddOutputFilter((o) => {
 			return Regex.IsMatch(o, @"^(llm_|llama_|clip_|encode_)");
+			});
+
+		_processRunner.AddOutputFilter((o) => {
+			var match = Regex.IsMatch(o, @"error loading model");
+
+			if (match)
+			{
+				if (InferenceResult.Error == null)
+				{
+					InferenceResult.Error = new() {
+						Type = "ErrorLoadingModel",
+						Code = "error_loading_model",
+					};
+				}
+
+				InferenceResult.Error.Message += o;
+			}
+
+			return match;
 			});
 	}
 	public override void _State_LoadModel_OnEnter()
