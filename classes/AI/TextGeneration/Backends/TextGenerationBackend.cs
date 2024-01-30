@@ -134,7 +134,7 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		// isn't implemented
 
 		int fakeTokenCount = content.Split(new char[] { ' ', '!', '<', '>', '/', '?', '[', ']' }).Count();
-		fakeTokenCount = Convert.ToInt32(((double) fakeTokenCount) * 1.75);
+		fakeTokenCount = Convert.ToInt32(((double) fakeTokenCount) * 2);
 		int[] fakeArray = new int[] {};
 		Array.Resize<int>(ref fakeArray, fakeTokenCount);
 
