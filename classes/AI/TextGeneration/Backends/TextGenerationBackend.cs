@@ -134,6 +134,7 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		// isn't implemented
 
 		int fakeTokenCount = content.Split(new char[] { ' ', '!', '<', '>', '/', '?', '[', ']' }).Count();
+		fakeTokenCount = Convert.ToInt32(((double) fakeTokenCount) * 1.75);
 		int[] fakeArray = new int[] {};
 		Array.Resize<int>(ref fakeArray, fakeTokenCount);
 
@@ -149,7 +150,7 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 
 		if (promptTokenLength > (LoadParams.NCtx - InferenceParams.NPredict))
 		{
-			throw new PromptExceedsContextLengthException($"Prompt length of {promptTokenLength} exceeds {LoadParams.NCtx - InferenceParams.NPredict} (NCtx {LoadParams.NCtx} - NPredict {InferenceParams.NPredict})");
+			// throw new PromptExceedsContextLengthException($"Prompt length of {promptTokenLength} exceeds {LoadParams.NCtx - InferenceParams.NPredict} (NCtx {LoadParams.NCtx} - NPredict {InferenceParams.NPredict})");
 		}
 	}
 
