@@ -150,7 +150,7 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 
 		if (promptTokenLength > (LoadParams.NCtx - InferenceParams.NPredict))
 		{
-			// throw new PromptExceedsContextLengthException($"Prompt length of {promptTokenLength} exceeds {LoadParams.NCtx - InferenceParams.NPredict} (NCtx {LoadParams.NCtx} - NPredict {InferenceParams.NPredict})");
+			throw new PromptExceedsContextLengthException($"Prompt length of {promptTokenLength} exceeds {LoadParams.NCtx - InferenceParams.NPredict} (NCtx {LoadParams.NCtx} - NPredict {InferenceParams.NPredict})");
 		}
 	}
 
