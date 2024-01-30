@@ -18,6 +18,7 @@ using GodotEGP.Threading;
 using System.ComponentModel;
 
 using System.Diagnostics;
+using System.Text;
 
 public partial class ProcessRunner : BackgroundJob
 {
@@ -38,7 +39,7 @@ public partial class ProcessRunner : BackgroundJob
 
 	public string Output { 
 		get {
-			return String.Join("\n", OutputLines);
+			return String.Join("", OutputStrings);
 		}
 	}
 	public string OutputStripped { 
@@ -56,7 +57,7 @@ public partial class ProcessRunner : BackgroundJob
 			return Error.Trim();
 		}
 	}
-	public List<string> OutputLines { get; set; }
+	public List<string> OutputStrings { get; set; }
 	public List<string> ErrorLines { get; set; }
 
 	public List<ProcessOutputFilter> OutputFilters { get; set; } = new();
@@ -68,6 +69,8 @@ public partial class ProcessRunner : BackgroundJob
 			return EndTime - StartTime;
 		}
 	}
+	
+	public ConsoleAutomator _automator { get; set; }
 
 	public ProcessRunner(string command, params string[] args)
 	{
@@ -75,7 +78,7 @@ public partial class ProcessRunner : BackgroundJob
 		Args = args;
 		_task = new();
 
-		OutputLines = new();
+		OutputStrings = new();
 		ErrorLines = new();
 	}
 
@@ -141,6 +144,11 @@ public partial class ProcessRunner : BackgroundJob
 		this.Emit<ProcessFinishedError>((e) => e.SetData(ReturnCode));
 	}
 
+	public void AutomatorStandardInputRead(object sender, ConsoleInputReadEventArgs e)
+	{
+		ProcessConsoleOutput(e.Input);
+	}
+
 	public override void DoWork(object sender, DoWorkEventArgs e)
 	{
 		LoggerManager.LogDebug("Executing process", "", "process", $"{Command} {String.Join(" ", Args)}");
@@ -148,10 +156,16 @@ public partial class ProcessRunner : BackgroundJob
 		this.Emit<ProcessStarted>();
 
 		_process.Start();
+
+		_automator = new ConsoleAutomator(_process.StandardInput, _process.StandardOutput);
+		_automator.StandardInputRead += AutomatorStandardInputRead;
+		_automator.StartAutomate();
+
 		_process.BeginErrorReadLine();
-		_process.BeginOutputReadLine();
+		// _process.BeginOutputReadLine();
 
 		_process.WaitForExit();
+		_automator.StandardInputRead -= AutomatorStandardInputRead;
 
 		ReturnCode = _process.ExitCode;
 
@@ -167,10 +181,9 @@ public partial class ProcessRunner : BackgroundJob
 	{
 	}
 
-	public void _On_Process_OutputData(object sender, DataReceivedEventArgs args)
+	public void ProcessConsoleOutput(string output)
 	{
-		string output = args.Data;
-		if (!String.IsNullOrEmpty(args.Data))
+		if (!String.IsNullOrEmpty(output))
 		{
 			if (GetOutputFilterMatch(output))
 			{
@@ -180,10 +193,15 @@ public partial class ProcessRunner : BackgroundJob
 
 			LoggerManager.LogDebug("Process output", "", "output", output);
 
-			OutputLines.Add(output);
+			OutputStrings.Add(output);
 
 			this.Emit<ProcessOutputLine>((e) => e.Line = output);
 		}
+	}
+
+	public void _On_Process_OutputData(object sender, DataReceivedEventArgs args)
+	{
+		ProcessConsoleOutput(args.Data+"\n");
 	}
 	public void _On_Process_ErrorData(object sender, DataReceivedEventArgs args)
 	{
@@ -233,4 +251,100 @@ public partial class ProcessOutputFilter
 	{
 		return Func(output);
 	}
+}
+
+public class ConsoleInputReadEventArgs : EventArgs
+{
+    public ConsoleInputReadEventArgs(string input)
+    {
+        this.Input = input;
+    }
+
+    public string Input { get; private set; }
+}
+
+public interface IConsoleAutomator
+{
+    StreamWriter StandardInput { get; }
+
+    event EventHandler<ConsoleInputReadEventArgs> StandardInputRead;
+}
+
+public abstract class ConsoleAutomatorBase : IConsoleAutomator
+{
+    protected readonly StringBuilder inputAccumulator = new StringBuilder();
+
+    protected readonly byte[] buffer = new byte[256];
+
+    protected volatile bool stopAutomation;
+
+    public StreamWriter StandardInput { get; protected set; }
+
+    protected StreamReader StandardOutput { get; set; }
+
+    protected StreamReader StandardError { get; set; }
+
+    public event EventHandler<ConsoleInputReadEventArgs> StandardInputRead;
+
+    protected void BeginReadAsync()
+    {
+        if (!this.stopAutomation) {
+            this.StandardOutput.BaseStream.BeginRead(this.buffer, 0, this.buffer.Length, this.ReadHappened, null);
+        }
+    }
+
+    protected virtual void OnAutomationStopped()
+    {
+        this.stopAutomation = true;
+        this.StandardOutput.DiscardBufferedData();
+    }
+
+    private void ReadHappened(IAsyncResult asyncResult)
+    {
+        var bytesRead = this.StandardOutput.BaseStream.EndRead(asyncResult);
+        if (bytesRead == 0) {
+            this.OnAutomationStopped();
+            return;
+        }
+
+        var input = this.StandardOutput.CurrentEncoding.GetString(this.buffer, 0, bytesRead);
+        this.inputAccumulator.Append(input);
+
+        if (bytesRead < this.buffer.Length) {
+            this.OnInputRead(this.inputAccumulator.ToString());
+        }
+
+        this.BeginReadAsync();
+    }
+
+    private void OnInputRead(string input)
+    {
+        var handler = this.StandardInputRead;
+        if (handler == null) {
+            return;
+        }
+
+        handler(this, new ConsoleInputReadEventArgs(input));
+        this.inputAccumulator.Clear();
+    }
+}
+
+public class ConsoleAutomator : ConsoleAutomatorBase, IConsoleAutomator
+{
+    public ConsoleAutomator(StreamWriter standardInput, StreamReader standardOutput)
+    {
+        this.StandardInput = standardInput;
+        this.StandardOutput = standardOutput;
+    }
+
+    public void StartAutomate()
+    {
+        this.stopAutomation = false;
+        this.BeginReadAsync();
+    }
+
+    public void StopAutomation()
+    {
+        this.OnAutomationStopped();
+    }
 }
