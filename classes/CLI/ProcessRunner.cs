@@ -208,6 +208,12 @@ public partial class ProcessRunner : BackgroundJob
 		string output = args.Data;
 		if (!String.IsNullOrEmpty(args.Data))
 		{
+			if (GetOutputFilterMatch(output))
+			{
+				LoggerManager.LogDebug("Error output filter match, excluding", "", "excludedErrorOutput", output);
+				return;
+			}
+
 			LoggerManager.LogDebug("Process output error", "", "output", output);
 
 			ErrorLines.Add(output);
