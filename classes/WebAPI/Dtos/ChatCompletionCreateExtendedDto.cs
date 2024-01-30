@@ -46,4 +46,7 @@ public partial class ChatCompletionCreateExtendedInferenceDto
 
 	public string? ChatMessageTemplate { get; set; }
 	public string? ChatMessageGenerationTemplate { get; set; }
+
+	public string? CfgNegativePrompt { get; set; }
+	public double? CfgScale { get; set; }
 }
