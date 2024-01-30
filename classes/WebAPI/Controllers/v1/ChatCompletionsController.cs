@@ -195,6 +195,8 @@ public partial class ChatController : ControllerBase
 					inferenceParams.NegativeCfgPrompt = (string) chatCompletionCreateDto.Extended.Inference.CfgNegativePrompt;
 				if (chatCompletionCreateDto.Extended.Inference.CfgScale != null)
 					inferenceParams.CfgScale = (double) chatCompletionCreateDto.Extended.Inference.CfgScale;
+				if (chatCompletionCreateDto.Extended.Inference.PromptCacheId != null)
+					inferenceParams.PromptCacheId = (string) chatCompletionCreateDto.Extended.Inference.PromptCacheId;
 			}
 		}
 

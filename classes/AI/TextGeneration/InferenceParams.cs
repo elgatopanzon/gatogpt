@@ -271,6 +271,13 @@ public partial class InferenceParams : VObject
 		set { _cfgScale.Value = value; }
 	}
 
+	internal readonly VValue<string> _promptCacheId;
+
+	public string PromptCacheId
+	{
+		get { return _promptCacheId.Value; }
+		set { _promptCacheId.Value = value; }
+	}
 
 	public InferenceParams()
 	{
@@ -392,6 +399,10 @@ public partial class InferenceParams : VObject
 
 		_cfgScale = AddValidatedValue<double>(this)
 		    .Default(1.0)
+		    .ChangeEventsEnabled();
+
+		_promptCacheId = AddValidatedValue<string>(this)
+		    .Default("")
 		    .ChangeEventsEnabled();
 	}
 }

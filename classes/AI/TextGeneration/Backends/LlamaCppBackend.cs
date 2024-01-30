@@ -114,9 +114,11 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.AddArguments("--cfg-negative-prompt-file", $"\"{_cfgPromptFilePath}\"");
 		_processRunner.AddArguments("--cfg-scale", InferenceParams.CfgScale.ToString());
 
-		// TODO: handle prompt cache using LlamaCacheManager
-		// _processRunner.AddArguments("--prompt-cache-all");
-		// _processRunner.AddArguments("--prompt-cache", "TODO");
+		if (ModelDefinition.PromptCache)
+		{
+			_processRunner.AddArguments("--prompt-cache-all");
+			_processRunner.AddArguments("--prompt-cache", ProjectSettings.GlobalizePath($"user://Cache/llama.cpp-prompt-cache-{InferenceParams.PromptCacheId}"));
+		}
 
 		// handle --grammar-file when configured
 		if (InferenceParams.GrammarResource != null)

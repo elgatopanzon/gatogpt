@@ -49,4 +49,6 @@ public partial class ChatCompletionCreateExtendedInferenceDto
 
 	public string? CfgNegativePrompt { get; set; }
 	public double? CfgScale { get; set; }
+
+	public string? PromptCacheId { get; set; }
 }
