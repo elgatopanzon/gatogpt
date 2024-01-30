@@ -130,64 +130,28 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		return currentPrompt;
 	}
 
-	public async void ProcessInferenceLine(string line)
+	public async void ProcessInferenceLine(string token)
 	{
-		line = line.Replace(GetCurrentPrompt(), "");
-		LoggerManager.LogDebug("Inference line", "", "line", line);
+		LoggerManager.LogDebug("Inference token", "", "token", token);
 
-    	if (InferenceResult.GenerationTokenCount == 0)
-    	{
-    		InferenceResult.FirstTokenTime = DateTime.Now;
-    		InferenceResult.PrevTokenTime = DateTime.Now;
-    	}
+		ProcessInferenceToken(token);
 
-		string[] lineAsTokens = line.Split(" ");
-		LoggerManager.LogDebug("Time to first token", "", "time", (InferenceResult.PrevTokenTime - InferenceResult.StartTime).TotalMilliseconds);
-		LoggerManager.LogDebug("Tokens in line", "", "tokens", lineAsTokens.Count());
-		double printSpeed = (InferenceResult.PrevTokenTime - InferenceResult.StartTime).TotalMilliseconds / lineAsTokens.Count();
-		printSpeed = Math.Min(printSpeed, 200);
-
-		LoggerManager.LogDebug("Token print speed", "", "printSpeed", printSpeed);
-
-		// queue up fake tokens
-		int count = 1;
-		foreach (string fakeToken in lineAsTokens)
+		// if process exited then go to unload state and end inference
+		if (_processRunner.ReturnCode != -1 && _state.CurrentSubState == _inferenceRunningState)
 		{
-			string t = fakeToken;
-			if (count < lineAsTokens.Count())
-			{
-				t+=" ";
-			}
-			_tokenPrintQueue.Enqueue(t);
-			count++;
-		}
-		_tokenPrintQueue.Enqueue("\n");
-
-		// issue fake tokens from print queue
-		if (!_printQueuePrinting)
-		{
-			while (_tokenPrintQueue.TryPeek(out string t))
-			{
-				string token = _tokenPrintQueue.Dequeue();
-
-				ProcessInferenceToken(token);
-
-				await Task.Delay(Convert.ToInt32(printSpeed));
-			}
-
-			_printQueuePrinting = false;
-
-			// if process exited then go to unload state and end inference
-			if (_processRunner.ReturnCode != -1 && _state.CurrentSubState == _inferenceRunningState)
-			{
-				LoggerManager.LogDebug("Process finished");
-				_state.Transition(UNLOAD_MODEL_STATE);
-			}
+			LoggerManager.LogDebug("Process finished");
+			_state.Transition(UNLOAD_MODEL_STATE);
 		}
 	}
 
 	public void ProcessInferenceToken(string text)
 	{
+		// strip the prompt from the output when there's no tokens
+		if (InferenceResult.Tokens.Count == 0)
+		{
+			text = text.Replace(" "+GetCurrentPrompt(), string.Empty);
+		}
+
     	if (InferenceResult.GenerationTokenCount == 0)
     	{
     		InferenceResult.FirstTokenTime = DateTime.Now;
@@ -227,11 +191,7 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		// format the input prompt
 		string fullPrompt = GetCurrentPrompt();
 
-		// check for prompt exceeding token size
-		if (TokenizeString(FormatPrompt(Prompt)).Count() > LoadParams.NCtx)
-		{
-			throw new PromptExceedsContextLengthException();
-		}
+		VerifyPromptCacheLength();
 
 		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
 		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);
