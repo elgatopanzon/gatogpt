@@ -108,7 +108,7 @@ public partial class LlamaCppBackend : TextGenerationBackend
 
 		foreach (string antiprompt in InferenceParams.Antiprompts)
 		{
-			_processRunner.AddArguments("--reverse-prompt", $"\"{antiprompt}\"");
+			_processRunner.AddArguments("--reverse-prompt", $"\"{antiprompt.Trim()}\"");
 		}
 
 		_processRunner.AddArguments("--cfg-negative-prompt-file", $"\"{_cfgPromptFilePath}\"");
