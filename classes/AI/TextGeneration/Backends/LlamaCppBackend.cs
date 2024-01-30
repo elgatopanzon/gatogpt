@@ -27,10 +27,13 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	private string _command = "llama.cpp";
 	private Queue<string> _tokenPrintQueue { get; set; } = new();
 	private bool _printQueuePrinting = false;
+	private string _promptFilePath { get; set; }
 
 	public LlamaCppBackend(ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		ModelDefinition = modelDefinition;
+
+		_promptFilePath = ProjectSettings.GlobalizePath($"user://Cache/llama.cpp-prompt-file-{GetHashCode()}");
 
 		LoggerManager.LogDebug("Created llamacpp backend", "", "instanceId", InstanceId);
 		LoggerManager.LogDebug("", "", "modelDefinition", ModelDefinition);
@@ -78,7 +81,10 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		}
 
 		// inference params
-		_processRunner.AddArguments("--prompt", $"\"{GetCurrentPrompt()}\"");
+		File.WriteAllText(_promptFilePath, GetCurrentPrompt(), System.Text.Encoding.UTF8);
+		// _processRunner.AddArguments("--prompt", $"\"{GetCurrentPrompt()}\"");
+		_processRunner.AddArguments("--file", $"\"{_promptFilePath}\"");
+		_processRunner.AddArguments("--no-display-prompt");
 		_processRunner.AddArguments("--escape");
 		_processRunner.AddArguments("--threads", InferenceParams.NThreads.ToString());
 		_processRunner.AddArguments("--n-predict", InferenceParams.NPredict.ToString());
@@ -134,14 +140,16 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	{
 		LoggerManager.LogDebug("Inference token", "", "token", token);
 
-		ProcessInferenceToken(token);
-
 		// if process exited then go to unload state and end inference
 		if (_processRunner.ReturnCode != -1 && _state.CurrentSubState == _inferenceRunningState)
 		{
 			LoggerManager.LogDebug("Process finished");
 			_state.Transition(UNLOAD_MODEL_STATE);
+
+			return;
 		}
+
+		ProcessInferenceToken(token);
 	}
 
 	public void ProcessInferenceToken(string text)
@@ -196,6 +204,10 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		LoggerManager.LogDebug("User prompt", "", "userPrompt", Prompt);
 		LoggerManager.LogDebug("Full prompt", "", "fullPrompt", fullPrompt);
 
+		Console.WriteLine("");
+		Console.WriteLine(fullPrompt);
+		Console.WriteLine("");
+
 		// set fake prompt token count using 100,000 words = 75,000 tokens
 		InferenceResult.PromptTokenCount = TokenizeString(fullPrompt).Count();
 
@@ -221,7 +233,7 @@ public partial class LlamaCppBackend : TextGenerationBackend
 
 		// add process filter to exclude certain output
 		_processRunner.AddOutputFilter((o) => {
-			return Regex.IsMatch(o, @"^(llm_|llama_|clip_|encode_|[.]+)");
+			return Regex.IsMatch(o, @"^(llm_|llama_|clip_|encode_)");
 			});
 	}
 	public override void _State_LoadModel_OnEnter()
@@ -257,6 +269,12 @@ public partial class LlamaCppBackend : TextGenerationBackend
 
 		// remove trailing \n token
 		InferenceResult.Tokens = InferenceResult.Tokens.Take(InferenceResult.Tokens.Count() - 1).ToList();
+
+		// remove prompt temp file
+		if (File.Exists(_promptFilePath))
+		{
+			File.Delete(_promptFilePath);
+		}
 
 		InferenceResult.Finished = true;
 		Running = false;
