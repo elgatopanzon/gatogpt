@@ -7,6 +7,7 @@
 namespace GatoGPT.AI.TextGeneration.Backends;
 
 using GatoGPT.Event;
+using GatoGPT.AI.TextGeneration.TokenFilter;
 
 using Godot;
 using GodotEGP.Objects.Extensions;
@@ -23,6 +24,8 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 	public string Prompt { get; set; } = "";
 	public string CurrentInferenceLine { get; set; } = "";
 	public InferenceResult InferenceResult { get; set; }
+
+	public StreamingTokenFilter StreamingTokenFilter  { get; set; }
 
 	public TextGenerationBackend(AI.TextGeneration.ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
@@ -54,6 +57,8 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		Running = true;
 
 		LoggerManager.LogDebug("Starting inference", "", "prompt", Prompt);
+
+		InitStreamingTokenFilter();
 
 		_state.Transition(LOAD_MODEL_STATE);
 	}
@@ -152,6 +157,55 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		{
 			throw new PromptExceedsContextLengthException($"Prompt length of {promptTokenLength} exceeds {LoadParams.NCtx - InferenceParams.NPredict} (NCtx {LoadParams.NCtx} - NPredict {InferenceParams.NPredict})");
 		}
+	}
+
+	/**************************
+	*  Token filter methods  *
+	**************************/
+	public void InitStreamingTokenFilter()
+	{
+		StreamingTokenFilter = new();		
+
+		AddTokenFilter(new StripLeadingSpace());
+		AddTokenFilter(new StripAntiprompt(InferenceParams.Antiprompts));
+		// AddTokenFilter(new CaptureMarkdownOutput());
+	}
+
+	public void AddTokenFilter(ITokenFilter filter)
+	{
+		StreamingTokenFilter.AddFilter(filter);
+	}
+
+	public bool FilterToken(string token)
+	{
+		bool tokenFiltered = StreamingTokenFilter.FilterToken(token, InferenceResult.Tokens.ToArray());
+
+		// check for released tokens
+		if (!tokenFiltered)
+		{
+			var releasedTokens = StreamingTokenFilter.ReleasedTokens;
+
+			if (releasedTokens.Count > 0)
+			{
+				LoggerManager.LogDebug("Filtered tokens after processing", "", "defilteredTokens", releasedTokens);
+
+				foreach (var rtoken in releasedTokens)
+				{
+					ProcessInferenceToken(rtoken, applyFilter:false);
+				}
+
+				tokenFiltered = true;
+			}
+
+			StreamingTokenFilter.ReleasedTokens = new();
+		}
+
+		return tokenFiltered;
+	}
+
+	public virtual void ProcessInferenceToken(string token, bool applyFilter = false)
+	{
+		
 	}
 
 	/*******************

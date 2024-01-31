@@ -160,8 +160,12 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		ProcessInferenceToken(token);
 	}
 
-	public void ProcessInferenceToken(string text)
+	public override void ProcessInferenceToken(string text, bool applyFilter = true)
 	{
+		if (applyFilter && FilterToken(text))
+		{
+			return;
+		}
 		// strip the prompt from the output when there's no tokens
 		if (InferenceResult.Tokens.Count == 0)
 		{
