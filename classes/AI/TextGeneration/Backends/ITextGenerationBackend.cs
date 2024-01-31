@@ -39,5 +39,6 @@ public partial interface ITextGenerationBackend : AI.IModelBackend
 			}
 		}
 	}
+	public abstract List<(int Id, string Token)> TokenizeString(string content);
 }
 

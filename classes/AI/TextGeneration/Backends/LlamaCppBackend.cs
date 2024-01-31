@@ -246,6 +246,36 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		return success;
 	}
 
+	public override List<(int Id, string Token)> TokenizeString(string content)
+	{
+		var proc = new ProcessRunner("llama.cpp-tokenize");
+		proc.AddArguments($"\"{ProjectSettings.GlobalizePath(ModelDefinition.ModelResource.Definition.Path)}\"");
+		proc.AddArguments($"\"{content}\"");
+
+		List<(int Id, string Token)> tokenizeOutput = new();
+
+		var res = proc.Execute();
+
+		// wait for process result
+		while (!proc.IsCompleted)
+		{
+			
+		}
+
+		foreach (var tokenUnparsed in proc.Output.Split("\n", StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToArray())
+		{
+			var match = Regex.Match(tokenUnparsed, @"([\d]*) -> '(.*)'");
+			if (match.Success)
+			{
+				tokenizeOutput.Add(( Convert.ToInt32(match.Groups[1].Value), match.Groups[2].Value ));
+			}
+		}
+
+		LoggerManager.LogDebug("Tokenized output", "", "tokenizeOutput", tokenizeOutput);
+
+		return tokenizeOutput;
+	}
+
 	/*******************
 	*  State methods  *
 	*******************/

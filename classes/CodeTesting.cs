@@ -41,6 +41,20 @@ public partial class CodeTesting
 	{
 		LoggerManager.LogDebug("Testing class!");
 
+		if (_args.Contains("--tokenize"))
+		{
+			string model = _args[1];
+			string tokenizeString = String.Join(" ", _args.Skip(2));
+
+			LoggerManager.LogDebug("Tokenize string", model, "string", tokenizeString);
+
+			var textGenService = ServiceRegistry.Get<TextGenerationService>();
+
+			List<(int Id, string Token)> tokenized = textGenService.TokenizeString(model, tokenizeString);
+
+			LoggerManager.LogDebug("Tokenized string", "", "tokenizedString", tokenized);
+		}
+
 		if (_args.Contains("--script"))
 		{
 			var scriptService = ServiceRegistry.Get<ScriptService>();
