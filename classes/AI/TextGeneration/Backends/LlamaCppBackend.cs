@@ -117,7 +117,7 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		if (ModelDefinition.PromptCache)
 		{
 			_processRunner.AddArguments("--prompt-cache-all");
-			_processRunner.AddArguments("--prompt-cache", ProjectSettings.GlobalizePath($"user://Cache/llama.cpp-prompt-cache-{InferenceParams.PromptCacheId}"));
+			_processRunner.AddArguments("--prompt-cache", ProjectSettings.GlobalizePath($"user://Cache/llama.cpp-prompt-cache-{InferenceParams.PromptCacheId}-{Convert.ToBase64String(System.Text.Encoding.Default.GetBytes(ModelDefinition.ModelResourceId))}"));
 		}
 
 		// handle --grammar-file when configured
