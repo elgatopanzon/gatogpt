@@ -40,5 +40,6 @@ public partial interface ITextGenerationBackend : AI.IModelBackend
 		}
 	}
 	public abstract List<TokenizedString> TokenizeString(string content);
+	public abstract string FormatPrompt(string prompt);
 }
 

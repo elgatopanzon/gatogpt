@@ -10,6 +10,7 @@ using GatoGPT.Service;
 using GatoGPT.Config;
 using GatoGPT.WebAPI.Dtos;
 using GatoGPT.WebAPI.Entities;
+using GatoGPT.AI.TextGeneration;
 
 using Godot;
 using GodotEGP;
@@ -31,18 +32,36 @@ using System.ComponentModel;
 public partial class ExtendedTokenizeController : ControllerBase
 {
 	private readonly IMapper _mapper;
+	private readonly TextGenerationModelManager _modelManager;
 	private readonly TextGenerationService _textGenerationService;
 
 	public ExtendedTokenizeController(IMapper mapper)
 	{
 		_mapper = mapper;
+		 _modelManager = ServiceRegistry.Get<TextGenerationModelManager>();
 		 _textGenerationService = ServiceRegistry.Get<TextGenerationService>();
 	}
 
     [HttpPost(Name = nameof(Tokenize))]
-    public ActionResult<ExtendedTokenizeDto> Tokenize(ApiVersion version, [FromBody] ExtendedTokenizeCreateDto tokenizeCreateDto)
+    public async Task<ActionResult<ExtendedTokenizeDto>> Tokenize(ApiVersion version, [FromBody] ExtendedTokenizeCreateDto tokenizeCreateDto)
     {
     	LoggerManager.LogDebug("Tokenize tokenizeCreateDto", "", "tokenizeCreateDto", tokenizeCreateDto);
+
+    	// validate required params
+		if (tokenizeCreateDto.Model.Length == 0)
+		{
+			return BadRequest(new InvalidRequestErrorDto(
+						message: "You must provide a model parameter",
+						code: null,
+						param:null
+						));
+		}
+
+		// check model is valid
+		if (!_modelManager.ModelDefinitions.ContainsKey(tokenizeCreateDto.Model))
+		{
+    		return NotFound(new InvalidRequestErrorDto(message:$"The model '{tokenizeCreateDto.Model}' does not exist", code:"model_not_found", param:"model"));
+		}
 
     	var tokenizedStringDto = new ExtendedTokenizeDto();
 
@@ -74,9 +93,76 @@ public partial class ExtendedTokenizeController : ControllerBase
     }
 
     [HttpPost("chat", Name = nameof(TokenizeChatCompletion))]
-    public ActionResult<ExtendedTokenizeDto> TokenizeChatCompletion(ApiVersion version, [FromBody] ChatCompletionCreateDto chatCompletionCreateDto)
+    public async Task<ActionResult<ExtendedTokenizeDto>> TokenizeChatCompletion(ApiVersion version, [FromBody] ChatCompletionCreateDto chatCompletionCreateDto)
     {
     	LoggerManager.LogDebug("Tokenize chatCompletionCreateDto", "", "chatCompletionCreateDto", chatCompletionCreateDto);
-		return Ok();
+
+    	// validate required params
+		if (chatCompletionCreateDto.Model.Length == 0)
+		{
+			return BadRequest(new InvalidRequestErrorDto(
+						message: "You must provide a model parameter",
+						code: null,
+						param:null
+						));
+		}
+
+		// check model is valid
+		if (!_modelManager.ModelDefinitions.ContainsKey(chatCompletionCreateDto.Model))
+		{
+    		return NotFound(new InvalidRequestErrorDto(message:$"The model '{chatCompletionCreateDto.Model}' does not exist", code:"model_not_found", param:"model"));
+		}
+
+    	ModelDefinition modelDefinition = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model);
+
+    	// create a StatefulChat instance and parse the prompt
+    	var inferenceParams = modelDefinition.ModelProfile.InferenceParams.DeepCopy();
+    	var loadParams = modelDefinition.ModelProfile.LoadParams.DeepCopy();
+    	StatefulChat chatInstance = new(false, loadParams, inferenceParams);
+
+		List<StatefulChatMessage> chatMessages = new();
+    	foreach (var message in chatCompletionCreateDto.Messages)
+    	{
+    		chatMessages.Add(new() {
+				Role = message.Role,
+				Name = message.Name,
+				Content = message.GetContent(),
+    		});
+    	}
+
+    	chatInstance.SetChatMessages(chatMessages);
+		chatInstance.UpdateStatefulInstanceId();
+
+    	string chatPrompt = chatInstance.GetPrompt();
+
+    	// create instance of model and get full prompt
+    	var modelInstance = _textGenerationService.CreateModelInstance(modelDefinition.Id);
+    	modelInstance.InferenceParams = inferenceParams;
+    	modelInstance.LoadParams = loadParams;
+
+    	chatPrompt = modelInstance.FormatPrompt(chatPrompt);
+
+		// create tokenizeDto
+    	ExtendedTokenizeCreateDto tokenizeCreateDto = new() {
+			Model = chatCompletionCreateDto.Model,
+			Content = chatPrompt,
+    	};
+
+		var res = await Tokenize(HttpContext.GetRequestedApiVersion(), tokenizeCreateDto);
+
+		if (res.Result is OkObjectResult okRes)
+		{
+			LoggerManager.LogDebug("Tokenize result", "", "res", okRes.Value);
+
+			return Ok(okRes.Value);
+		}
+		else if (res.Result is BadRequestResult badRes)
+		{
+    		return BadRequest(badRes);
+		}
+		else {
+    		return BadRequest(new InvalidRequestErrorDto(message:$"Unknown error", code:"tokenize_unknown_error"));
+		}
+
     }
 }
