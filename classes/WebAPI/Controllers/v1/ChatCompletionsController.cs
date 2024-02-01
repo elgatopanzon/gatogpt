@@ -195,6 +195,8 @@ public partial class ChatController : ControllerBase
 					inferenceParams.ChatMessageTemplate = (string) chatCompletionCreateDto.Extended.Inference.ChatMessageTemplate;
 				if (chatCompletionCreateDto.Extended.Inference.ChatMessageGenerationTemplate != null)
 					inferenceParams.ChatMessageGenerationTemplate = (string) chatCompletionCreateDto.Extended.Inference.ChatMessageGenerationTemplate;
+				if (chatCompletionCreateDto.Extended.Inference.PrePrompt != null)
+					inferenceParams.PrePrompt = (string) chatCompletionCreateDto.Extended.Inference.PrePrompt;
 				if (chatCompletionCreateDto.Extended.Inference.CfgNegativePrompt != null)
 					inferenceParams.NegativeCfgPrompt = (string) chatCompletionCreateDto.Extended.Inference.CfgNegativePrompt;
 				if (chatCompletionCreateDto.Extended.Inference.CfgScale != null)
