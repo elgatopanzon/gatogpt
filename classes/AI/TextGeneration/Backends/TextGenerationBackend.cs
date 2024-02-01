@@ -159,7 +159,7 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 	public void VerifyPromptCacheLength()
 	{
 		// check for prompt exceeding token size
-		int promptTokenLength = TokenizeString(FormatPrompt(Prompt)).Count();
+		int promptTokenLength = TokenizeString(FormatPrompt(Prompt)+InferenceParams.NegativeCfgPrompt).Count();
 
 		LoggerManager.LogDebug("Prompt token size", "", "tokenSize", promptTokenLength);
 

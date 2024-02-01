@@ -167,7 +167,7 @@ public partial class ExtendedTokenizeController : ControllerBase
 		// create tokenizeDto
     	ExtendedTokenizeCreateDto tokenizeCreateDto = new() {
 			Model = chatCompletionCreateDto.Model,
-			Content = chatPrompt,
+			Content = chatPrompt+inferenceParams.NegativeCfgPrompt,
     	};
 
 		var res = await Tokenize(HttpContext.GetRequestedApiVersion(), tokenizeCreateDto);
