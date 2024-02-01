@@ -132,7 +132,7 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		return output.Trim();
 	}
 
-	public virtual List<(int Id, string Token)> TokenizeString(string content)
+	public virtual List<TokenizedString> TokenizeString(string content)
 	{
 		// this is a fake tokenize method using the 100,000 words = 75,000 words
 		// estimate, it's the default when a native backend tokenize method
@@ -143,11 +143,14 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		int[] fakeArray = new int[] {};
 		Array.Resize<int>(ref fakeArray, fakeTokenCount);
 
-		List<(int, string)> fakeDict = new();
+		List<TokenizedString> fakeDict = new();
 
 		for (int i = 0; i < fakeArray.Count(); i++)
 		{
-			fakeDict.Add(( i, fakeArray[i].ToString() ));
+			fakeDict.Add(new() {
+				Id = i,
+				Token = fakeArray[i].ToString() 
+			});
 		}
 
 		return fakeDict;

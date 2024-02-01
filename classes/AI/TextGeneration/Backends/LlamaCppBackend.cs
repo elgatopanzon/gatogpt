@@ -246,13 +246,13 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		return success;
 	}
 
-	public override List<(int Id, string Token)> TokenizeString(string content)
+	public override List<TokenizedString> TokenizeString(string content)
 	{
 		var proc = new ProcessRunner("llama.cpp-tokenize");
 		proc.AddArguments($"\"{ProjectSettings.GlobalizePath(ModelDefinition.ModelResource.Definition.Path)}\"");
 		proc.AddArguments($"\"{content}\"");
 
-		List<(int Id, string Token)> tokenizeOutput = new();
+		List<TokenizedString> tokenizeOutput = new();
 
 		var res = proc.Execute();
 
@@ -267,7 +267,10 @@ public partial class LlamaCppBackend : TextGenerationBackend
 			var match = Regex.Match(tokenUnparsed, @"([\d]*) -> '(.*)'");
 			if (match.Success)
 			{
-				tokenizeOutput.Add(( Convert.ToInt32(match.Groups[1].Value), match.Groups[2].Value ));
+				tokenizeOutput.Add(new() { 
+					Id = Convert.ToInt32(match.Groups[1].Value),
+					Token = match.Groups[2].Value
+				});
 			}
 		}
 

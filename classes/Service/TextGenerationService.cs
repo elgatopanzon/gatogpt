@@ -213,7 +213,7 @@ public partial class TextGenerationService : Service
 	/******************
 	*  Tokenization  *
 	******************/
-	public List<(int Id, string Token)> TokenizeString(string modelDefinitionId, string content)
+	public List<TokenizedString> TokenizeString(string modelDefinitionId, string content)
 	{
 		// create model instance
 		var modelInstance = CreateModelInstance(modelDefinitionId);

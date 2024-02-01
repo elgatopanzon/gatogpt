@@ -50,7 +50,7 @@ public partial class CodeTesting
 
 			var textGenService = ServiceRegistry.Get<TextGenerationService>();
 
-			List<(int Id, string Token)> tokenized = textGenService.TokenizeString(model, tokenizeString);
+			List<TokenizedString> tokenized = textGenService.TokenizeString(model, tokenizeString);
 
 			LoggerManager.LogDebug("Tokenized string", "", "tokenizedString", tokenized);
 		}
