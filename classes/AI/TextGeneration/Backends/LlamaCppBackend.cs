@@ -250,7 +250,7 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	{
 		var proc = new ProcessRunner("llama.cpp-tokenize");
 		proc.AddArguments($"\"{ProjectSettings.GlobalizePath(ModelDefinition.ModelResource.Definition.Path)}\"");
-		proc.AddArguments($"\"{content}\"");
+		proc.AddArguments($@"""{content.Replace(@"""", @"\""")}""");
 
 		List<TokenizedString> tokenizeOutput = new();
 
