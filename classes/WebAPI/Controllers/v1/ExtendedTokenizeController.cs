@@ -115,9 +115,36 @@ public partial class ExtendedTokenizeController : ControllerBase
 
     	ModelDefinition modelDefinition = _modelManager.GetModelDefinition(chatCompletionCreateDto.Model);
 
-    	// create a StatefulChat instance and parse the prompt
+    	// create instance of model and get full prompt
+    	var modelInstance = _textGenerationService.CreateModelInstance(modelDefinition.Id);
+
     	var inferenceParams = modelDefinition.ModelProfile.InferenceParams.DeepCopy();
     	var loadParams = modelDefinition.ModelProfile.LoadParams.DeepCopy();
+    	modelInstance.InferenceParams = inferenceParams;
+    	modelInstance.LoadParams = loadParams;
+
+		// apply extended parameters which can affect token length
+		if (chatCompletionCreateDto.Extended != null)
+		{
+			if (chatCompletionCreateDto.Extended.Model != null)
+			{
+				if (chatCompletionCreateDto.Extended.Model.Backend != null)
+					modelDefinition.Backend = (string) chatCompletionCreateDto.Extended.Model.Backend;
+			}
+			if (chatCompletionCreateDto.Extended.Inference != null)
+			{
+				if (chatCompletionCreateDto.Extended.Inference.ChatMessageTemplate != null)
+					inferenceParams.ChatMessageTemplate = (string) chatCompletionCreateDto.Extended.Inference.ChatMessageTemplate;
+				if (chatCompletionCreateDto.Extended.Inference.ChatMessageGenerationTemplate != null)
+					inferenceParams.ChatMessageGenerationTemplate = (string) chatCompletionCreateDto.Extended.Inference.ChatMessageGenerationTemplate;
+				if (chatCompletionCreateDto.Extended.Inference.PrePrompt != null)
+					inferenceParams.PrePrompt = (string) chatCompletionCreateDto.Extended.Inference.PrePrompt;
+				if (chatCompletionCreateDto.Extended.Inference.CfgNegativePrompt != null)
+					inferenceParams.NegativeCfgPrompt = (string) chatCompletionCreateDto.Extended.Inference.CfgNegativePrompt;
+			}
+		}
+
+    	// create a StatefulChat instance and parse the prompt
     	StatefulChat chatInstance = new(false, loadParams, inferenceParams);
 
 		List<StatefulChatMessage> chatMessages = new();
@@ -134,11 +161,6 @@ public partial class ExtendedTokenizeController : ControllerBase
 		chatInstance.UpdateStatefulInstanceId();
 
     	string chatPrompt = chatInstance.GetPrompt();
-
-    	// create instance of model and get full prompt
-    	var modelInstance = _textGenerationService.CreateModelInstance(modelDefinition.Id);
-    	modelInstance.InferenceParams = inferenceParams;
-    	modelInstance.LoadParams = loadParams;
 
     	chatPrompt = modelInstance.FormatPrompt(chatPrompt);
 
