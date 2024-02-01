@@ -183,9 +183,10 @@ public partial class StatefulChat
 				_userNames.Add(message.GetUserName());
 
 				// add the stop to the message
-				if (!_inferenceParams.Antiprompts.Contains(message.GetUserName()))
+				string antiprompt = $"{message.GetUserName()}: ";
+				if (!_inferenceParams.Antiprompts.Contains(antiprompt))
 				{
-					_inferenceParams.Antiprompts.Add($"{message.GetUserName()}: ");
+					_inferenceParams.Antiprompts.Add(antiprompt);
 				}
 			}
 
