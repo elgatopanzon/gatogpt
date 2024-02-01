@@ -391,9 +391,9 @@ public partial class BuiltinLlamaBackend : AI.TextGeneration.Backends.TextGenera
     	return true;
 	}
 
-	public override List<TokenizedString> TokenizeString(string content)
+	public override List<TokenizedString> TokenizeString(string content, bool skipBos = true)
 	{
-		var tokenIds = _llamaWeights.NativeHandle.Tokenize(content, true, false, System.Text.Encoding.UTF8);
+		var tokenIds = _llamaWeights.NativeHandle.Tokenize(content, !skipBos, false, System.Text.Encoding.UTF8);
 
 		List<TokenizedString> fakeDict = new();
 

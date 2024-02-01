@@ -132,7 +132,7 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		return output.Trim();
 	}
 
-	public virtual List<TokenizedString> TokenizeString(string content)
+	public virtual List<TokenizedString> TokenizeString(string content, bool skipBos = true)
 	{
 		// this is a fake tokenize method using the 100,000 words = 75,000 words
 		// estimate, it's the default when a native backend tokenize method
