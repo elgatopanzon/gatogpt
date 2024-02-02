@@ -91,15 +91,22 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		var prePromptS = InferenceParams.PrePromptSuffix;
 		var prePrompt = InferenceParams.PrePrompt;
 
-		var InputP = InferenceParams.InputPrefix;
-		var InputS = InferenceParams.InputSuffix;
+		var inputP = InferenceParams.InputPrefix;
+		var inputS = InferenceParams.InputSuffix;
+
+		// remove preprompt prefix/suffix when preprompt is empty
+		if (prePrompt.Length == 0)
+		{
+			prePromptP = "";
+			prePromptS = "";
+		}
 
 		Dictionary<string, object> templateVars = new();
-		templateVars.Add("PrePromptPrefix", InferenceParams.PrePromptPrefix);
-		templateVars.Add("PrePromptSuffix", InferenceParams.PrePromptSuffix);
-		templateVars.Add("PrePrompt", InferenceParams.PrePrompt);
-		templateVars.Add("InputPrefix", InferenceParams.InputPrefix);
-		templateVars.Add("InputSuffix", InferenceParams.InputSuffix);
+		templateVars.Add("PrePromptPrefix", prePromptP);
+		templateVars.Add("PrePromptSuffix", prePromptS);
+		templateVars.Add("PrePrompt", prePrompt);
+		templateVars.Add("InputPrefix", inputP);
+		templateVars.Add("InputSuffix", inputS);
 		templateVars.Add("Input", userPrompt);
 
 		string formattedPrompt = "";
