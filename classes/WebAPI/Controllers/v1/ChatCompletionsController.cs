@@ -330,15 +330,18 @@ public partial class ChatController : ControllerBase
 
 				if (res.Result is OkObjectResult okRes)
 				{
-					imageInferenceResults.Add((string) ((ChatCompletionDto) okRes.Value).Choices[0].Message.Content);
+					string imageInferenceRes = (string) ((ChatCompletionDto) okRes.Value).Choices[0].Message.Content;
+					imageInferenceResults.Add(imageInferenceRes);
 				}
 			}
 
 			LoggerManager.LogDebug("Image inference results", "", "imageRes", imageInferenceResults);
+			
+			List<StatefulChatMessage> imageMessages = new();
 
 			// hack together some injected system prompts to give information
 			// about the inference results (RAG I guess?)
-    		messageEntities.Add(new StatefulChatMessage() {
+    		imageMessages.Add(new StatefulChatMessage() {
 				Role = "user",
 				Name = (string) chatCompletionCreateDto.Messages.Last().Name,
 				Content = (string) $"I've browsed the web to look at {imageUrls.Count} images provided",
@@ -347,7 +350,7 @@ public partial class ChatController : ControllerBase
 			int counter = 0;
 			foreach (var imageResult in imageInferenceResults)
 			{
-    			messageEntities.Add(new StatefulChatMessage() {
+    			imageMessages.Add(new StatefulChatMessage() {
 					Role = "assistant",
 					Content = (string) $"Description of image ({imageUrls[counter]}): {imageResult}",
     				});
@@ -355,11 +358,35 @@ public partial class ChatController : ControllerBase
 				counter++;
 			}
 
-    		messageEntities.Add(new StatefulChatMessage() {
+    		imageMessages.Add(new StatefulChatMessage() {
 				Role = "user",
 				Name = (string) chatCompletionCreateDto.Messages.Last().Name,
 				Content = (string) messageEntities.Last().Content,
     			});
+
+    		// get the injected images tokenized count and remove it from
+    		// npredict to now over-budget context
+			ChatCompletionRequest imageChatRequest = new() {
+				Messages = new(),
+				Model = chatCompletionCreateDto.Model,
+			};
+
+			foreach (var msg in imageMessages)
+			{
+				imageChatRequest.Messages.Add(new() {
+					Role = msg.Role,
+					Name = msg.Name,
+					Content = msg.Content,
+				});
+			}
+
+			var tokens = _inferenceService.TokenizeString(imageChatRequest.Model, String.Join("", imageChatRequest.Messages.Select(x => x.Content+x.Name)));
+
+			LoggerManager.LogDebug("Image RAG prompt token count", "", "tokenCount", tokens.Count);
+
+			inferenceParams.NPredict -= tokens.Count;
+
+			messageEntities.AddRange(imageMessages);
 		}
 
 		// inject a list of tools into the system prompt
