@@ -87,6 +87,8 @@ public partial class ExtendedTokenizeController : ControllerBase
 			return BadRequest(err);
     	}
 
+    	LoggerManager.LogDebug("Tokenized string count", "", tokenizeCreateDto.Content, tokenizedStringDto.Tokens.Count);
+
     	LoggerManager.LogDebug("Returning tokenizedStringDto", "", "tokenizedStringDto", tokenizedStringDto);
 
 		return Ok(tokenizedStringDto);
