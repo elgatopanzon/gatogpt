@@ -128,16 +128,15 @@
         "RopeFreqScale": 0
       },
       "InferenceParams": {
-        "InputPrefix": "",
+        "InputPrefix": "[INST]",
         "InputSuffix": "",
         "PrePromptPrefix": "",
-        "PrePromptSuffix": "",
+        "PrePromptSuffix": "[INST]",
         "Antiprompts": [
           "[INST]"
         ],
         "ChatTemplate": "{{ PrePromptPrefix }}{{ PrePrompt }}{{ PrePromptSuffix }}{{ Input }}",
-        "ChatMessageTemplate": " [INST] {{ Name }}: {{ Message }} [/INST] ",
-        "ChatMessageGenerationTemplate": "{{ AssistantName }}: "
+        "ChatMessageGenerationTemplate": "[/INST]{{ AssistantName }}: "
       }
     },
     "obsidian_vision": {
