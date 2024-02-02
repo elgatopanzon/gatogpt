@@ -1,6 +1,6 @@
 {
   "LoggerManager": {
-    "LogLevel": 0,
+    "LogLevel": 1,
     "LogLevelOverrides": null
   }
 }
