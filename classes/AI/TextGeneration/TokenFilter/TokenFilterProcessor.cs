@@ -30,9 +30,11 @@ public partial class StreamingTokenFilter
 
 		foreach (ITokenFilter filter in Filters)
 		{
-			LoggerManager.LogDebug("Running filter", "", "filter", filter.GetType().Name);
+			LoggerManager.LogDebug("Running filter", "", filter.GetType().Name, String.Join("", FilteredTokens)+token);
 
 			filtered = filter.Match(FilteredTokens.Concat(new string[] { token }).ToArray(), allTokens);
+
+			LoggerManager.LogDebug("Filter result", "", filter.GetType().Name, filtered);
 
 			if (filtered)
 			{
@@ -41,23 +43,30 @@ public partial class StreamingTokenFilter
 				LoggerManager.LogDebug("Filtering matched token", "", "token", token);
 				LoggerManager.LogDebug("Current filtered tokens", "", "filteredTokens", FilteredTokens);
 
-				break;
+				return filtered;
 			}
-			else
+		}
+
+		if (!filtered)
+		{
+			if (FilteredTokens.Count > 0 && ReleasedTokens.Count == 0)
 			{
-				if (FilteredTokens.Count > 0 && ReleasedTokens.Count == 0)
+				LoggerManager.LogDebug("Release filtered tokens", "", "filteredTokens", FilteredTokens);
+
+				var t = FilteredTokens.Concat(new string[] { token }).ToArray();
+
+				foreach (ITokenFilter filter in Filters)
 				{
-					LoggerManager.LogDebug("Release filtered tokens", "", "filteredTokens", FilteredTokens);
-
-					var t = FilteredTokens.Concat(new string[] { token }).ToArray();
-
-					foreach (ITokenFilter releaseFilter in Filters)
+					if (filter.Match(t, allTokens))
 					{
-						ReleasedTokens = releaseFilter.Filter(t, allTokens).ToList();
+						continue;
 					}
-
-					FilteredTokens = new();
+					t = filter.Filter(t, allTokens);
 				}
+
+				ReleasedTokens = t.ToList();
+
+				FilteredTokens = new();
 			}
 		}
 

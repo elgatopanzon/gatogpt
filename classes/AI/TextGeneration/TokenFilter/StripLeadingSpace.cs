@@ -33,9 +33,10 @@ public partial class StripLeadingSpace : ITokenFilter
 	{
 		string str = String.Join("", tokens);
 		str = str.Trim();
-		return new string[] { str };
 
-		return tokens;
+		LoggerManager.LogDebug("After filter", "", "after", str);
+
+		return new string[] { str };
 	}
 }
 

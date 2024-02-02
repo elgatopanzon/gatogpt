@@ -33,7 +33,7 @@ public partial class StripAntiprompt : ITokenFilter
 
 		foreach (string antiprompt in Antiprompts)
 		{
-			if (tokensString.Trim().Length > 0 && antiprompt.StartsWith(tokensString.Trim()))
+			if (tokensString.Trim().Length > 0 && antiprompt.StartsWith(tokensString))
 			{
 				LoggerManager.LogDebug("Token partial match anti-prompt", "", tokensString, antiprompt);
 
@@ -47,27 +47,19 @@ public partial class StripAntiprompt : ITokenFilter
 
 	public string[] Filter(string[] tokens, string[] allTokens)
 	{
-		if (Match(tokens, allTokens))
+		int tokensCount = tokens.Count();
+		string tokensString = String.Join("", tokens);
+
+		foreach (var antiprompt in Antiprompts)
 		{
-			int tokensCount = tokens.Count();
-			string tokensString = String.Join("", tokens);
-
-			foreach (var antiprompt in Antiprompts)
-			{
-				tokensString = tokensString.Replace(antiprompt, String.Empty);
-			}
-
-			// make fake array of tokens simply because after stripping some away
-			// it's not possible to return them to token form
-			string[] fakeArray = new string[] { tokensString };
-
-			return fakeArray;
-
-			// return Enumerable.Range(0, tokensString.Length / tokensCount)
-        	// .Select(i => tokensString.Substring(i * tokensCount, tokensCount)).ToArray();
+			tokensString = tokensString.Replace(antiprompt, String.Empty);
 		}
 
-		return tokens;
+		// make fake array of tokens simply because after stripping some away
+		// it's not possible to return them to token form
+		string[] fakeArray = new string[] { tokensString };
+
+		return fakeArray;
 	}
 }
 

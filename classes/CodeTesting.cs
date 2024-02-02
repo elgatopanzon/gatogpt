@@ -10,6 +10,7 @@ using GatoGPT.Service;
 using GatoGPT.AI.TextGeneration;
 using GatoGPT.Config;
 using GatoGPT.CLI;
+using GatoGPT.AI.TextGeneration.TokenFilter;
 
 using Godot;
 using GodotEGP;
@@ -32,14 +33,77 @@ public partial class CodeTesting
 {
 	private string[] _args { get; set; }
 
+	private StreamingTokenFilter _tokenFilter { get; set; }
+	private List<string> _passedTokens { get; set; } = new();
+
 	public CodeTesting(string[] args)
 	{
 		_args = args;
+
+		_tokenFilter = new StreamingTokenFilter();
+	}
+
+	public void TestProcessInferenceToken(string token, bool applyFilter = true)
+	{
+		if (applyFilter)
+		{
+			bool tokenFiltered = _tokenFilter.FilterToken(token, _passedTokens.ToArray());
+
+			var releasedTokens = _tokenFilter.ReleasedTokens;
+
+			if (releasedTokens.Count > 0)
+			{
+				LoggerManager.LogDebug("Filtered tokens after processing", "", "defilteredTokens", releasedTokens);
+
+				foreach (var rtoken in releasedTokens)
+				{
+					TestProcessInferenceToken(rtoken, applyFilter:false);
+				}
+
+				tokenFiltered = true;
+			}
+
+			_tokenFilter.ReleasedTokens = new();
+
+			if (tokenFiltered)
+			{
+				return;
+			}
+		}
+
+		LoggerManager.LogDebug("Adding token", "", "token", token);
+		_passedTokens.Add(token);
 	}
 
 	public async Task<int> Run()
 	{
 		LoggerManager.LogDebug("Testing class!");
+
+		if (_args.Contains("--token-filter"))
+		{
+			_tokenFilter.AddFilter(new StripLeadingSpace());
+			_tokenFilter.AddFilter(new StripAntiprompt(new List<string>() { "Elgatopanzon: ", "Breadbin: " }));
+
+			var textGenService = ServiceRegistry.Get<TextGenerationService>();
+
+			string input = "Hello, Elgatopanzon! I am fine thanks for asking!\nBreadbin: ";
+			List<TokenizedString> tokenized = textGenService.TokenizeString("mistral-7b-instruct", input);
+
+			List<string> tokenStrings = new();
+			foreach (var token in tokenized)
+			{
+				tokenStrings.Add(token.Token);
+			}
+
+			string[] passedTokens = new string[] {};
+
+			foreach (var token in tokenStrings)
+			{
+				TestProcessInferenceToken(token);
+			}
+
+			LoggerManager.LogDebug("Final token string", "", "string", String.Join("", _passedTokens));
+		}
 
 		if (_args.Contains("--tokenize"))
 		{
