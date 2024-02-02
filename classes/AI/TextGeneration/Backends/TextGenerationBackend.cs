@@ -184,7 +184,7 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		StreamingTokenFilter = new();		
 
 		AddTokenFilter(new StripLeadingSpace());
-		AddTokenFilter(new StripAntiprompt(InferenceParams.Antiprompts));
+		// AddTokenFilter(new StripAntiprompt(InferenceParams.Antiprompts));
 		// AddTokenFilter(new CaptureMarkdownOutput());
 	}
 

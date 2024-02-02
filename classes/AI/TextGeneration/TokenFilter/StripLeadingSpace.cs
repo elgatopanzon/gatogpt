@@ -31,12 +31,9 @@ public partial class StripLeadingSpace : ITokenFilter
 
 	public string[] Filter(string[] tokens, string[] allTokens)
 	{
-		if (Match(tokens, allTokens))
-		{
-			string str = String.Join("", tokens);
-			str = str.Trim();
-			return new string[] { str };
-		}
+		string str = String.Join("", tokens);
+		str = str.Trim();
+		return new string[] { str };
 
 		return tokens;
 	}
