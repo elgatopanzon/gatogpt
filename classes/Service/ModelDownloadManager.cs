@@ -128,40 +128,49 @@ public partial class ModelDownloadManager : Service
 		// RemoteTransferOperation
 		int activeDownloads = GetActiveDownloadCount();
 
-		LoggerManager.LogDebug("Active downloads count", "", "count", activeDownloads);
-		
 		// url downloads
 		foreach (var download in _config.UrlDownloads)
 		{
 			var endpoints = GetDownloadEndpoints(download);
 
-			if (GetExistingDownloadProcess(endpoints.Http, endpoints.File).Process == null)
+			if (GetExistingDownloadProcess(endpoints.Http, endpoints.File).Process == null && !File.Exists(endpoints.File.Path))
 			{
-				LoggerManager.LogDebug("Found pending download", "", "download", download);
-				if (activeDownloads < _config.MaxConcurrentDownloads)
+				LoggerManager.LogDebug("Creating download process", "", "download", download);
+				// create download process operation
+				var process = new DataOperationProcessRemoteTransfer<Resource<GodotEGP.Resource.RemoteTransferResult>>(endpoints.File, endpoints.Http,
+						onErrorCb: _On_DownloadOperation_Error, 
+						onProgressCb: _On_DownloadOperation_Progress, 
+						onCompleteCb: _On_DownloadOperation_Complete
+					);
+
+				_downloadOperations.Add(endpoints, (process, download));
+			}
+		}
+
+		// start download processes
+		foreach (var operation in _downloadOperations)
+		{
+			// skip working downloads
+			if (operation.Value.Process.DataOperation.Working)
+			{
+				continue;
+			}
+
+			if (activeDownloads < _config.MaxConcurrentDownloads)
+			{
+				LoggerManager.LogDebug("Starting download operation", "", "download", operation.Value.Config);
+
+				activeDownloads++;
+
+				try
 				{
-					LoggerManager.LogDebug("Starting download", "", "download", download);
-
-					// create download process operation
-					var process = new DataOperationProcessRemoteTransfer<Resource<GodotEGP.Resource.RemoteTransferResult>>(endpoints.File, endpoints.Http,
-							onErrorCb: _On_DownloadOperation_Error, 
-							onProgressCb: _On_DownloadOperation_Progress, 
-							onCompleteCb: _On_DownloadOperation_Complete
-						);
-
-					_downloadOperations.Add(endpoints, (process, download));
-					activeDownloads++;
-
-					try
-					{
-						// trigger async save, we can listen for the result via
-						// events
-						process.SaveAsync();
-					}
-					catch (System.Exception e)
-					{
-						LoggerManager.LogDebug("Error during download", "", "error", e.Message);
-					}
+					// trigger async save, we can listen for the result via
+					// events
+					operation.Value.Process.SaveAsync();
+				}
+				catch (System.Exception e)
+				{
+					LoggerManager.LogDebug("Error during download", "", "error", e.Message);
 				}
 			}
 		}
@@ -255,7 +264,7 @@ public partial class ModelDownloadManager : Service
 
 		foreach (var downloadProcess in _downloadOperations)
 		{
-			if (!downloadProcess.Value.Process.DataOperation.Completed)
+			if (downloadProcess.Value.Process.DataOperation.Working)
 			{
 				count++;
 			}
