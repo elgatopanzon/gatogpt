@@ -19,6 +19,11 @@ using GodotEGP.Logging;
 using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
+using GodotEGP.Data;
+using GodotEGP.Data.Endpoint;
+using GodotEGP.Data.Operation;
+using GodotEGP.Data.Operator;
+using GodotEGP.Resource;
 
 using ChromaDBSharp.Client;
 using ChromaDBSharp.Embeddings;
@@ -43,41 +48,49 @@ public partial class CodeTesting
 		_tokenFilter = new StreamingTokenFilter();
 	}
 
-	public void TestProcessInferenceToken(string token, bool applyFilter = true)
-	{
-		if (applyFilter)
-		{
-			bool tokenFiltered = _tokenFilter.FilterToken(token, _passedTokens.ToArray());
-
-			var releasedTokens = _tokenFilter.ReleasedTokens;
-
-			if (releasedTokens.Count > 0)
-			{
-				LoggerManager.LogDebug("Filtered tokens after processing", "", "defilteredTokens", releasedTokens);
-
-				foreach (var rtoken in releasedTokens)
-				{
-					TestProcessInferenceToken(rtoken, applyFilter:false);
-				}
-
-				tokenFiltered = true;
-			}
-
-			_tokenFilter.ReleasedTokens = new();
-
-			if (tokenFiltered)
-			{
-				return;
-			}
-		}
-
-		LoggerManager.LogDebug("Adding token", "", "token", token);
-		_passedTokens.Add(token);
-	}
-
 	public async Task<int> Run()
 	{
 		LoggerManager.LogDebug("Testing class!");
+
+		if (_args.Contains("--remote-transfer-endpoint"))
+		{
+			string downloadUrl = _args[1];
+			string downloadPath = _args[2];
+
+			var uri = new UriBuilder(downloadUrl);
+			HTTPEndpoint httpEndpoint = new(uri.Uri);
+			httpEndpoint.BandwidthLimit = 10000000;
+
+			FileEndpoint fileEndpoint = new(Path.Combine(downloadPath, Path.Combine(uri.Path.GetFile())));
+
+			LoggerManager.LogDebug("Testing RemoteTransferEndpoint operation", "", "operation", $"{downloadUrl} => {downloadPath}");
+
+			LoggerManager.LogDebug("HTTPEndpoint", "", "endpoint", httpEndpoint);
+			LoggerManager.LogDebug("FileEndpoint", "", "endpoint", fileEndpoint);
+
+			var process = new DataOperationProcessRemoteTransfer<Resource<GodotEGP.Resource.RemoteTransferResult>>(fileEndpoint, httpEndpoint, onErrorCb: (e) => {
+				LoggerManager.LogDebug("Operation error");
+				}, onWorkingCb: (e) => {
+				LoggerManager.LogDebug("Operation working", "", "e", e);
+				}, onProgressCb: (e) => {
+				LoggerManager.LogDebug("Operation progress", "", "e", e);
+				}, onCompleteCb: (e) => {
+				LoggerManager.LogDebug("Operation complete", "", "e", e);
+				});
+
+			try
+			{
+				var res = await process.SaveAsync();
+
+				LoggerManager.LogDebug("Process completed!", "", "res", res);
+
+				File.Delete(fileEndpoint.Path);
+			}
+			catch (System.Exception e)
+			{
+				LoggerManager.LogDebug("Test download error", "", "error", e.Message);
+			}
+		}
 
 		if (_args.Contains("--token-filter"))
 		{
@@ -235,6 +248,39 @@ public partial class CodeTesting
 
 		return 0;
 	}
+
+	public void TestProcessInferenceToken(string token, bool applyFilter = true)
+	{
+		if (applyFilter)
+		{
+			bool tokenFiltered = _tokenFilter.FilterToken(token, _passedTokens.ToArray());
+
+			var releasedTokens = _tokenFilter.ReleasedTokens;
+
+			if (releasedTokens.Count > 0)
+			{
+				LoggerManager.LogDebug("Filtered tokens after processing", "", "defilteredTokens", releasedTokens);
+
+				foreach (var rtoken in releasedTokens)
+				{
+					TestProcessInferenceToken(rtoken, applyFilter:false);
+				}
+
+				tokenFiltered = true;
+			}
+
+			_tokenFilter.ReleasedTokens = new();
+
+			if (tokenFiltered)
+			{
+				return;
+			}
+		}
+
+		LoggerManager.LogDebug("Adding token", "", "token", token);
+		_passedTokens.Add(token);
+	}
+
 }
 
 public sealed class EmbeddingServiceChromaDBEmbedder : IEmbeddable

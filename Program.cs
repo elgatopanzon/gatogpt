@@ -33,6 +33,7 @@ class Program
 		// init LLMConfigHandler
 		SceneTree.Instance.Root.AddChild(new LlamaConfigHandler());
 		SceneTree.Instance.Root.AddChild(new EmbeddingConfigHandler());
+		SceneTree.Instance.Root.AddChild(new DownloadConfigHandler());
 
 		// wait for services to be ready
 		if (!ServiceRegistry.WaitForServices(
