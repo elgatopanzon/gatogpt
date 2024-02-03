@@ -150,8 +150,8 @@ public partial class ModelDownloadManager : Service
 		// start download processes
 		foreach (var operation in _downloadOperations)
 		{
-			// skip working downloads
-			if (operation.Value.Process.DataOperation.Working)
+			// skip working downloads and finished downloads
+			if (operation.Value.Process.DataOperation.Working || File.Exists(operation.Key.File.Path))
 			{
 				continue;
 			}
@@ -256,6 +256,8 @@ public partial class ModelDownloadManager : Service
 		{
 			LoggerManager.LogDebug("Process not found for download result", "", "downloadResult", remoteTransferResult);
 		}
+
+		ProcessDownloads();
 	}
 
 	public int GetActiveDownloadCount()
