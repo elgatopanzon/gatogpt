@@ -6,6 +6,8 @@
 
 namespace GatoGPT.Config;
 
+using GatoGPT.AI.TextGeneration;
+
 using Godot;
 using GodotEGP.Objects.Extensions;
 using GodotEGP.Objects.Validated;
@@ -86,6 +88,7 @@ public partial class DownloadConfig : VConfig
 	public string Id { get; set; }
 	public string Type { get; set; }
 	public string Quantization { get; set; }
+	public ModelDefinition ModelDefinition { get; set; }
 	public bool CreateResourceDefinition { get; set; } = true;
 }
 

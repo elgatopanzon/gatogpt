@@ -87,6 +87,11 @@ public partial class TextGenerationModelManager : Service
 				// fetch the resource object from resources
 				def.Value.ModelResource = GetModelResource(def.Value.ModelResourceId);
 
+				if (def.Value.ModelResource == null)
+				{
+					continue;
+				}
+
 				// find matching preset for filename
 				if (def.Value.ProfilePreset != null && def.Value.ProfilePreset.Length > 0 && _presetsConfig.PresetExists(def.Value.ProfilePreset))
 				{
@@ -115,7 +120,11 @@ public partial class TextGenerationModelManager : Service
 
 	public Resource<LlamaModel> GetModelResource(string resourceId)
 	{
-		return _modelResources[resourceId];
+		if (_modelResources.TryGetValue(resourceId, out var resource))
+		{
+			return resource;
+		}
+		return null;
 	}
 
 	public void SetModelResources(Dictionary<string, Resource<LlamaModel>> modelResources)
@@ -166,7 +175,12 @@ public partial class TextGenerationModelManager : Service
 
 	public AI.TextGeneration.ModelDefinition GetModelDefinition(string id)
 	{
-		return _definitionsConfig.TextGeneration[id];
+		if (ModelDefinitionIsValid(id))
+		{
+			return _definitionsConfig.TextGeneration[id];
+		}
+
+		return null;
 	}
 }
 

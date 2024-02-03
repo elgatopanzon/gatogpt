@@ -44,6 +44,7 @@ public partial class ModelDownloadManager : Service
 
 		_downloadTimer = new Timer();
 
+		_textgenModelManager = ServiceRegistry.Get<TextGenerationModelManager>();
 		_configManager = ServiceRegistry.Get<ConfigManager>();
 	}
 
@@ -197,24 +198,50 @@ public partial class ModelDownloadManager : Service
 
 				// create a new config object to store downloaded resource
 				// definitions
-				GodotEGP.Config.Object<ResourceDefinitionConfig> modelDefinitionsConfig = new();
-				modelDefinitionsConfig.Value = new();
+				GodotEGP.Config.Object<ResourceDefinitionConfig> modelResourcesConfig = new();
+				modelResourcesConfig.Value = new();
 
-				modelDefinitionsConfig.Value.Resources[_resourceCategory] = new();
+				modelResourcesConfig.Value.Resources[_resourceCategory] = new();
 
 				// add resources from download category into new config object
 				foreach (var resource in _resourceDefinitions.Resources[_resourceCategory])
 				{
-					modelDefinitionsConfig.Value.Resources[_resourceCategory].Add(resource.Key, resource.Value);
+					modelResourcesConfig.Value.Resources[_resourceCategory].Add(resource.Key, resource.Value);
 				}
 
 				// create endpoint for resource configs
-				modelDefinitionsConfig.DataEndpoint = _configManager.GetDefaultSaveEndpoint(typeof(ResourceDefinitionConfig), $"{_resourceCategory}.json");
+				modelResourcesConfig.DataEndpoint = _configManager.GetDefaultSaveEndpoint(typeof(ResourceDefinitionConfig), $"{_resourceCategory}.json");
 
-				LoggerManager.LogDebug("Saving downloaded resource definitions", "", "resourceDefinitions", modelDefinitionsConfig);
+				LoggerManager.LogDebug("Saving downloaded resource definitions", "", "resourceDefinitions", modelResourcesConfig);
 
-				modelDefinitionsConfig.Save();
+				modelResourcesConfig.Save();
+
+				// create a model definition and save it to DownloadedModels.json
+				if (process.Config.ModelDefinition.Id != null)
+				{
+					// create a new config object to store downloaded model
+					// definitions
+					GodotEGP.Config.Object<ModelDefinitionsConfig> modelDefinitionsConfig = new();
+					modelDefinitionsConfig.Value = new();
+
+					// add resources from download category into new config object
+					foreach (var download in _config.UrlDownloads)
+					{
+						if (download.ModelDefinition.Id != null)
+						{
+							modelDefinitionsConfig.Value.TextGeneration[download.ModelDefinition.Id] = new(download.Id+"/"+download.Quantization);
+						}
+					}
+
+					// create endpoint for resource configs
+					modelDefinitionsConfig.DataEndpoint = _configManager.GetDefaultSaveEndpoint(typeof(ModelDefinitionsConfig), $"{_resourceCategory}.json");
+
+					LoggerManager.LogDebug("Saving downloaded model definitions", "", "resourceDefinitions", modelDefinitionsConfig);
+
+					modelDefinitionsConfig.Save();
+				}
 			}
+
 		}
 		else
 		{

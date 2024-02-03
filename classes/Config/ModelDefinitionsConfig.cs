@@ -43,9 +43,13 @@ public partial class ModelDefinitionsConfig : VConfig
 		    .Default(new Dictionary<string, ModelDefinition>())
 		    .ChangeEventsEnabled();
 
+		_textGenerationModelDefinitions.MergeCollections = true;
+
 		_embeddingModelDefinitions = AddValidatedValue<Dictionary<string, EmbeddingModelDefinition>>(this)
 		    .Default(new Dictionary<string, EmbeddingModelDefinition>())
 		    .ChangeEventsEnabled();
+
+		_embeddingModelDefinitions.MergeCollections = true;
 	}
 }
 
