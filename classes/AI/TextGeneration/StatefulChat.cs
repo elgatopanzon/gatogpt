@@ -182,11 +182,21 @@ public partial class StatefulChat
 			{
 				_userNames.Add(message.GetUserName());
 
-				// add the stop to the message
-				string antiprompt = $"{message.GetUserName()}: ";
-				if (!_inferenceParams.Antiprompts.Contains(antiprompt))
+				string formattedAntiprompt = _inferenceParams.ChatMessageTemplate;
+
+				Dictionary<string, object> antipromptVars = new();
+				antipromptVars.Add("Name", message.GetUserName());
+				antipromptVars.Add("Message", "");
+
+				foreach (var var in antipromptVars)
 				{
-					_inferenceParams.Antiprompts.Add(antiprompt);
+					formattedAntiprompt = formattedAntiprompt.Replace("{{ "+var.Key+" }}", (string) var.Value);
+				}
+
+				// add the stop to the message
+				if (!_inferenceParams.Antiprompts.Contains(formattedAntiprompt))
+				{
+					_inferenceParams.Antiprompts.Add(formattedAntiprompt);
 				}
 			}
 
@@ -227,7 +237,18 @@ public partial class StatefulChat
 			// add anti-prompt for assistant name when generating without a
 			// generation template because it is assumed we want to continue
 			// generating a previous message
-			_inferenceParams.Antiprompts.Add($"{_assistantName}: ");
+			string formattedMessage = _inferenceParams.ChatMessageTemplate;
+
+			Dictionary<string, object> templateVars = new();
+			templateVars.Add("Name", _assistantName);
+			templateVars.Add("Message", "");
+
+			foreach (var var in templateVars)
+			{
+				formattedMessage = formattedMessage.Replace("{{ "+var.Key+" }}", (string) var.Value);
+			}
+
+			_inferenceParams.Antiprompts.Add(formattedMessage);
 		}
 
 
