@@ -66,9 +66,9 @@ To create a model to be accessed by the API, a Model Definition must be created.
 Note: don't use the filepath for the model definition.
 - `OwnedBy` defaults to local, but can be defined as whatever you like
 - `Backend` the backend to use, available options for Text Generation are:
-    - `BuiltinLlama` is the default, however it does not support all the features and may not support some of the models.
-    - `LlamaCpp` is the most up to date and recommended backend.
-        - Note: requires the process `llama.cpp` when running outside Docker.
+    - `LlamaCpp` is the most up to date and recommended backend, and is also the default.
+        - Note: requires the process `llama.cpp` and `llama.cpp-tokenize` when running outside Docker.
+    - `BuiltinLlama` does not require any external processes, however it's not as up to date feature-wise.
     - `LlamaCppServer` uses the server offered by `llama.cpp` (does not support some of the latest features).
         - Note: requires the process `llama.cpp-server` when running outside Docker.
     - `openai` OpenAI passthrough mode, only works with OpenAI models.

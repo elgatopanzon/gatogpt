@@ -45,6 +45,7 @@ RUN git clone https://github.com/ggerganov/llama.cpp \
 RUN mv llama.cpp/build/bin/main /code/llama.cpp
 RUN mv llama.cpp/build/bin/llava-cli /code/llama.cpp-llava-cli
 RUN mv llama.cpp/build/bin/server /code/llama.cpp-server
+RUN mv llama.cpp/build/bin/tokenize /code/llama.cpp-tokenize
 
 # Create running user
 ARG UNAME=user
