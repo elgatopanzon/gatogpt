@@ -183,6 +183,12 @@ public partial class ChatController : ControllerBase
 					inferenceParams.Tfs = (double) chatCompletionCreateDto.Extended.Inference.Tfs;
 				if (chatCompletionCreateDto.Extended.Inference.Typical != null)
 					inferenceParams.Typical = (double) chatCompletionCreateDto.Extended.Inference.Typical;
+				if (chatCompletionCreateDto.Extended.Inference.Mirostat != null)
+					inferenceParams.Mirostat = (double) chatCompletionCreateDto.Extended.Inference.Mirostat;
+				if (chatCompletionCreateDto.Extended.Inference.MirostatLearningRate != null)
+					inferenceParams.MirostatLearningRate = (double) chatCompletionCreateDto.Extended.Inference.MirostatLearningRate;
+				if (chatCompletionCreateDto.Extended.Inference.MirostatEntropy != null)
+					inferenceParams.MirostatEntropy = (double) chatCompletionCreateDto.Extended.Inference.MirostatEntropy;
 				if (chatCompletionCreateDto.Extended.Inference.RepeatPenalty != null)
 					inferenceParams.RepeatPenalty = (double) chatCompletionCreateDto.Extended.Inference.RepeatPenalty;
 				if (chatCompletionCreateDto.Extended.Inference.RepeatLastN != null)

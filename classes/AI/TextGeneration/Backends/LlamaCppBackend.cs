@@ -101,6 +101,10 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.AddArguments("--presence-penalty", InferenceParams.PresencePenalty.ToString());
 		_processRunner.AddArguments("--frequency-penalty", InferenceParams.FrequencyPenalty.ToString());
 
+		_processRunner.AddArguments("--mirostat", InferenceParams.Mirostat.ToString());
+		_processRunner.AddArguments("--mirostat-lr", InferenceParams.MirostatLearningRate.ToString());
+		_processRunner.AddArguments("--mirostat-ent", InferenceParams.MirostatEntropy.ToString());
+
 		_processRunner.AddArguments("--temp", InferenceParams.Temp.ToString());
 		_processRunner.AddArguments("--keep", InferenceParams.KeepTokens.ToString());
 

@@ -123,6 +123,30 @@ public partial class InferenceParams : VObject
 		set { _typical.Value = value; }
 	}
 
+	internal readonly VValue<double> _mirostat;
+
+	public double Mirostat
+	{
+		get { return _mirostat.Value; }
+		set { _mirostat.Value = value; }
+	}
+
+	internal readonly VValue<double> _mirostatLearningRate;
+
+	public double MirostatLearningRate
+	{
+		get { return _mirostatLearningRate.Value; }
+		set { _mirostatLearningRate.Value = value; }
+	}
+
+	internal readonly VValue<double> _MirostatEntropy;
+
+	public double MirostatEntropy
+	{
+		get { return _MirostatEntropy.Value; }
+		set { _MirostatEntropy.Value = value; }
+	}
+
 	// samplers config for --samplers
 	internal readonly VValue<List<string>> _samplers;
 
@@ -336,6 +360,18 @@ public partial class InferenceParams : VObject
 
 		_typical = AddValidatedValue<double>(this)
 		    .Default(1.0)
+		    .ChangeEventsEnabled();
+
+		_mirostat = AddValidatedValue<double>(this)
+		    .Default(0)
+		    .ChangeEventsEnabled();
+
+		_mirostatLearningRate = AddValidatedValue<double>(this)
+		    .Default(0.1)
+		    .ChangeEventsEnabled();
+
+		_MirostatEntropy = AddValidatedValue<double>(this)
+		    .Default(5.0)
 		    .ChangeEventsEnabled();
 
 		_samplers = AddValidatedValue<List<string>>(this)

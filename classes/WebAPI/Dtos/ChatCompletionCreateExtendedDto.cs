@@ -41,6 +41,9 @@ public partial class ChatCompletionCreateExtendedInferenceDto
 	public int? TopK { get; set; }
 	public double? Tfs { get; set; }
 	public double? Typical { get; set; }
+	public double? Mirostat { get; set; }
+	public double? MirostatLearningRate { get; set; }
+	public double? MirostatEntropy { get; set; }
 	public double? RepeatPenalty { get; set; }
 	public int? RepeatLastN { get; set; }
 	public bool? Vision { get; set; }
