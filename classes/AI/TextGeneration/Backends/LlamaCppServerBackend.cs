@@ -440,6 +440,7 @@ public partial class LlamaCppServerBackend : TextGenerationBackend
 	}
 	public void _On_ProcessFinishedSuccess(ProcessFinishedSuccess e)
 	{
+		Console.WriteLine(InferenceResult.Output);
 	}
 	public void _On_ProcessFinishedError(ProcessFinishedError e)
 	{
