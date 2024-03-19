@@ -193,6 +193,22 @@
         ]
       }
     },
+    "vicuna_v1_1": {
+      "Name": "Vicuna v1.1",
+      "LoadParams": {
+        "RopeFreqScale": 0
+      },
+      "InferenceParams": {
+        "InputPrefix": "USER:",
+        "InputSuffix": "ASSISTANT:",
+        "PrePromptPrefix": "",
+        "PrePromptSuffix": "\n\n",
+        "PrePrompt": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.",
+        "Antiprompts": [
+          "USER:"
+        ]
+      }
+    },
     "vicuna_v1_5_16k": {
       "Name": "Vicuna v1.5 16K",
       "LoadParams": {
