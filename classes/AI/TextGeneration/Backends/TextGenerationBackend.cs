@@ -16,6 +16,8 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 
+using System.Text.RegularExpressions;
+
 public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBackend
 {
 	public AI.TextGeneration.ModelDefinition ModelDefinition { get; set; }
@@ -135,6 +137,8 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		{
 			output = output.Replace(antiprompt, "");
 		}
+
+		output = Regex.Replace(output, @"\p{C}+", string.Empty);
 
 		return output.Trim();
 	}
