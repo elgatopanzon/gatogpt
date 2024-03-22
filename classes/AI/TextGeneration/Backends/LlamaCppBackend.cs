@@ -30,6 +30,8 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	private string _promptFilePath { get; set; }
 	private string _cfgPromptFilePath { get; set; }
 
+	public Dictionary<string, (string Type, string value)> Metadata { get; set; } = new();
+
 	public LlamaCppBackend(ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		ModelDefinition = modelDefinition;
@@ -309,7 +311,51 @@ public partial class LlamaCppBackend : TextGenerationBackend
 
 		// add process filter to exclude certain output
 		_processRunner.AddOutputFilter((o) => {
-			return Regex.IsMatch(o, @"^(llm_|llama_|clip_|encode_)");
+			var match = Regex.IsMatch(o, @"^(llm_|llama_|clip_|encode_)");
+
+			// TODO: parse loading metadata values
+			string metadataKey = "";
+			string metadataType = "";
+			string metadataValue = "";
+
+			// llama_model_loader: - kv[ ]*[\d]*:[ ]*([a-z0-9.]*) ([a-z0-9,\[\]]*)[ ]*=[ ]*(.*)
+			var metadataMatch = Regex.Match(o, @"llama_model_loader: - kv[ ]*[\d]*:[ ]*([a-z0-9._]*) ([a-z0-9,\[\]]*)[ ]*=[ ]*(.*)");
+
+			if (metadataMatch.Success)
+			{
+				metadataKey = metadataMatch.Groups[1].Value;
+				metadataType = metadataMatch.Groups[2].Value;
+				metadataValue = metadataMatch.Groups[3].Value;
+			}
+
+			// llm_load_print_meta: ([a-z_]*)[ ]*= (.*)
+			metadataMatch = Regex.Match(o, @"llm_load_print_meta: ([a-z_ ]*)[ ]*= (.*)");
+
+			if (metadataMatch.Success)
+			{
+				metadataKey = metadataMatch.Groups[1].Value.Trim();
+				metadataType = "str";
+				metadataValue = metadataMatch.Groups[2].Value;
+			}
+
+			// llm_load_tensors: offloaded ([0-9]*)/([0-9]*)
+			metadataMatch = Regex.Match(o, @"llm_load_tensors: offloaded ([0-9]*)/([0-9]*)");
+
+			if (metadataMatch.Success)
+			{
+				metadataKey = "custom.gpu_layers";
+				metadataType = "u32";
+				metadataValue = metadataMatch.Groups[2].Value;
+			}
+
+			if (metadataKey.Length > 0)
+			{
+				Metadata.Add(metadataKey, (metadataType, metadataValue));
+
+				LoggerManager.LogDebug($"Metadata parsed", "", metadataKey, metadataValue);
+			}
+
+			return match;
 			});
 
 		_processRunner.AddOutputFilter((o) => {
