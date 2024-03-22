@@ -30,8 +30,6 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	private string _promptFilePath { get; set; }
 	private string _cfgPromptFilePath { get; set; }
 
-	public Dictionary<string, (string Type, string value)> Metadata { get; set; } = new();
-
 	public LlamaCppBackend(ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		ModelDefinition = modelDefinition;

@@ -29,6 +29,8 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 
 	public StreamingTokenFilter StreamingTokenFilter  { get; set; }
 
+	public Dictionary<string, (string Type, string Value)> Metadata { get; set; } = new();
+
 	public TextGenerationBackend(AI.TextGeneration.ModelDefinition modelDefinition, bool isStateful = false) : base(modelDefinition, isStateful)
 	{
 		this.SubscribeOwner<TextGenerationInferenceStart>(_On_InferenceStart, true);

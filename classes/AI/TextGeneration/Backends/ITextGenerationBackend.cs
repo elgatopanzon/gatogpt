@@ -23,6 +23,7 @@ public partial interface ITextGenerationBackend : AI.IModelBackend
 	public string Prompt { get; set; }
 	public string CurrentInferenceLine { get; set; }
 	public InferenceResult InferenceResult { get; set; }
+	public Dictionary<string, (string Type, string Value)> Metadata { get; set; }
 
 	public bool Persistent { get; set; }
 
