@@ -235,7 +235,16 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		_processRunner.SubscribeOwner<ProcessFinishedError>(_On_ProcessFinishedError);
 
 		// run and wait for process to exit
-		bool success = (await _processRunner.Execute() == 0);
+		await _processRunner.Execute();
+		bool success = (_processRunner.ReturnCode == 0);
+
+		if (!success && InferenceResult.Error == null)
+		{
+			InferenceResult.Error = new InferenceError();
+			InferenceResult.Error.Type = "crash";
+			InferenceResult.Error.Code = _processRunner.ReturnCode.ToString();
+			InferenceResult.Error.Message = $"llama.cpp non-zero return code";
+		}
 
 		if (InferenceResult.Error != null)
 		{
@@ -366,6 +375,7 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		InferenceResult.OutputStripped = FormatOutput(InferenceResult.Output);
 
 		LoggerManager.LogDebug("Llama.cpp output", "", "output", InferenceResult.Output);
+		LoggerManager.LogDebug("Llama.cpp return code", "", "returnCode", _processRunner.ReturnCode);
 
 		// clear tokens on non-successful exit
 		if (!_processRunner.Success)
