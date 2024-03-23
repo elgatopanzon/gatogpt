@@ -52,6 +52,13 @@ public partial class LlamaModelDefinition : ModelDefinition<LlamaModel>
 		set { _vision.Value = value; }
 	}
 
+	internal readonly VValue<List<DynamicCtxConfig>> _dynamicCtxConfigs;
+
+	public List<DynamicCtxConfig> DynamicCtxConfigs
+	{
+		get { return _dynamicCtxConfigs.Value; }
+		set { _dynamicCtxConfigs.Value = value; }
+	}
 
 	public LlamaModelDefinition(string modelResourceId, string profilePreset = "", ModelProfile modelProfile = null) : base(modelResourceId, profilePreset)
 	{
@@ -69,6 +76,10 @@ public partial class LlamaModelDefinition : ModelDefinition<LlamaModel>
 		    .Default(true)
 		    .ChangeEventsEnabled();
 
+		_dynamicCtxConfigs = AddValidatedValue<List<DynamicCtxConfig>>(this)
+		    .Default(new List<DynamicCtxConfig>())
+		    .ChangeEventsEnabled();
+
 		if (modelProfile != null)
 		{
 			ModelProfileOverride = modelProfile;
@@ -76,3 +87,8 @@ public partial class LlamaModelDefinition : ModelDefinition<LlamaModel>
 	}
 }
 
+public class DynamicCtxConfig {
+	public int NCtx { get; set; }
+	public int NGpuLayers { get; set; }
+	public int NThreads { get; set; }
+}

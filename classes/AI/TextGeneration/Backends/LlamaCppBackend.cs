@@ -224,8 +224,20 @@ public partial class LlamaCppBackend : TextGenerationBackend
 		Console.WriteLine(fullPrompt);
 		Console.WriteLine("");
 
-		// set fake prompt token count using 100,000 words = 75,000 tokens
-		InferenceResult.PromptTokenCount = TokenizeString(fullPrompt).Count();
+		// dynamic ctx
+		var dynamicCtxConfig = GetDynamicCtxConfig(InferenceResult.PromptTokenCount);
+		LoggerManager.LogDebug("Dynamic ctx config", "", "dynamicCtxConfig", dynamicCtxConfig);
+
+		LoadParams.NCtx = dynamicCtxConfig.NCtx;
+		LoadParams.NGpuLayers = dynamicCtxConfig.NGpuLayers;
+		InferenceParams.NThreads = dynamicCtxConfig.NThreads;
+
+		if (LoadParams.NCtx < LoadParams.NBatch)
+		{
+			LoadParams.NBatch = LoadParams.NCtx;
+		}
+
+		SetupProcessArgs();
 
 		// TODO: handle stateful stuff here
 		
@@ -378,8 +390,6 @@ public partial class LlamaCppBackend : TextGenerationBackend
 	public override void _State_LoadModel_OnEnter()
 	{
 		// no need to load model
-		SetupProcessArgs();
-
 		_state.Transition(INFERENCE_RUNNING_STATE);
 	}
 	// public override void _State_LoadModel_OnUpdate()

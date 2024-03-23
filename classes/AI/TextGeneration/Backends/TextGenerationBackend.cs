@@ -174,12 +174,50 @@ public partial class TextGenerationBackend : AI.ModelBackend, ITextGenerationBac
 		// check for prompt exceeding token size
 		int promptTokenLength = TokenizeString(FormatPrompt(Prompt)+InferenceParams.NegativeCfgPrompt).Count();
 
+		InferenceResult.PromptTokenCount = promptTokenLength;
+
 		LoggerManager.LogDebug("Prompt token size", "", "tokenSize", promptTokenLength);
 
 		if (promptTokenLength > (LoadParams.NCtx - InferenceParams.NPredict))
 		{
 			throw new PromptExceedsContextLengthException($"Prompt length of {promptTokenLength} exceeds {LoadParams.NCtx - InferenceParams.NPredict} (NCtx {LoadParams.NCtx} - NPredict {InferenceParams.NPredict})");
 		}
+	}
+
+	public DynamicCtxConfig GetDynamicCtxConfig(int promptTokenCount)
+	{
+		// create config as current non-dynamic config
+		DynamicCtxConfig matchingConfig = new() {
+			NCtx = LoadParams.NCtx,
+			NGpuLayers = LoadParams.NGpuLayers,
+			NThreads = InferenceParams.NThreads,
+		};
+		
+		// if an npredict is set we can find the nearest dynamic ctx config
+		int minContextSize = LoadParams.NCtx;
+		if (InferenceParams.NPredict > 0)
+		{
+			minContextSize = (promptTokenCount + InferenceParams.NPredict);
+			LoggerManager.LogDebug("DynamicCtx: finding config", "", "minCtxSize", minContextSize);
+
+			foreach (var config in ModelDefinition.DynamicCtxConfigs)
+			{
+				// keep skipping until we find a config which is large enough to
+				// hold the prompt with the npredict
+				if (config.NCtx > minContextSize)
+				{
+					matchingConfig = config.DeepCopy();
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+
+		matchingConfig.NCtx = minContextSize;
+
+		return matchingConfig;
 	}
 
 	/**************************
