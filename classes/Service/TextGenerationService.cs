@@ -91,21 +91,23 @@ public partial class TextGenerationService : Service
 
 			// set GrammarResource
 			// TODO: put this in a better location?
-			string grammarResourceId = request.ModelInstance.ModelDefinition.ModelProfileOverride.InferenceParams.GrammarResourceId;
-			if (request.InferenceParams.GrammarResourceId.Length > 0)
+			if (request.ModelInstance.ModelDefinition.ModelProfileOverride != null)
 			{
-				grammarResourceId = request.InferenceParams.GrammarResourceId;
-			}
-			if (grammarResourceId.Length > 0)
-			{
-				var grammarResources = _resourceManager.GetResources<LlamaGrammar>();
-				if (grammarResources.TryGetValue(grammarResourceId, out var grammarResource))
+				string grammarResourceId = request.ModelInstance.ModelDefinition.ModelProfileOverride.InferenceParams.GrammarResourceId;
+				if (request.InferenceParams.GrammarResourceId.Length > 0)
 				{
-					LoggerManager.LogDebug("Setting grammar resource", "", "grammarResource", grammarResource);
-					request.InferenceParams.GrammarResource = grammarResource;
+					grammarResourceId = request.InferenceParams.GrammarResourceId;
+				}
+				if (grammarResourceId.Length > 0)
+				{
+					var grammarResources = _resourceManager.GetResources<LlamaGrammar>();
+					if (grammarResources.TryGetValue(grammarResourceId, out var grammarResource))
+					{
+						LoggerManager.LogDebug("Setting grammar resource", "", "grammarResource", grammarResource);
+						request.InferenceParams.GrammarResource = grammarResource;
+					}
 				}
 			}
-
 
 			request.ModelInstance.StartInference(request.Prompt, request.LoadParams, request.InferenceParams);
 		}
