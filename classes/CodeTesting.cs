@@ -48,9 +48,475 @@ public partial class CodeTesting
 		_tokenFilter = new StreamingTokenFilter();
 	}
 
+	class TestTuneResult {
+		public int SpeedGpuLayers { get; set; }
+		public int SpeedThreads { get; set; }
+		public double SpeedTokensPerSec { get; set; }
+
+		public List<(int Ctx, int GpuLayers, int Threads, double TokensPerSec)> ContextResults { get; set; } = new();
+	}
+
+	class TestTuneState {
+		public int State { get; set; } = 0;
+		public int Counter { get; set; } = 0;
+		public int TuneTarget { get; set; } = 0;
+
+		public int Threads { get; set; } = 0;
+		public int PrevThreads { get; set; } = 0;
+		public int GpuLayers { get; set; } = 0;
+		public int PrevGpuLayers { get; set; } = 0;
+		public int Ctx { get; set; } = 0;
+		public int PrevCtx { get; set; } = 0;
+		public List<double> TokensPerSecDiffAvg { get; set; } = new();
+		public List<double> TokensPerSecDiffAvgAvg { get; set; } = new();
+
+		public InferenceResult Result { get; set; }
+		public InferenceResult PrevResult { get; set; }
+
+		public string Action { get; set; } = "";
+	}
+
 	public async Task<int> Run()
 	{
 		LoggerManager.LogDebug("Testing class!");
+
+		if (_args.Contains("--tune"))
+		{
+			string tuneModelId = _args[1];
+			int tuneGpuLayersMax = 0;
+			LoggerManager.LogDebug("Tuning model parameters", "", "model", tuneModelId);
+
+			int tuneRequiredCtx = 128;
+			int tuneCtxMax = 0;
+			int tuneTargetPredict = 30;
+
+			// load the text content for the tests
+			string promptString = "";
+			using (HttpClient client = new HttpClient())
+			{
+    			// promptString = await client.GetStringAsync("https://0x0.st/s/uIJ87ff3E-jb97feriuAPQ/Xrtt.txt");
+    			promptString = await client.GetStringAsync("https://0x0.st/s/sFQWLe6fmpu5EFdvhO97Jw/XrdI.txt");
+			}
+
+			var textGenService = ServiceRegistry.Get<TextGenerationService>();
+
+			List<TokenizedString> tokenized = textGenService.TokenizeString(tuneModelId, promptString);
+
+			LoggerManager.LogDebug("Test prompt token length", "", "tokens", tokenized.Count);
+
+			var modelManager = ServiceRegistry.Get<TextGenerationModelManager>();
+
+			// tune
+			var tuneState = new TestTuneState();
+			tuneState.Ctx = tuneRequiredCtx;
+			tuneState.PrevCtx = tuneRequiredCtx;
+
+			var tuneResult = new TestTuneResult();
+
+			if (_args.Count() >= 3)
+			{
+				tuneState.GpuLayers = Convert.ToInt32(_args[2]);
+			}
+			if (_args.Count() >= 4)
+			{
+				tuneState.Threads = Convert.ToInt32(_args[3]);
+			}
+			if (_args.Count() >= 5)
+			{
+				tuneState.TuneTarget = Convert.ToInt32(_args[4]);
+
+				tuneResult.SpeedThreads = tuneState.Threads;
+				tuneResult.SpeedGpuLayers = tuneState.GpuLayers;
+			}
+
+			LoggerManager.LogDebug("Starting tune!", "", "tuneModel", tuneModelId);
+			LoggerManager.LogDebug("Tune CTX requirement", "", "tuneCtx", tuneRequiredCtx);
+			LoggerManager.LogDebug("Tune Token samples (predict)", "", "tunePredict", tuneTargetPredict);
+
+			bool metadataSet = false;
+			while (true)
+			{
+				// 0 = tune threads
+				if (tuneState.State == 0)
+				{
+					LoggerManager.LogDebug("Tuning CPU threads", "", "threads", tuneState.Threads);
+				}
+
+				AI.TextGeneration.LoadParams loadParams = modelManager.GetModelDefinition(tuneModelId).ModelProfile.LoadParams.DeepCopy();
+				AI.TextGeneration.InferenceParams inferenceParams = modelManager.GetModelDefinition(tuneModelId).ModelProfile.InferenceParams.DeepCopy();
+
+				loadParams.NGpuLayers = tuneState.GpuLayers;
+				loadParams.NCtx = tuneState.Ctx;
+				loadParams.Seed = 1337;
+
+				inferenceParams.NThreads = tuneState.Threads;
+				inferenceParams.NPredict = tuneTargetPredict;
+				inferenceParams.PrePrompt = "";
+				inferenceParams.PrePromptPrefix = "";
+				inferenceParams.PrePromptSuffix = "";
+				inferenceParams.InputPrefix = "";
+				inferenceParams.InputSuffix = "";
+				inferenceParams.Antiprompts = new();
+
+				var modelInstance = textGenService.CreateModelInstance(tuneModelId, false, "");
+
+				var inferenceResult = await textGenService.InferAsync(tuneModelId, String.Join("", tokenized.Take((tuneRequiredCtx-1) - tuneTargetPredict).Select(x => x.Token).ToList()), existingInstanceId:modelInstance.InstanceId, stateful:false, loadParams:loadParams, inferenceParams:inferenceParams);
+
+				tuneState.Result = inferenceResult;
+				if (tuneState.PrevResult == null)
+				{
+					tuneState.PrevResult = inferenceResult;
+				}
+
+				// set ctx and gpu layer counts
+				if (modelInstance.Metadata.TryGetValue("n_ctx_train", out var modelCtx))
+				{
+					if (!metadataSet)
+					{
+						tuneCtxMax = Convert.ToInt32(modelCtx.Value);
+
+						if (tuneState.TuneTarget == 1)
+						{
+							tuneState.Ctx = tuneCtxMax;
+							tuneRequiredCtx = tuneCtxMax;
+						}
+					}
+				}
+				if (modelInstance.Metadata.TryGetValue("custom.gpu_layers", out var modelGpuLayers))
+				{
+					if (!metadataSet)
+					{
+						tuneGpuLayersMax = Convert.ToInt32(modelGpuLayers.Value);
+						tuneState.GpuLayers = tuneGpuLayersMax;
+					}
+				}
+				// assume the above properties are found, then set metadata as
+				// set
+				if (!metadataSet)
+				{
+					metadataSet = true;
+
+					tuneState.Threads = 1;
+
+					// if the initial run fails with gpu layers 0 and threads 0,
+					// then there's not enough for basic speed tuning at 128 ctx
+					if ((!tuneState.Result.Success || tuneState.Result.OutputStripped.Length == 0))
+					{
+						LoggerManager.LogDebug("Tune failed: insufficient resources for model");
+						break;
+					}
+
+					continue;
+				}
+
+				LoggerManager.LogDebug("Inference result", "", "inferenceResult", inferenceResult);
+
+				LoggerManager.LogDebug("Tune state", "", "stateId", tuneState.State);
+				LoggerManager.LogDebug("Tune target", "", "tuneTarget", tuneState.TuneTarget);
+				LoggerManager.LogDebug("Tune run success", "", "success", tuneState.Result.Success);
+				if (!tuneState.Result.Success)
+				{
+					LoggerManager.LogDebug("Tune run error", "", "tuneError", inferenceResult.Error.Message);
+				}
+
+				LoggerManager.LogDebug("Tune state threads", "", "threads", tuneState.Threads);
+				LoggerManager.LogDebug("Tune state gpu layers", "", "gpuLayers", $"{tuneState.GpuLayers} / {tuneGpuLayersMax}");
+				LoggerManager.LogDebug("Tune state ctx", "", "ctx", $"{tuneState.Ctx} / {tuneCtxMax}");
+				LoggerManager.LogDebug("Tune state tok/s", "", "toks", tuneState.Result.TokensPerSec);
+
+				// tune state actions
+				double tokensPerSecDiff = tuneState.Result.TokensPerSec - tuneState.PrevResult.TokensPerSec;
+				int tuneThreadsDiff = tuneState.Threads - tuneState.PrevThreads;
+				int tuneCtxDiff = tuneState.Ctx - tuneState.PrevCtx;
+				int tuneGpuLayersDiff = tuneState.GpuLayers - tuneState.PrevGpuLayers;
+
+				tuneState.TokensPerSecDiffAvg.Add(tokensPerSecDiff);
+
+				// 0 = gpu layers
+				if (tuneState.State == 0)
+				{
+					if (tuneState.Counter >= 0)
+					{
+						// assume that failing to infer means running out of
+						// memory on the gpu
+						// no changes = max layers reached (so threads to 0)
+						if ((!tuneState.Result.Success || tuneState.Result.OutputStripped.Length == 0) && tuneState.GpuLayers != 0)
+						{
+							tuneState.GpuLayers--;
+							tuneState.Action = "infer failed (out of resources?)";
+
+							// this means the fastest is the combo of
+							// threads + gpu layers, so next step is figuring
+							// out the thread count to use with the found gpu
+							// layers value
+							tuneState.TokensPerSecDiffAvgAvg = new();
+
+							if (tuneState.TuneTarget == 0)
+							{
+								tuneResult.SpeedGpuLayers = tuneState.GpuLayers;
+								tuneResult.SpeedThreads = tuneState.Threads;
+
+								if (tuneState.GpuLayers <= 0)
+								{
+									// set gpu layers to 0, move on to threads tuning
+									tuneState.GpuLayers = 0;
+									tuneState.State++;
+								}
+							}
+							else if (tuneState.TuneTarget == 1)
+							{
+								if (tuneState.GpuLayers <= 0)
+								{
+									// set gpu layers to 0, skip threads tuning
+									tuneState.GpuLayers = 0;
+									tuneState.State++;
+									tuneState.State++;
+								}
+							}
+						}
+						else if (tuneState.GpuLayers == tuneGpuLayersMax)
+						{
+
+							// this means that threads can be at 1, because the
+							// full load is on the GPU
+
+							if (tuneState.TuneTarget == 0)
+							{
+								tuneResult.SpeedGpuLayers = tuneState.GpuLayers;
+								tuneResult.SpeedThreads = 1;
+
+								tuneState.Action = $"speed: max gpu layers reached ({tuneState.GpuLayers})";
+
+								// reset gpu layers so we can find threads count
+								tuneState.GpuLayers = 0;
+							}
+							else if (tuneState.TuneTarget == 1)
+							{
+								// if we can run the largest context at the max
+								// layers, then we accept that
+								tuneState.Action = $"context: max gpu layers reached ({tuneState.GpuLayers})";
+								tuneState.State++;
+							}
+
+							tuneState.State++;
+
+							tuneState.TokensPerSecDiffAvgAvg = new();
+						}
+						else
+						{
+							if (tuneState.TuneTarget == 0)
+							{
+								tuneState.Action = "speed: non-crashing layer count found";
+
+								tuneState.State++;
+							}
+							else if (tuneState.TuneTarget == 1)
+							{
+								// accept first non-crashing layer count in
+								// context size tune mode
+								tuneState.Action = "context: non-crashing layer count found";
+								tuneState.State++;
+								tuneState.State++;
+							}
+						}
+
+						tuneState.Counter = 0;
+						tuneState.TokensPerSecDiffAvgAvg.Add(tuneState.TokensPerSecDiffAvg.Average());
+					}
+					else
+					{
+						tuneState.Action = $"gpu layers {tuneState.GpuLayers} count {tuneState.Counter + 1}";
+						tuneState.Counter++;
+					}
+
+				}
+
+
+				// 1 = threads
+				else if (tuneState.State == 1)
+				{
+					// if the new tokens/s is slower than the current, then
+					// reverse the threads increase to the previous one and move
+					// to the next state
+
+					if (tuneState.Counter >= (tuneState.TuneTarget == 0 ? 2 : 0))
+					{
+						if (tuneState.TokensPerSecDiffAvg.Average() < -0.05 && tuneState.Threads != 1)
+						{
+							tuneState.Threads--;
+
+							tuneState.State++;
+							tuneState.TokensPerSecDiffAvgAvg = new();
+
+							if (tuneState.TuneTarget == 0)
+							{
+								tuneResult.SpeedThreads = tuneState.Threads;
+								tuneState.Action = "speed: revert threads to prev value";
+
+								// restore speed gpu layers value
+								tuneState.GpuLayers = tuneResult.SpeedGpuLayers;
+							}
+						}
+						else
+						{
+							tuneState.Action = "speed: increase thread count";
+							tuneState.Threads++;
+						}
+
+						tuneState.Counter = 0;
+						tuneState.TokensPerSecDiffAvgAvg.Add(tuneState.TokensPerSecDiffAvg.Average());
+					}
+					else
+					{
+						tuneState.Action = $"speed: threads {tuneState.Threads} count {tuneState.Counter + 1}";
+						tuneState.Counter++;
+					}
+
+				}
+
+				if (tuneState.State == 2)
+				{
+					tuneState.State++;
+				}
+
+				tokensPerSecDiff = tuneState.Result.TokensPerSec - tuneState.PrevResult.TokensPerSec;
+				tuneThreadsDiff = tuneState.Threads - tuneState.PrevThreads;
+				tuneCtxDiff = tuneState.Ctx - tuneState.PrevCtx;
+				tuneGpuLayersDiff = tuneState.GpuLayers - tuneState.PrevGpuLayers;
+
+				LoggerManager.LogDebug("");
+				LoggerManager.LogDebug("Tune state threads diff", "", "threadsDiff", tuneThreadsDiff);
+				LoggerManager.LogDebug("Tune state gpu layers diff", "", "gpuLayersDiff", tuneGpuLayersDiff);
+				LoggerManager.LogDebug("Tune state ctx diff", "", "ctx", tuneCtxDiff);
+				LoggerManager.LogDebug("Tune state tok/s diff", "", "toksDiff", tokensPerSecDiff);
+
+				if (tuneState.TokensPerSecDiffAvg.Count > 0)
+				{
+					LoggerManager.LogDebug("Tune state tok/s diff avg", "", "toksDiffAvg", tuneState.TokensPerSecDiffAvg.Average());
+					LoggerManager.LogDebug("Tune state tok/s diff avg", "", "toksDiffAvg", tuneState.TokensPerSecDiffAvg);
+					if (tuneState.TokensPerSecDiffAvgAvg.Count > 0)
+					{
+						LoggerManager.LogDebug("Tune state tok/s diff avg avg", "", "toksDiffAvgAvg", tuneState.TokensPerSecDiffAvgAvg.Average());
+						LoggerManager.LogDebug("Tune state tok/s diff avg avg", "", "toksDiffAvgAvg", tuneState.TokensPerSecDiffAvgAvg);
+					}
+				}
+
+				if (tuneState.Counter == 0)
+				{
+					tuneState.PrevResult = tuneState.Result;
+					tuneState.TokensPerSecDiffAvg = new();
+				}
+
+				if (tuneState.TokensPerSecDiffAvg.Count > 0)
+				{
+					if (tuneState.TuneTarget == 0)
+					{
+						tuneResult.SpeedTokensPerSec = tuneState.Result.TokensPerSec;
+					}
+					else if (tuneState.TuneTarget == 1)
+					{
+					}
+				}
+
+				LoggerManager.LogDebug("");
+				LoggerManager.LogDebug("Tune state action", "", "action", tuneState.Action);
+
+				tuneState.PrevCtx = tuneState.Ctx;
+				tuneState.PrevThreads = tuneState.Threads;
+				tuneState.PrevGpuLayers = tuneState.GpuLayers;
+
+				if (tuneState.State == 3)
+				{
+					if (tuneState.TuneTarget == 0)
+					{
+						// set to context tune mode
+						tuneState.State = 0;
+						tuneState.TuneTarget = 1;
+
+						tuneState.Ctx = tuneCtxMax;
+						tuneRequiredCtx = tuneCtxMax;
+
+						LoggerManager.LogDebug("Switching to context tune target");
+
+						await Task.Delay(10000);
+					}
+					else if (tuneState.TuneTarget == 1)
+					{
+						tuneState.State = 0;
+						tuneState.Ctx = tuneCtxMax;
+						tuneRequiredCtx = tuneCtxMax;
+
+						tuneResult.ContextResults.Add(new() {
+							Ctx = tuneCtxMax,
+							GpuLayers = tuneState.GpuLayers,
+							Threads = tuneState.Threads,
+							TokensPerSec = tuneState.Result.TokensPerSec
+							});
+
+						LoggerManager.LogDebug("Tune context result", "", tuneCtxMax.ToString(), tuneResult.ContextResults.Last());
+						// decrease context size for next round
+						if (tuneCtxMax >= 32768)
+						{
+							tuneCtxMax -= 4096;
+						}
+						else if (tuneCtxMax >= 16384)
+						{
+							tuneCtxMax -= 2048;
+						}
+						else if (tuneCtxMax >= 2048)
+						{
+							tuneCtxMax -= 1024;
+						}
+						else
+						{
+							tuneCtxMax = tuneCtxMax / 2;
+						}
+
+						// finish the tuning if we're back to max layers by
+						// setting to 512 context
+						if (tuneState.GpuLayers == tuneGpuLayersMax && tuneCtxMax > 512)
+						{
+							tuneCtxMax = 512;
+						}
+
+						tuneRequiredCtx = tuneCtxMax;
+						tuneState.Threads = tuneResult.SpeedThreads;
+						tuneState.GpuLayers = tuneResult.SpeedGpuLayers;
+						tuneState.Ctx = tuneCtxMax;
+
+						if (tuneCtxMax < 128)
+						{
+							// since it's the same as the first speed run, we
+							// can set the tokens/s value here
+							tuneResult.SpeedTokensPerSec = tuneState.Result.TokensPerSec;
+							break;
+						}
+
+						LoggerManager.LogDebug("Decreasing max context size", "", "ctx", tuneCtxMax);
+					}
+				}
+
+				await Task.Delay(1500);
+			}
+
+			LoggerManager.LogDebug("Tune results");
+			LoggerManager.LogDebug("model id", "", "model", tuneModelId);
+			LoggerManager.LogDebug("");
+			LoggerManager.LogDebug("Tune results - speed", "", "tokensPerSec", tuneResult.SpeedTokensPerSec);
+			LoggerManager.LogDebug("gpu layers", "", "gpuLayers", $"{tuneResult.SpeedGpuLayers} / {tuneGpuLayersMax}");
+			LoggerManager.LogDebug("threads", "", "threads", tuneResult.SpeedThreads);
+
+			LoggerManager.LogDebug("");
+			LoggerManager.LogDebug("Tune results - context", "", "ctxRange", $"{tuneResult.ContextResults.FirstOrDefault().Ctx} - {tuneResult.ContextResults.LastOrDefault().Ctx}");
+
+			foreach (var contextResult in tuneResult.ContextResults)
+			{
+				LoggerManager.LogDebug("");
+				LoggerManager.LogDebug($"context tune result {contextResult.Ctx}", "", "tokensPerSec", contextResult.TokensPerSec);
+				LoggerManager.LogDebug("gpu layers", "", "gpuLayers", $"{contextResult.GpuLayers} / {tuneGpuLayersMax}");
+				LoggerManager.LogDebug("threads", "", "threads", contextResult.Threads);
+			}
+		}
 
 		if (_args.Contains("--remote-transfer-endpoint"))
 		{
