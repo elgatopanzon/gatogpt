@@ -130,9 +130,9 @@ public partial class CodeTesting
 				tuneResult.SpeedGpuLayers = tuneState.GpuLayers;
 			}
 
-			LoggerManager.LogDebug("Starting tune!", "", "tuneModel", tuneModelId);
-			LoggerManager.LogDebug("Tune CTX requirement", "", "tuneCtx", tuneRequiredCtx);
-			LoggerManager.LogDebug("Tune Token samples (predict)", "", "tunePredict", tuneTargetPredict);
+			LoggerManager.LogInfo("Starting tune!", "", "tuneModel", tuneModelId);
+			LoggerManager.LogInfo("Tune CTX requirement", "", "tuneCtx", tuneRequiredCtx);
+			LoggerManager.LogInfo("Tune Token samples (predict)", "", "tunePredict", tuneTargetPredict);
 
 			bool metadataSet = false;
 			while (true)
@@ -140,7 +140,7 @@ public partial class CodeTesting
 				// 0 = tune threads
 				if (tuneState.State == 0)
 				{
-					LoggerManager.LogDebug("Tuning CPU threads", "", "threads", tuneState.Threads);
+					LoggerManager.LogInfo("Tuning CPU threads", "", "threads", tuneState.Threads);
 				}
 
 				AI.TextGeneration.LoadParams loadParams = modelManager.GetModelDefinition(tuneModelId).ModelProfile.LoadParams.DeepCopy();
@@ -437,7 +437,7 @@ public partial class CodeTesting
 						tuneState.Ctx = tuneCtxMax;
 						tuneRequiredCtx = tuneCtxMax;
 
-						LoggerManager.LogDebug("Switching to context tune target");
+						LoggerManager.LogInfo("Switching to context tune target");
 
 						await Task.Delay(10000);
 					}
@@ -454,7 +454,7 @@ public partial class CodeTesting
 							TokensPerSec = tuneState.Result.TokensPerSec
 							});
 
-						LoggerManager.LogDebug("Tune context result", "", tuneCtxMax.ToString(), tuneResult.ContextResults.Last());
+						LoggerManager.LogInfo("Tune context result", "", tuneCtxMax.ToString(), tuneResult.ContextResults.Last());
 						// decrease context size for next round
 						if (tuneCtxMax >= 32768)
 						{
@@ -500,23 +500,34 @@ public partial class CodeTesting
 				await Task.Delay(1500);
 			}
 
-			LoggerManager.LogDebug("Tune results");
-			LoggerManager.LogDebug("model id", "", "model", tuneModelId);
-			LoggerManager.LogDebug("");
-			LoggerManager.LogDebug("Tune results - speed", "", "tokensPerSec", tuneResult.SpeedTokensPerSec);
-			LoggerManager.LogDebug("gpu layers", "", "gpuLayers", $"{tuneResult.SpeedGpuLayers} / {tuneGpuLayersMax}");
-			LoggerManager.LogDebug("threads", "", "threads", tuneResult.SpeedThreads);
+			LoggerManager.LogInfo("Tune results");
+			LoggerManager.LogInfo("model id", "", "model", tuneModelId);
+			LoggerManager.LogInfo("");
+			LoggerManager.LogInfo("Tune results - speed", "", "tokensPerSec", tuneResult.SpeedTokensPerSec);
+			LoggerManager.LogInfo("gpu layers", "", "gpuLayers", $"{tuneResult.SpeedGpuLayers} / {tuneGpuLayersMax}");
+			LoggerManager.LogInfo("threads", "", "threads", tuneResult.SpeedThreads);
 
-			LoggerManager.LogDebug("");
-			LoggerManager.LogDebug("Tune results - context", "", "ctxRange", $"{tuneResult.ContextResults.FirstOrDefault().Ctx} - {tuneResult.ContextResults.LastOrDefault().Ctx}");
+			LoggerManager.LogInfo("");
+			LoggerManager.LogInfo("Tune results - context", "", "ctxRange", $"{tuneResult.ContextResults.FirstOrDefault().Ctx} - {tuneResult.ContextResults.LastOrDefault().Ctx}");
+
+			var dynamicCtxConfig = new List<DynamicCtxConfig>();
 
 			foreach (var contextResult in tuneResult.ContextResults)
 			{
-				LoggerManager.LogDebug("");
-				LoggerManager.LogDebug($"context tune result {contextResult.Ctx}", "", "tokensPerSec", contextResult.TokensPerSec);
-				LoggerManager.LogDebug("gpu layers", "", "gpuLayers", $"{contextResult.GpuLayers} / {tuneGpuLayersMax}");
-				LoggerManager.LogDebug("threads", "", "threads", contextResult.Threads);
+				LoggerManager.LogInfo("");
+				LoggerManager.LogInfo($"context tune result {contextResult.Ctx}", "", "tokensPerSec", contextResult.TokensPerSec);
+				LoggerManager.LogInfo("gpu layers", "", "gpuLayers", $"{contextResult.GpuLayers} / {tuneGpuLayersMax}");
+				LoggerManager.LogInfo("threads", "", "threads", contextResult.Threads);
+
+				dynamicCtxConfig.Add(new() {
+					NCtx = contextResult.Ctx,
+					NThreads = contextResult.Threads,
+					NGpuLayers = contextResult.GpuLayers,
+					});
 			}
+
+			var s = JsonConvert.SerializeObject(new Dictionary<string, List<DynamicCtxConfig>> {{ "DynamicCtxConfigs", dynamicCtxConfig }}, Formatting.Indented);
+			Console.WriteLine(s);
 		}
 
 		if (_args.Contains("--remote-transfer-endpoint"))
