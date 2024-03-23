@@ -226,11 +226,18 @@ public partial class LlamaCppBackend : TextGenerationBackend
 
 		// dynamic ctx
 		var dynamicCtxConfig = GetDynamicCtxConfig(InferenceResult.PromptTokenCount);
+
 		LoggerManager.LogDebug("Dynamic ctx config", "", "dynamicCtxConfig", dynamicCtxConfig);
 
 		LoadParams.NCtx = dynamicCtxConfig.NCtx;
-		LoadParams.NGpuLayers = dynamicCtxConfig.NGpuLayers;
 		InferenceParams.NThreads = dynamicCtxConfig.NThreads;
+
+		// only set gpu layers if the non-dynamic config is not 0, so that we
+		// can have non-gpu inference if desired
+		if (LoadParams.NGpuLayers != 0)
+		{
+			LoadParams.NGpuLayers = dynamicCtxConfig.NGpuLayers;
+		}
 
 		if (LoadParams.NCtx < LoadParams.NBatch)
 		{
