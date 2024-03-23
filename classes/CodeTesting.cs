@@ -95,7 +95,7 @@ public partial class CodeTesting
 			using (HttpClient client = new HttpClient())
 			{
     			// promptString = await client.GetStringAsync("https://0x0.st/s/uIJ87ff3E-jb97feriuAPQ/Xrtt.txt");
-    			promptString = await client.GetStringAsync("https://0x0.st/s/sFQWLe6fmpu5EFdvhO97Jw/XrdI.txt");
+    			promptString = await client.GetStringAsync("https://0x0.st/s/RBuFkjriNPdMEeJzzmAeNA/Xr5D.txt");
 			}
 
 			var textGenService = ServiceRegistry.Get<TextGenerationService>();
