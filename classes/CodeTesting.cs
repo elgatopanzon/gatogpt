@@ -86,7 +86,8 @@ public partial class CodeTesting
 			int tuneGpuLayersMax = 0;
 			LoggerManager.LogDebug("Tuning model parameters", "", "model", tuneModelId);
 
-			int tuneRequiredCtx = 128;
+			int tuneRequiredCtxMin = 64;
+			int tuneRequiredCtx = tuneRequiredCtxMin;
 			int tuneCtxMax = 0;
 			int tuneTargetPredict = 30;
 
@@ -199,7 +200,7 @@ public partial class CodeTesting
 					tuneState.Threads = 1;
 
 					// if the initial run fails with gpu layers 0 and threads 0,
-					// then there's not enough for basic speed tuning at 128 ctx
+					// then there's not enough for basic speed tuning at min ctx
 					if ((!tuneState.Result.Success || tuneState.Result.OutputStripped.Length == 0))
 					{
 						LoggerManager.LogDebug("Tune failed: insufficient resources for model");
@@ -484,7 +485,7 @@ public partial class CodeTesting
 						tuneState.GpuLayers = tuneResult.SpeedGpuLayers;
 						tuneState.Ctx = tuneCtxMax;
 
-						if (tuneCtxMax < 128)
+						if (tuneCtxMax < tuneRequiredCtxMin)
 						{
 							// since it's the same as the first speed run, we
 							// can set the tokens/s value here
