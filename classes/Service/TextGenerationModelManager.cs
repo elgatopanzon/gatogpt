@@ -37,9 +37,9 @@ public partial class TextGenerationModelManager : Service
 	}
 
 
-	private Dictionary<string, Resource<LlamaModel>> _modelResources;
+	private Dictionary<string, ResourceObject<LlamaModel>> _modelResources;
 
-	public Dictionary<string, Resource<LlamaModel>> ModelResources { 
+	public Dictionary<string, ResourceObject<LlamaModel>> ModelResources { 
 		get {
 			return _modelResources;
 		}
@@ -118,7 +118,7 @@ public partial class TextGenerationModelManager : Service
 		}
 	}
 
-	public Resource<LlamaModel> GetModelResource(string resourceId)
+	public ResourceObject<LlamaModel> GetModelResource(string resourceId)
 	{
 		if (_modelResources.TryGetValue(resourceId, out var resource))
 		{
@@ -127,7 +127,7 @@ public partial class TextGenerationModelManager : Service
 		return null;
 	}
 
-	public void SetModelResources(Dictionary<string, Resource<LlamaModel>> modelResources)
+	public void SetModelResources(Dictionary<string, ResourceObject<LlamaModel>> modelResources)
 	{
 		LoggerManager.LogDebug("Setting model resources config", "", "modelResources", modelResources);
 

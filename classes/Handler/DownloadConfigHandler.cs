@@ -17,7 +17,7 @@ using GodotEGP.Objects.Extensions;
 using GodotEGP.Logging;
 using GodotEGP.Service;
 using GodotEGP.Event.Events;
-using GodotEGP.Event.Filter;
+using GodotEGP.Event.Filters;
 using GodotEGP.Config;
 using GodotEGP.Handler;
 
@@ -27,11 +27,11 @@ public partial class DownloadConfigHandler : Handler
 
 	public DownloadConfigHandler()
 	{
-		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectType(typeof(ConfigManager)));
+		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectTypeFilter(typeof(ConfigManager)));
 
 		// run config update when ResourceManager is ready to populate model
 		// resources
-		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectType(typeof(ResourceManager)));
+		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectTypeFilter(typeof(ResourceManager)));
 
 		_modelDownloadManager = ServiceRegistry.Get<ModelDownloadManager>();
 	}

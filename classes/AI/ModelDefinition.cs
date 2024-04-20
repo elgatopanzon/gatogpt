@@ -54,8 +54,8 @@ public partial class ModelDefinition : VObject
 		set { _modelResourceId.Value = value; }
 	}
 
-	internal readonly VValue<Resource<Resource>> _modelResource;
-	public Resource<Resource> ModelResource
+	internal readonly VValue<ResourceObject<Resource>> _modelResource;
+	public ResourceObject<Resource> ModelResource
 	{
 		get { return _modelResource.Value; }
 		set { _modelResource.Value = value; }
@@ -108,9 +108,9 @@ public partial class ModelDefinition : VObject
 public partial class ModelDefinition<TModelResource> : ModelDefinition where TModelResource : Resource
 {
 	// instance of the model resource to load for this model definition
-	internal readonly new VValue<Resource<TModelResource>> _modelResource;
+	internal readonly new VValue<ResourceObject<TModelResource>> _modelResource;
 
-	public new Resource<TModelResource> ModelResource
+	public new ResourceObject<TModelResource> ModelResource
 	{
 		get { return _modelResource.Value; }
 		set { _modelResource.Value = value; }
@@ -118,7 +118,7 @@ public partial class ModelDefinition<TModelResource> : ModelDefinition where TMo
 
 	public ModelDefinition(string modelResourceId, string profilePreset = "") : base(modelResourceId, profilePreset)
 	{
-		_modelResource = AddValidatedValue<Resource<TModelResource>>(this)
+		_modelResource = AddValidatedValue<ResourceObject<TModelResource>>(this)
 		    .ChangeEventsEnabled();
 	}
 }

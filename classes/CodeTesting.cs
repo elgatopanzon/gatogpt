@@ -19,10 +19,10 @@ using GodotEGP.Logging;
 using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
-using GodotEGP.Data;
-using GodotEGP.Data.Endpoint;
-using GodotEGP.Data.Operation;
-using GodotEGP.Data.Operator;
+using GodotEGP.DAL;
+using GodotEGP.DAL.Endpoints;
+using GodotEGP.DAL.Operations;
+using GodotEGP.DAL.Operators;
 using GodotEGP.Resource;
 
 using ChromaDBSharp.Client;
@@ -546,7 +546,7 @@ public partial class CodeTesting
 			LoggerManager.LogDebug("HTTPEndpoint", "", "endpoint", httpEndpoint);
 			LoggerManager.LogDebug("FileEndpoint", "", "endpoint", fileEndpoint);
 
-			var process = new DataOperationProcessRemoteTransfer<Resource<GodotEGP.Resource.RemoteTransferResult>>(fileEndpoint, httpEndpoint, onErrorCb: (e) => {
+			var process = new DataOperationProcessRemoteTransfer<ResourceObject<GodotEGP.Resource.Resources.RemoteTransferResult>>(fileEndpoint, httpEndpoint, onErrorCb: (e) => {
 				LoggerManager.LogDebug("Operation error");
 				}, onWorkingCb: (e) => {
 				LoggerManager.LogDebug("Operation working", "", "e", e);

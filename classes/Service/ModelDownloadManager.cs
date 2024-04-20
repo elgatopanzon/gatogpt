@@ -16,9 +16,10 @@ using GodotEGP.Service;
 using GodotEGP.Event.Events;
 using GodotEGP.Config;
 using GodotEGP.Resource;
-using GodotEGP.Data;
-using GodotEGP.Data.Endpoint;
-using GodotEGP.Data.Operation;
+using GodotEGP.Resource.Resources;
+using GodotEGP.DAL;
+using GodotEGP.DAL.Endpoints;
+using GodotEGP.DAL.Operations;
 using GodotEGP.Misc;
 
 using System.Net;
@@ -34,7 +35,7 @@ public partial class ModelDownloadManager : Service
 	private string _resourceCategory = "DownloadedModels";
 
 	// download operations
-	private Dictionary<(HTTPEndpoint Http, FileEndpoint File), (DataOperationProcessRemoteTransfer<Resource<GodotEGP.Resource.RemoteTransferResult>> Process, UrlDownloadConfig Config)> _downloadOperations { get; set; } = new();
+	private Dictionary<(HTTPEndpoint Http, FileEndpoint File), (DataOperationProcessRemoteTransfer<ResourceObject<GodotEGP.Resource.Resources.RemoteTransferResult>> Process, UrlDownloadConfig Config)> _downloadOperations { get; set; } = new();
 
 	private Timer _downloadTimer;
 
@@ -137,7 +138,7 @@ public partial class ModelDownloadManager : Service
 			{
 				LoggerManager.LogDebug("Creating download process", "", "download", download);
 				// create download process operation
-				var process = new DataOperationProcessRemoteTransfer<Resource<GodotEGP.Resource.RemoteTransferResult>>(endpoints.File, endpoints.Http,
+				var process = new DataOperationProcessRemoteTransfer<ResourceObject<GodotEGP.Resource.Resources.RemoteTransferResult>>(endpoints.File, endpoints.Http,
 						onErrorCb: _On_DownloadOperation_Error, 
 						onProgressCb: _On_DownloadOperation_Progress, 
 						onCompleteCb: _On_DownloadOperation_Complete
@@ -188,7 +189,7 @@ public partial class ModelDownloadManager : Service
 
 			if (process.Config.CreateResourceDefinition)
 			{
-				GodotEGP.Resource.Definition resourceDefinition = new() {
+				GodotEGP.Resource.ResourceDefinition resourceDefinition = new() {
 					Path = remoteTransferResult.FileEndpoint.Path,
 					Class = "GatoGPT.Resource.LlamaModel",
 				};
@@ -207,7 +208,7 @@ public partial class ModelDownloadManager : Service
 
 				// create a new config object to store downloaded resource
 				// definitions
-				GodotEGP.Config.Object<ResourceDefinitionConfig> modelResourcesConfig = new();
+				GodotEGP.Config.ConfigObject<ResourceDefinitionConfig> modelResourcesConfig = new();
 				modelResourcesConfig.Value = new();
 
 				modelResourcesConfig.Value.Resources[_resourceCategory] = new();
@@ -230,7 +231,7 @@ public partial class ModelDownloadManager : Service
 				{
 					// create a new config object to store downloaded model
 					// definitions
-					GodotEGP.Config.Object<ModelDefinitionsConfig> modelDefinitionsConfig = new();
+					GodotEGP.Config.ConfigObject<ModelDefinitionsConfig> modelDefinitionsConfig = new();
 					modelDefinitionsConfig.Value = new();
 
 					// add resources from download category into new config object
@@ -275,7 +276,7 @@ public partial class ModelDownloadManager : Service
 		return count;
 	}
 
-	public (DataOperationProcessRemoteTransfer<Resource<GodotEGP.Resource.RemoteTransferResult>> Process, UrlDownloadConfig Config) GetExistingDownloadProcess(HTTPEndpoint httpEndpoint, FileEndpoint fileEndpoint)
+	public (DataOperationProcessRemoteTransfer<ResourceObject<GodotEGP.Resource.Resources.RemoteTransferResult>> Process, UrlDownloadConfig Config) GetExistingDownloadProcess(HTTPEndpoint httpEndpoint, FileEndpoint fileEndpoint)
 	{
 		foreach (var downloadProcess in _downloadOperations)
 		{
@@ -324,7 +325,7 @@ public partial class ModelDownloadManager : Service
 
 			var res = ee.RunWorkerCompletedEventArgs.Result;
 
-			if (res is OperationResult<Resource<RemoteTransferResult>> resobj)
+			if (res is DataOperationResult<ResourceObject<RemoteTransferResult>> resobj)
 			{
 				ProcessFinishedDownload(resobj.ResultObject.Value);
 			}

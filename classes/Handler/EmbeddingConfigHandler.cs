@@ -17,7 +17,7 @@ using GodotEGP.Objects.Extensions;
 using GodotEGP.Logging;
 using GodotEGP.Service;
 using GodotEGP.Event.Events;
-using GodotEGP.Event.Filter;
+using GodotEGP.Event.Filters;
 using GodotEGP.Config;
 using GodotEGP.Handler;
 
@@ -27,11 +27,11 @@ public partial class EmbeddingConfigHandler : Handler
 
 	public EmbeddingConfigHandler()
 	{
-		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectType(typeof(ConfigManager)));
+		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectTypeFilter(typeof(ConfigManager)));
 
 		// run config update when ResourceManager is ready to populate model
 		// resources
-		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectType(typeof(ResourceManager)));
+		ServiceRegistry.Get<EventManager>().Subscribe<ServiceReady>(_On_ConfigManager_Ready).Filters(new OwnerObjectTypeFilter(typeof(ResourceManager)));
 		
 		_embeddingManager = ServiceRegistry.Get<EmbeddingModelManager>();
 	}

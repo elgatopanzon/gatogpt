@@ -280,9 +280,9 @@ public partial class InferenceParams : VObject
 		set { _GrammaResourceId.Value = value; }
 	}
 
-	internal readonly VValue<Resource<LlamaGrammar>> _grammarResource;
+	internal readonly VValue<ResourceObject<LlamaGrammar>> _grammarResource;
 
-	internal Resource<LlamaGrammar> GrammarResource
+	internal ResourceObject<LlamaGrammar> GrammarResource
 	{
 		get { return _grammarResource.Value; }
 		set { _grammarResource.Value = value; }
@@ -438,7 +438,7 @@ public partial class InferenceParams : VObject
 		    .Default("")
 		    .ChangeEventsEnabled();
 
-		_grammarResource = AddValidatedValue<Resource<LlamaGrammar>>(this)
+		_grammarResource = AddValidatedValue<ResourceObject<LlamaGrammar>>(this)
 		    .Default(null)
 		    .ChangeEventsEnabled();
 

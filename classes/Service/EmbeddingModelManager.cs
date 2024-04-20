@@ -32,9 +32,9 @@ public partial class EmbeddingModelManager : Service
 	}
 
 
-	private Dictionary<string, Resource<EmbeddingModel>> _modelResources;
+	private Dictionary<string, ResourceObject<EmbeddingModel>> _modelResources;
 
-	public Dictionary<string, Resource<EmbeddingModel>> ModelResources { 
+	public Dictionary<string, ResourceObject<EmbeddingModel>> ModelResources { 
 		get {
 			return _modelResources;
 		}
@@ -89,12 +89,12 @@ public partial class EmbeddingModelManager : Service
 		}
 	}
 
-	public Resource<EmbeddingModel> GetModelResource(string resourceId)
+	public ResourceObject<EmbeddingModel> GetModelResource(string resourceId)
 	{
 		return _modelResources[resourceId];
 	}
 
-	public void SetModelResources(Dictionary<string, Resource<EmbeddingModel>> modelResources)
+	public void SetModelResources(Dictionary<string, ResourceObject<EmbeddingModel>> modelResources)
 	{
 		LoggerManager.LogDebug("Setting model resources config", "", "modelResources", modelResources);
 

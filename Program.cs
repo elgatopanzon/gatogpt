@@ -17,7 +17,7 @@ using GodotEGP.Service;
 using GodotEGP.Random;
 using GodotEGP.Objects.Extensions;
 using GodotEGP.Event.Events;
-using GodotEGP.Event.Filter;
+using GodotEGP.Event.Filters;
 using Godot;
 
 class Program
